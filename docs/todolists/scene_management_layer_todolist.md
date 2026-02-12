@@ -58,8 +58,8 @@
 
 ### 1.6 Renderable 挂载
 
-- [ ] SceneNode 实现 `SetRenderable(Renderable* r)` / `GetRenderable()`
-- [ ] SceneNode 持有 Renderable 非占有指针（`Renderable* renderable`）
+- [x] SceneNode 实现 `SetRenderable(Renderable* r)` / `GetRenderable()`
+- [x] SceneNode 持有 Renderable 非占有指针（`Renderable* renderable`）
 
 ---
 

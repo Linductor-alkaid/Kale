@@ -612,7 +612,7 @@
         "SceneNode 实现 SetRenderable(Renderable* r) / GetRenderable()",
         "SceneNode 持有 Renderable 非占有指针（Renderable* renderable）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.2"],
       "test_verification": "Renderable 正确挂载到节点"

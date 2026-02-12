@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.6 Renderable 挂载
+状态：已完成
+- SceneNode 前向声明 Renderable，新增成员 Renderable* renderable_
+- 实现 SetRenderable(Renderable* r) / GetRenderable()，非占有指针
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.5 Pass 标志
 状态：已完成
 - 在 scene_types.hpp 定义 PassFlags 枚举（ShadowCaster、Opaque、Transparent、All）及 operator|/operator&
