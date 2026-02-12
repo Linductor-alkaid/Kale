@@ -4,7 +4,8 @@
 
 add_library(kale_scene STATIC
     placeholder.cpp
-    # 待实现：scene_manager.cpp, scene_node.cpp, entity_manager.cpp, culling.cpp
+    scene_manager.cpp
+    # 待实现：scene_node.cpp, entity_manager.cpp, culling.cpp
 )
 
 target_include_directories(kale_scene

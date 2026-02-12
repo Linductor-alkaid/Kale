@@ -16,12 +16,12 @@
 
 ### 1.1 句柄与类型定义
 
-- [ ] 定义 `SceneNodeHandle = uint64_t` 类型
-- [ ] 定义 `kInvalidSceneNodeHandle = 0` 常量
-- [ ] 实现 `SceneManager::GetHandle(SceneNode* node)` 句柄查找
-- [ ] 实现 `SceneManager::GetNode(SceneNodeHandle handle)` 句柄解析（已销毁返回 `nullptr`）
-- [ ] 实现 `handleRegistry_`（`std::unordered_map<SceneNodeHandle, SceneNode*>`）
-- [ ] 节点创建时分配 handle 并注册，销毁时从注册表移除
+- [x] 定义 `SceneNodeHandle = uint64_t` 类型
+- [x] 定义 `kInvalidSceneNodeHandle = 0` 常量
+- [x] 实现 `SceneManager::GetHandle(SceneNode* node)` 句柄查找
+- [x] 实现 `SceneManager::GetNode(SceneNodeHandle handle)` 句柄解析（已销毁返回 `nullptr`）
+- [x] 实现 `handleRegistry_`（`std::unordered_map<SceneNodeHandle, SceneNode*>`）
+- [x] 节点创建时分配 handle 并注册，销毁时从注册表移除
 
 ### 1.2 SceneNode 核心
 

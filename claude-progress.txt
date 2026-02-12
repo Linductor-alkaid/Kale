@@ -3,6 +3,15 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.1 句柄与类型定义
+状态：已完成
+- 定义 SceneNodeHandle、kInvalidSceneNodeHandle（scene_types.hpp）
+- 实现 SceneManager：handleRegistry_、nodeToHandle_、nextHandle_
+- 实现 GetHandle(SceneNode*)、GetNode(SceneNodeHandle)、RegisterNode、UnregisterNode
+- 节点创建时分配 handle 并注册，销毁时从注册表移除
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.8 简单 ModelLoader
 状态：已完成
 - 实现 ModelLoader : public IResourceLoader（model_loader.hpp / model_loader.cpp）
