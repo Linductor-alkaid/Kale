@@ -3,6 +3,16 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.6 Mesh / Texture 数据结构
+状态：已完成
+- 定义 BoundingBox 结构（min, max，glm::vec3）
+- 定义 SubMesh 结构（indexOffset, indexCount, materialIndex）
+- 定义 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, topology, bounds, subMeshes）
+- 定义 Texture 结构（handle, width, height, format, mipLevels）
+- resource_types.hpp 引用 kale_device::rdi_types 与 glm，kale_resource 链接 glm::glm
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.5 同步 Load 实现
 状态：已完成
 - 实现 Load<T>(path) 模板方法：检查缓存（已存在则 AddRef 并返回）、查找 Loader、调用 Load、成功后 Register 入 Cache

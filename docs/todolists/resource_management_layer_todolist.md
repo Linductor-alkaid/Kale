@@ -78,10 +78,10 @@
 
 ### 1.8 Mesh 与 Texture 数据结构
 
-- [ ] 定义 `Mesh` 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, topology, bounds, subMeshes）
-- [ ] 定义 `SubMesh` 结构（indexOffset, indexCount, materialIndex）
-- [ ] 定义 `Texture` 结构（handle, width, height, format, mipLevels）
-- [ ] 定义 `BoundingBox` 结构
+- [x] 定义 `Mesh` 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, topology, bounds, subMeshes）
+- [x] 定义 `SubMesh` 结构（indexOffset, indexCount, materialIndex）
+- [x] 定义 `Texture` 结构（handle, width, height, format, mipLevels）
+- [x] 定义 `BoundingBox` 结构
 
 ---
 

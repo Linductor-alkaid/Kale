@@ -460,7 +460,7 @@
         "定义 Texture 结构（handle, width, height, format, mipLevels）",
         "定义 BoundingBox 结构"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.1"],
       "test_verification": "数据结构定义完整，可以表示各种资源"

@@ -18,4 +18,5 @@ target_link_libraries(kale_resource
     PUBLIC
         kale_device
         kale_executor
+        glm::glm
 )
