@@ -4,6 +4,7 @@
  *
  * 与 scene_management_layer_design.md 5.3 对齐。
  * phase5-5.2：SceneNode 核心（localTransform、worldMatrix、AddChild、GetParent/GetChildren、GetHandle）。
+ * phase5-5.5：Pass 标志 SetPassFlags/GetPassFlags，默认 PassFlags::All。
  */
 
 #pragma once
@@ -61,6 +62,11 @@ public:
     /** 本节点句柄，由 SceneManager 在创建/加入场景时设置 */
     SceneNodeHandle GetHandle() const { return handle_; }
 
+    /** 设置参与哪些渲染 Pass（ShadowCaster、Opaque、Transparent），默认 All */
+    void SetPassFlags(PassFlags f) { passFlags_ = f; }
+    /** 获取当前 Pass 标志 */
+    PassFlags GetPassFlags() const { return passFlags_; }
+
 private:
     /** 仅供 SceneManager::UpdateRecursive 调用，用于写入世界矩阵 */
     void SetWorldMatrix(const glm::mat4& m) { worldMatrix_ = m; }
@@ -70,6 +76,7 @@ private:
     glm::mat4 worldMatrix_{1.0f};
     std::vector<std::unique_ptr<SceneNode>> children_;
     SceneNode* parent_ = nullptr;
+    PassFlags passFlags_ = PassFlags::All;
 
     friend class SceneManager;
 };

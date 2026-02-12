@@ -52,9 +52,9 @@
 
 ### 1.5 Pass 标志
 
-- [ ] 定义 `PassFlags` 枚举（ShadowCaster、Opaque、Transparent、All）
-- [ ] SceneNode 实现 `SetPassFlags(PassFlags f)` / `GetPassFlags()`
-- [ ] 默认 `PassFlags::All`
+- [x] 定义 `PassFlags` 枚举（ShadowCaster、Opaque、Transparent、All）
+- [x] SceneNode 实现 `SetPassFlags(PassFlags f)` / `GetPassFlags()`
+- [x] 默认 `PassFlags::All`
 
 ### 1.6 Renderable 挂载
 

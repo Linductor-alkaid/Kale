@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.5 Pass 标志
+状态：已完成
+- 在 scene_types.hpp 定义 PassFlags 枚举（ShadowCaster、Opaque、Transparent、All）及 operator|/operator&
+- SceneNode 实现 SetPassFlags(PassFlags f) / GetPassFlags()，成员 passFlags_ 默认 PassFlags::All
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.4 世界矩阵计算
 状态：已完成
 - 实现 SceneManager::Update(float deltaTime)：无 activeRoot 则 return，否则 UpdateRecursive(activeRoot_, glm::mat4(1.0f))
