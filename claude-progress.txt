@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.4 世界矩阵计算
+状态：已完成
+- 实现 SceneManager::Update(float deltaTime)：无 activeRoot 则 return，否则 UpdateRecursive(activeRoot_, glm::mat4(1.0f))
+- 实现 UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld)：world = parentWorld * node->GetLocalTransform()，node->SetWorldMatrix(world)，递归子节点
+- 层级变换正确传播，编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.3 SceneManager 生命周期
 状态：已完成
 - 实现 SceneManager::CreateScene() 创建根节点、分配 handle、注册，返回 std::unique_ptr<SceneNode>

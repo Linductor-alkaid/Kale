@@ -45,10 +45,10 @@
 
 ### 1.4 世界矩阵计算
 
-- [ ] 实现 `SceneManager::Update(float deltaTime)`
-- [ ] 实现 `UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld)`
-- [ ] 世界矩阵计算：`world = parentWorld * node->GetLocalTransform()`
-- [ ] 递归更新所有子节点
+- [x] 实现 `SceneManager::Update(float deltaTime)`
+- [x] 实现 `UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld)`
+- [x] 世界矩阵计算：`world = parentWorld * node->GetLocalTransform()`
+- [x] 递归更新所有子节点
 
 ### 1.5 Pass 标志
 

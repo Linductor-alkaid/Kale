@@ -579,7 +579,7 @@
         "世界矩阵计算：world = parentWorld * node->GetLocalTransform()",
         "递归更新所有子节点"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.3"],
       "test_verification": "世界矩阵计算正确，层级变换正确传播"

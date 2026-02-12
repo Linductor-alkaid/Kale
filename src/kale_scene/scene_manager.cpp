@@ -1,12 +1,25 @@
 /**
  * @file scene_manager.cpp
- * @brief SceneManager 实现：句柄注册表、CreateScene、SetActiveScene、GetActiveRoot、UnregisterSubtree
+ * @brief SceneManager 实现：句柄注册表、CreateScene、SetActiveScene、Update、UpdateRecursive、UnregisterSubtree
  */
 
 #include <kale_scene/scene_manager.hpp>
 #include <kale_scene/scene_node.hpp>
 
 namespace kale::scene {
+
+void SceneManager::Update(float deltaTime) {
+    (void)deltaTime;
+    if (!activeRoot_) return;
+    UpdateRecursive(activeRoot_, glm::mat4(1.0f));
+}
+
+void SceneManager::UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld) {
+    glm::mat4 world = parentWorld * node->GetLocalTransform();
+    node->SetWorldMatrix(world);
+    for (const auto& child : node->GetChildren())
+        UpdateRecursive(child.get(), world);
+}
 
 std::unique_ptr<SceneNode> SceneManager::CreateScene() {
     auto root = std::make_unique<SceneNode>();

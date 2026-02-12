@@ -12,6 +12,7 @@
 #include <kale_scene/scene_node.hpp>
 #include <kale_scene/scene_types.hpp>
 
+#include <glm/glm.hpp>
 #include <memory>
 #include <unordered_map>
 
@@ -41,6 +42,13 @@ public:
      * @param root 新场景根节点所有权；若为 nullptr 则仅销毁当前活动场景
      */
     void SetActiveScene(std::unique_ptr<SceneNode> root);
+
+    /**
+     * 每帧更新：递归计算活动场景中所有节点的世界矩阵。
+     * 应在 ECS 写回 Scene Graph 之后、OnRender 之前调用。
+     * @param deltaTime 帧间隔（保留供后续 UpdateBounds 等扩展）
+     */
+    void Update(float deltaTime);
 
     /**
      * 返回当前活动场景根节点；无活动场景时返回 nullptr。
@@ -77,6 +85,9 @@ public:
     void UnregisterNode(SceneNode* node);
 
 private:
+    /** 递归计算世界矩阵：world = parentWorld * node->GetLocalTransform()，并递归子节点 */
+    void UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld);
+
     /** 递归将子树所有节点从注册表移除（先子后父） */
     void UnregisterSubtree(SceneNode* node);
 
