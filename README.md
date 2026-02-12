@@ -16,6 +16,9 @@ Vulkan + SDL3 渲染引擎，采用模块化分层架构，支持 Scene Graph、
 kale/
 ├── CMakeLists.txt              # 总 CMake 配置
 ├── README.md
+├── scripts/                    # 构建与依赖脚本
+│   ├── setup_dependencies.ps1  # Windows 依赖设置
+│   └── setup_dependencies.sh   # Linux/macOS 依赖设置
 ├── src/
 │   ├── kale_device/            # 设备抽象层 (RDI、窗口、输入)
 │   │   ├── CMakeLists.txt
@@ -35,6 +38,8 @@ kale/
 ## 构建
 
 ### 依赖
+
+使用 `scripts/setup_dependencies.sh`（Linux/macOS）或 `scripts/setup_dependencies.ps1`（Windows）可自动拉取 third_party 依赖。
 
 | 依赖 | 说明 |
 |------|------|
