@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.7 BoundingBox 与数学
+状态：已完成
+- BoundingBox 结构已在 phase3-3.6 定义于 resource_types.hpp（min, max）
+- 在 kale_resource/resource_types.hpp 实现 BoundingBox::Transform(const glm::mat4& m)：变换 8 顶点后取 min/max 得新 AABB
+- 实现 TransformBounds(const BoundingBox& box, const glm::mat4& m) 自由函数，委托 box.Transform(m)
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.6 Renderable 挂载
 状态：已完成
 - SceneNode 前向声明 Renderable，新增成员 Renderable* renderable_

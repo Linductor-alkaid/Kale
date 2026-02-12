@@ -67,9 +67,9 @@
 
 ### 2.1 BoundingBox 与数学
 
-- [ ] 实现 `BoundingBox` 结构（min, max，glm::vec3）
-- [ ] 实现 `BoundingBox::Transform(const glm::mat4& m)` 变换包围体
-- [ ] 实现 `TransformBounds(const BoundingBox& box, const glm::mat4& m)` 自由函数
+- [x] 实现 `BoundingBox` 结构（min, max，glm::vec3）
+- [x] 实现 `BoundingBox::Transform(const glm::mat4& m)` 变换包围体
+- [x] 实现 `TransformBounds(const BoundingBox& box, const glm::mat4& m)` 自由函数
 
 ### 2.2 视锥剔除
 

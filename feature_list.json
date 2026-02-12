@@ -629,7 +629,7 @@
         "实现 BoundingBox::Transform(const glm::mat4& m) 变换包围体",
         "实现 TransformBounds(const BoundingBox& box, const glm::mat4& m) 自由函数"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.6"],
       "test_verification": "包围盒变换正确"
