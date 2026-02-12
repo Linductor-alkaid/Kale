@@ -120,11 +120,11 @@
 
 ### 2.6 Vulkan Swapchain 与呈现
 
-- [ ] 实现 `AcquireNextImage` 返回 back buffer index，内部 signal semaphore
-- [ ] 实现 `Present` 与 Swapchain 呈现
-- [ ] 实现 `GetBackBuffer` 返回当前帧 TextureHandle
-- [ ] 实现 `GetCurrentFrameIndex` 帧索引
-- [ ] 处理 `VK_ERROR_OUT_OF_DATE_KHR`（resize 时重建 Swapchain）
+- [x] 实现 `AcquireNextImage` 返回 back buffer index，内部 signal semaphore
+- [x] 实现 `Present` 与 Swapchain 呈现
+- [x] 实现 `GetBackBuffer` 返回当前帧 TextureHandle
+- [x] 实现 `GetCurrentFrameIndex` 帧索引
+- [x] 处理 `VK_ERROR_OUT_OF_DATE_KHR`（resize 时重建 Swapchain）
 
 ---
 

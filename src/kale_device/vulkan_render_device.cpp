@@ -31,6 +31,8 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
     if (!context_.Initialize(vkConfig)) {
         return false;
     }
+    width_ = config.width;
+    height_ = config.height;
 
     if (!CreateUploadCommandPoolAndBuffer()) {
         Shutdown();
@@ -1166,7 +1168,11 @@ std::uint32_t VulkanRenderDevice::AcquireNextImage() {
     std::uint32_t imageIndex = 0;
     VkResult err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,
                                          frameImageAvailableSemaphores_[frameIndex], VK_NULL_HANDLE, &imageIndex);
-    if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR) { /* 调用方可处理 */ }
+    if (err == VK_ERROR_OUT_OF_DATE_KHR) {
+        if (!context_.RecreateSwapchain(width_, height_)) return 0;
+        err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,
+                                    frameImageAvailableSemaphores_[frameIndex], VK_NULL_HANDLE, &imageIndex);
+    }
     if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) return 0;
     currentImageIndex_ = imageIndex;
     return imageIndex;
@@ -1183,8 +1189,13 @@ void VulkanRenderDevice::Present() {
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = &swapchain;
     presentInfo.pImageIndices = &currentImageIndex_;
-    vkQueuePresentKHR(context_.GetPresentQueue(), &presentInfo);
-    currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
+    VkResult err = vkQueuePresentKHR(context_.GetPresentQueue(), &presentInfo);
+    if (err == VK_ERROR_OUT_OF_DATE_KHR) {
+        context_.RecreateSwapchain(width_, height_);
+        return;
+    }
+    if (err == VK_SUCCESS || err == VK_SUBOPTIMAL_KHR)
+        currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
 }
 
 TextureHandle VulkanRenderDevice::GetBackBuffer() {
@@ -1194,7 +1205,12 @@ TextureHandle VulkanRenderDevice::GetBackBuffer() {
 }
 
 std::uint32_t VulkanRenderDevice::GetCurrentFrameIndex() const {
-    return currentFrameIndex_;
+    return currentFrameIndex_ % kMaxFramesInFlight;
+}
+
+void VulkanRenderDevice::SetExtent(std::uint32_t width, std::uint32_t height) {
+    width_ = width;
+    height_ = height;
 }
 
 const DeviceCapabilities& VulkanRenderDevice::GetCapabilities() const {

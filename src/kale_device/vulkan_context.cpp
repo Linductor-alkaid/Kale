@@ -241,6 +241,8 @@ bool VulkanContext::CreateSwapchain(const VulkanConfig& config) {
     if (imageCount < caps.minImageCount) imageCount = caps.minImageCount;
     if (caps.maxImageCount > 0 && imageCount > caps.maxImageCount) imageCount = caps.maxImageCount;
 
+    vsync_ = config.vsync;
+    backBufferCount_ = config.backBufferCount;
     swapchainFormat_ = chosenFormat.format;
     swapchainWidth_ = config.width;
     swapchainHeight_ = config.height;
@@ -275,6 +277,40 @@ bool VulkanContext::CreateSwapchain(const VulkanConfig& config) {
     swapchainImages_.resize(count);
     vkGetSwapchainImagesKHR(device_, swapchain_, &count, swapchainImages_.data());
 
+    return true;
+}
+
+bool VulkanContext::RecreateSwapchain(uint32_t width, uint32_t height) {
+    if (device_ == nullptr || surface_ == nullptr) return false;
+    vkDeviceWaitIdle(device_);
+
+    for (auto fb : framebuffers_) {
+        if (fb != VK_NULL_HANDLE) vkDestroyFramebuffer(device_, fb, nullptr);
+    }
+    framebuffers_.clear();
+
+    for (auto iv : swapchainImageViews_) {
+        if (iv != VK_NULL_HANDLE) vkDestroyImageView(device_, iv, nullptr);
+    }
+    swapchainImageViews_.clear();
+
+    if (swapchain_ != VK_NULL_HANDLE) {
+        vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+        swapchain_ = VK_NULL_HANDLE;
+    }
+    swapchainImages_.clear();
+
+    VulkanConfig config;
+    config.windowHandle = nullptr;
+    config.width = width;
+    config.height = height;
+    config.vsync = vsync_;
+    config.backBufferCount = backBufferCount_;
+    config.enableValidation = validationEnabled_;
+    if (!CreateSwapchain(config)) return false;
+
+    if (!CreateImageViews()) return false;
+    if (renderPass_ != VK_NULL_HANDLE && !CreateFramebuffers()) return false;
     return true;
 }
 

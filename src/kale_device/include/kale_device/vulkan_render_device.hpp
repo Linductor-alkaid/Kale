@@ -126,6 +126,9 @@ public:
 
     const DeviceCapabilities& GetCapabilities() const override;
 
+    /// 窗口 resize 时由应用调用，以便下次重建 Swapchain 使用新尺寸
+    void SetExtent(std::uint32_t width, std::uint32_t height);
+
     /// 仅供内部/测试：获取底层 Vulkan 上下文
     VulkanContext* GetContext() { return &context_; }
     const VulkanContext* GetContext() const { return &context_; }
@@ -149,6 +152,8 @@ private:
     DeviceCapabilities capabilities_{};
     std::uint32_t currentImageIndex_ = 0;
     std::uint32_t currentFrameIndex_ = 0;
+    std::uint32_t width_ = 0;
+    std::uint32_t height_ = 0;
     static constexpr std::uint32_t kMaxFramesInFlight = 3;
 
     // 资源表（Phase 2.4）

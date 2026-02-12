@@ -2,6 +2,16 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-13 ===
+功能：phase2-2.6 Vulkan Swapchain 与呈现
+状态：已完成
+- VulkanContext：存储 vsync_/backBufferCount_，新增 RecreateSwapchain(width, height)（销毁旧 swapchain/imageViews/framebuffers，按新尺寸重建）
+- VulkanRenderDevice：AcquireNextImage 遇 VK_ERROR_OUT_OF_DATE_KHR 时调用 RecreateSwapchain 并重试获取图像
+- Present：检查 vkQueuePresentKHR 返回值，OUT_OF_DATE 时重建 Swapchain 且不递增 currentFrameIndex_；SUBOPTIMAL/SUCCESS 时递增
+- GetBackBuffer 返回当前帧 TextureHandle（id = currentImageIndex_ + 1）；GetCurrentFrameIndex 返回 currentFrameIndex_ % kMaxFramesInFlight
+- 新增 SetExtent(width, height) 供窗口 resize 时更新尺寸，便于下次重建使用新尺寸
+- 编译通过
+
 === 2026-02-12 25:00:00 ===
 功能：phase2-2.5 Vulkan Backend 命令与同步
 状态：已完成

@@ -128,6 +128,12 @@ public:
     /// 是否已成功初始化
     bool IsInitialized() const { return device_ != nullptr; }
 
+    /// 重建 Swapchain（resize 或 OUT_OF_DATE 时调用）
+    /// \param width 新宽度
+    /// \param height 新高度
+    /// \return 成功返回 true
+    bool RecreateSwapchain(uint32_t width, uint32_t height);
+
 private:
     bool CreateInstance(const VulkanConfig& config);
     bool SelectPhysicalDevice();
@@ -144,6 +150,8 @@ private:
     uint32_t swapchainFormat_ = 0;  // VkFormat
     uint32_t swapchainWidth_ = 0;
     uint32_t swapchainHeight_ = 0;
+    bool vsync_ = true;
+    uint32_t backBufferCount_ = 3;
 
     // 三角形渲染（phase1-1.3）
     std::vector<VkImageView> swapchainImageViews_;
