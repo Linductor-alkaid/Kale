@@ -88,11 +88,11 @@
 
 ### 2.4 Renderable 抽象
 
-- [ ] 实现 `Renderable` 基类
-- [ ] 实现 `GetBounds()` 返回 BoundingBox
-- [ ] 实现 `GetMesh()` / `GetMaterial()`（或 mesh、material 成员）
-- [ ] 实现 `Draw(CommandList& cmd, const glm::mat4& worldTransform)` 虚函数
-- [ ] 定义 `bounds` 成员供 CullScene 使用
+- [x] 实现 `Renderable` 基类
+- [x] 实现 `GetBounds()` 返回 BoundingBox
+- [x] 实现 `GetMesh()` / `GetMaterial()`（或 mesh、material 成员）
+- [x] 实现 `Draw(CommandList& cmd, const glm::mat4& worldTransform)` 虚函数
+- [x] 定义 `bounds` 成员供 CullScene 使用
 
 ---
 

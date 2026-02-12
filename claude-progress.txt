@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.10 Renderable 抽象
+状态：已完成
+- 实现 Renderable 基类：GetBounds()、GetMesh()/GetMaterial()（默认 nullptr）、Draw(cmd, worldTransform) 虚函数
+- 定义 protected bounds_ 成员供 CullScene 与子类使用
+- 新增 kale_device/command_list.hpp、glm 依赖，编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.9 CullScene 单相机
 状态：已完成
 - 实现 SceneManager::CullScene(CameraNode* camera) 返回 std::vector<SceneNode*>
