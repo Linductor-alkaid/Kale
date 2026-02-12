@@ -3,6 +3,17 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.1 资源句柄类型
+状态：已完成
+- 实现 ResourceHandle<T> 模板（id, IsValid, operator==, operator!=）
+- 实现 ResourceHandleAny 类型擦除句柄（id + type_index）
+- 实现 ToAny(ResourceHandle<T>) 转换为 ResourceHandleAny
+- 定义 MeshHandle、TextureHandle、MaterialHandle 类型别名（kale::resource）
+- 新增 resource_handle.hpp、resource_types.hpp（占位 Mesh/Texture/Material）
+- placeholder 包含新头文件并验证句柄与 ToAny 编译
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase2-2.6 Vulkan Swapchain 与呈现
 状态：已完成
 - VulkanContext：存储 vsync_/backBufferCount_，新增 RecreateSwapchain(width, height)（销毁旧 swapchain/imageViews/framebuffers，按新尺寸重建）

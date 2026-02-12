@@ -16,10 +16,10 @@
 
 ### 1.1 资源句柄类型
 
-- [ ] 实现 `ResourceHandle<T>` 模板（id, IsValid, operator==, operator!=）
-- [ ] 实现 `ResourceHandleAny` 类型擦除句柄（id + type_index）
-- [ ] 实现 `ToAny(ResourceHandle<T>)` 转换为 ResourceHandleAny
-- [ ] 定义 Mesh、Texture、Material 等资源句柄类型别名
+- [x] 实现 `ResourceHandle<T>` 模板（id, IsValid, operator==, operator!=）
+- [x] 实现 `ResourceHandleAny` 类型擦除句柄（id + type_index）
+- [x] 实现 `ToAny(ResourceHandle<T>)` 转换为 ResourceHandleAny
+- [x] 定义 Mesh、Texture、Material 等资源句柄类型别名
 
 ### 1.2 ResourceCache 基础实现
 
