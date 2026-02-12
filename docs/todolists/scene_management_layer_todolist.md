@@ -37,11 +37,11 @@
 
 ### 1.3 SceneManager 生命周期
 
-- [ ] 实现 `SceneManager::CreateScene()` 创建根节点、分配 handle、注册
-- [ ] 实现 `SetActiveScene(SceneNode* root)` 销毁旧场景、激活新场景
-- [ ] 实现 `GetActiveRoot()` 返回当前活动根
-- [ ] 销毁旧场景时递归销毁节点并从 handleRegistry 移除
-- [ ] 实现 `nextHandle_` 分配递增 handle
+- [x] 实现 `SceneManager::CreateScene()` 创建根节点、分配 handle、注册
+- [x] 实现 `SetActiveScene(SceneNode* root)` 销毁旧场景、激活新场景
+- [x] 实现 `GetActiveRoot()` 返回当前活动根
+- [x] 销毁旧场景时递归销毁节点并从 handleRegistry 移除
+- [x] 实现 `nextHandle_` 分配递增 handle
 
 ### 1.4 世界矩阵计算
 

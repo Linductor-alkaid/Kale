@@ -561,9 +561,9 @@
         "销毁旧场景时递归销毁节点并从 handleRegistry 移除",
         "实现 nextHandle_ 分配递增 handle"
       ],
-      "status": "pending",
       "priority": "high",
       "dependencies": ["phase5-5.2"],
+      "status": "completed",
       "test_verification": "场景创建和切换正常，无内存泄漏"
     },
     {

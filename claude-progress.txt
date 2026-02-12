@@ -3,6 +3,16 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.3 SceneManager 生命周期
+状态：已完成
+- 实现 SceneManager::CreateScene() 创建根节点、分配 handle、注册，返回 std::unique_ptr<SceneNode>
+- 实现 SetActiveScene(std::unique_ptr<SceneNode> root) 销毁旧场景、激活新场景并取得所有权
+- 实现 GetActiveRoot() 返回当前活动根
+- 实现 UnregisterSubtree 递归从 handleRegistry 移除子树；销毁旧场景时先 UnregisterSubtree 再释放 activeRootStorage_
+- nextHandle_ 已在 phase5-5.1 中实现并用于 CreateScene/RegisterNode
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.2 SceneNode 核心
 状态：已完成
 - 实现 SceneNode 类（scene_node.hpp）：localTransform_、worldMatrix_、children_、parent_、handle_

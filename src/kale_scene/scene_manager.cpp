@@ -1,12 +1,37 @@
 /**
  * @file scene_manager.cpp
- * @brief SceneManager 实现：句柄注册表、GetHandle/GetNode、RegisterNode/UnregisterNode
+ * @brief SceneManager 实现：句柄注册表、CreateScene、SetActiveScene、GetActiveRoot、UnregisterSubtree
  */
 
 #include <kale_scene/scene_manager.hpp>
 #include <kale_scene/scene_node.hpp>
 
 namespace kale::scene {
+
+std::unique_ptr<SceneNode> SceneManager::CreateScene() {
+    auto root = std::make_unique<SceneNode>();
+    RegisterNode(root.get());
+    return root;
+}
+
+void SceneManager::SetActiveScene(std::unique_ptr<SceneNode> root) {
+    if (activeRootStorage_) {
+        UnregisterSubtree(activeRootStorage_.get());
+        activeRootStorage_.reset();
+    }
+    activeRoot_ = nullptr;
+    if (root) {
+        activeRootStorage_ = std::move(root);
+        activeRoot_ = activeRootStorage_.get();
+    }
+}
+
+void SceneManager::UnregisterSubtree(SceneNode* node) {
+    if (!node) return;
+    for (const auto& child : node->GetChildren())
+        UnregisterSubtree(child.get());
+    UnregisterNode(node);
+}
 
 SceneNodeHandle SceneManager::GetHandle(SceneNode* node) const {
     if (!node) return kInvalidSceneNodeHandle;

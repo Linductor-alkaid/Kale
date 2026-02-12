@@ -1,24 +1,26 @@
 /**
  * @file scene_manager.hpp
- * @brief 场景管理器：句柄注册表、GetHandle/GetNode、节点注册/注销
+ * @brief 场景管理器：句柄注册表、场景生命周期、GetHandle/GetNode
  *
  * 与 scene_management_layer_design.md 5.5 对齐。
- * phase5-5.1：handleRegistry_、GetHandle、GetNode；节点创建时分配 handle 并注册，销毁时从注册表移除。
+ * phase5-5.1：handleRegistry_、GetHandle、GetNode。
+ * phase5-5.3：CreateScene、SetActiveScene、GetActiveRoot；销毁旧场景时递归 Unregister 并从 handleRegistry 移除。
  */
 
 #pragma once
 
+#include <kale_scene/scene_node.hpp>
 #include <kale_scene/scene_types.hpp>
 
+#include <memory>
 #include <unordered_map>
 
 namespace kale::scene {
 
-class SceneNode;
-
 /**
- * 场景管理器：管理场景图节点句柄注册表，提供句柄与节点双向查找。
+ * 场景管理器：管理场景图节点句柄注册表与活动场景生命周期。
  * 节点创建时通过 RegisterNode 分配 handle 并注册；销毁时通过 UnregisterNode 从注册表移除。
+ * SetActiveScene 销毁旧场景（递归 Unregister 后释放），激活新场景并取得所有权。
  */
 class SceneManager {
 public:
@@ -27,6 +29,23 @@ public:
 
     SceneManager(const SceneManager&) = delete;
     SceneManager& operator=(const SceneManager&) = delete;
+
+    /**
+     * 创建根节点，分配 handle 并注册。
+     * @return 根节点所有权，调用方可继续 AddChild 后通过 SetActiveScene 激活
+     */
+    std::unique_ptr<SceneNode> CreateScene();
+
+    /**
+     * 销毁旧场景（递归从 handleRegistry 移除并释放），激活新场景并取得所有权。
+     * @param root 新场景根节点所有权；若为 nullptr 则仅销毁当前活动场景
+     */
+    void SetActiveScene(std::unique_ptr<SceneNode> root);
+
+    /**
+     * 返回当前活动场景根节点；无活动场景时返回 nullptr。
+     */
+    SceneNode* GetActiveRoot() const { return activeRoot_; }
 
     /**
      * 根据节点指针查找其句柄。
@@ -58,12 +77,19 @@ public:
     void UnregisterNode(SceneNode* node);
 
 private:
+    /** 递归将子树所有节点从注册表移除（先子后父） */
+    void UnregisterSubtree(SceneNode* node);
+
     /** handle -> node，用于 GetNode */
     std::unordered_map<SceneNodeHandle, SceneNode*> handleRegistry_;
     /** node -> handle，用于 GetHandle（节点创建时注册，销毁时移除） */
     std::unordered_map<SceneNode*, SceneNodeHandle> nodeToHandle_;
     /** 下一个可分配的句柄值（从 1 递增，0 保留为无效） */
     SceneNodeHandle nextHandle_ = 1;
+    /** 当前活动场景根节点所有权；释放时递归销毁整棵树 */
+    std::unique_ptr<SceneNode> activeRootStorage_;
+    /** 当前活动场景根节点指针，与 activeRootStorage_ 一致 */
+    SceneNode* activeRoot_ = nullptr;
 };
 
 }  // namespace kale::scene
