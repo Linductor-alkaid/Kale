@@ -16,7 +16,7 @@
         "添加 executor 子目录或使用 find_package",
         "验证 executor 链接成功"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "critical",
       "dependencies": []
     },
@@ -32,7 +32,7 @@
         "验证 SDL3 头文件可用",
         "验证 SDL3 链接成功"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "critical",
       "dependencies": []
     },

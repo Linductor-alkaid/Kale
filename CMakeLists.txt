@@ -31,6 +31,7 @@ option(KALE_ENABLE_TSAN "启用 ThreadSanitizer 检测数据竞争" OFF)
 # 依赖路径（可通过 -D 传入）
 set(KALE_EXECUTOR_PATH "" CACHE PATH "executor 库路径（add_subdirectory 用）")
 set(KALE_USE_VCPKG OFF CACHE BOOL "使用 vcpkg 管理依赖")
+set(KALE_USE_SYSTEM_SDL3 OFF CACHE BOOL "使用系统安装的 SDL3")
 
 # 第三方依赖查找（根 CMake 统一配置，子模块通过 target_link_libraries 使用）
 if(KALE_USE_VCPKG)
@@ -38,6 +39,7 @@ if(KALE_USE_VCPKG)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(Vulkan REQUIRED)
 else()
+    # 查找 glm
     find_package(glm QUIET)
     if(NOT glm_FOUND)
         include(FetchContent)
@@ -47,7 +49,22 @@ else()
         )
         FetchContent_MakeAvailable(glm)
     endif()
-    find_package(SDL3 QUIET)
+
+    # 查找 SDL3：优先使用 third_party/SDL，其次系统安装
+    if(KALE_USE_SYSTEM_SDL3)
+        find_package(SDL3 QUIET)
+    endif()
+
+    # 如果未找到系统 SDL3，使用 third_party/SDL
+    if(NOT SDL3_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL/CMakeLists.txt")
+        message(STATUS "Using SDL3 from third_party/SDL")
+        set(SDL3_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+        set(SDL3_TESTS OFF CACHE BOOL "" FORCE)
+        add_subdirectory(third_party/SDL third_party/SDL EXCLUDE_FROM_ALL)
+    elseif(NOT SDL3_FOUND)
+        message(FATAL_ERROR "SDL3 not found. Please install SDL3 or ensure third_party/SDL exists")
+    endif()
+
     find_package(Vulkan QUIET)
 endif()
 

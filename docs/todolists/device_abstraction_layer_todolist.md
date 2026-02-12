@@ -16,7 +16,7 @@
 
 ### 1.1 SDL3 与窗口系统
 
-- [ ] 集成 SDL3 库（`SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS`）
+- [x] 集成 SDL3 库（`SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS`）
 - [ ] 实现 `WindowSystem` 类
 - [ ] 实现 `WindowSystem::Create(const WindowConfig& config)` 创建 SDL 窗口
 - [ ] 实现 `WindowSystem::Destroy()` 销毁窗口

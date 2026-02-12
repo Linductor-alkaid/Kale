@@ -210,6 +210,14 @@ check_environment() {
         log_msg SUCCESS "✓ Git 仓库"
     fi
 
+    # 检查是否有未提交的更改
+    if [ -d "$KALE_ROOT/.git" ]; then
+        if [ -n "$(git -C "$KALE_ROOT" status --porcelain 2>/dev/null)" ]; then
+            log_msg WARNING "存在未提交的更改，建议先提交或暂存"
+            git -C "$KALE_ROOT" status --short 2>/dev/null | head -5
+        fi
+    fi
+
     echo ""
 }
 
@@ -220,11 +228,24 @@ generate_prompt() {
 
 ## 工作流程
 
-### 1. 了解当前状态
-- 运行 `pwd` 确认工作目录
+### 1. 了解当前状态（必须首先执行）
+
+#### 1.1 验证环境
+- 运行 `pwd` 确认工作目录（必须是 /home/linductor/kale）
+- 检查是否有未提交的更改：`git status`
+- 如果有未提交的更改，先了解情况再决定是否需要处理
+
+#### 1.2 读取状态文件
 - 读取 `claude-progress.txt` 了解项目进度
-- 读取 `feature_list.json` 查看功能列表
+- 读取 `feature_list.json` **验证格式正确**
+  - 运行 `python3 -c "import json; json.load(open('feature_list.json'))"` 验证
+  - 如果格式错误，使用 `git checkout feature_list.json` 恢复
+- 统计当前进度：`grep -c '"status": "completed"' feature_list.json`
+
+#### 1.3 构建状态检查
 - 运行 `./init.sh` 或检查构建状态
+- 查看 build/ 目录是否存在
+- 如果 build/ 目录有问题，删除重建：`rm -rf build && mkdir build && cd build && cmake ..`
 
 ### 2. 选择下一个功能
 - 在 feature_list.json 中找到一个 status 为 "pending" 的功能
@@ -288,17 +309,42 @@ feature_list.json 中的 layer 字段对应：
 - 添加必要的注释说明设计意图
 
 ### 5. ✅ 测试验证
-- 构建项目：`cd build && cmake --build . -j$(nproc)`
-- 运行测试（如果有）：`cd build && ctest --output-on-failure`
-- 运行示例应用验证功能
+
+#### 5.1 必须实际执行测试（重要！）
+**禁止**：只输出"建议运行..."或"预期输出..."的提示
+**必须**：实际执行测试命令并验证结果
+
+测试方法：
+```bash
+# 构建项目（必须执行）
+cd build && cmake --build . -j$(nproc)
+
+# 运行单元测试（如果有）
+cd build && ctest --output-on-failure
+
+# 运行示例应用验证
+./build/apps/hello_kale/hello_kale
+```
+
+#### 5.2 测试文件管理规则
+- ❌ **不要**在项目根目录创建 test_* 文件或目录
+- ❌ **不要**创建独立的 CMakeLists_test.txt
+- ✅ **应该**在 build/ 目录中进行所有测试
+- ✅ **应该**使用项目现有的测试框架（tests/ 目录）
+- ✅ **应该**测试完成后清理 build 目录中的临时文件
+
+#### 5.3 验证标准
 - 根据 feature_list.json 中的 test_verification 进行验证
-- **只有测试通过后才能标记为完成**
+- **只有测试实际通过后才能标记为完成**
+- 如果测试失败，修复问题后重新测试
 
 ### 6. 📝 更新文档（重要！）
 
-#### 6.1 更新 feature_list.json
+#### 6.1 更新 feature_list.json（必须完成）
 - 将该功能的 status 改为 "completed"
-- 不要删除或修改其他功能
+- **不要**删除或修改其他功能
+- **不要**修改 features 数组的结构
+- 使用 Edit 工具精确修改 status 字段
 
 #### 6.2 更新 claude-progress.txt
 在文件顶部添加：
@@ -306,13 +352,21 @@ feature_list.json 中的 layer 字段对应：
 [YYYY-MM-DD HH:MM] COMPLETED - feature_id: Feature title
 - 实现的主要功能点
 - 遇到的问题和解决方案（如有）
-- 测试结果
+- 实际测试结果（必须包含真实输出）
 ```
 
-#### 6.3 更新任务清单（重要！）
+#### 6.3 更新任务清单（必须完成）
 - 在 `docs/todolists/<模块>_todolist.md` 中
 - 将对应的 `- [ ]` 改为 `- [x]`
 - 确保子任务的完成状态准确反映
+- 只更新本次实现的任务
+
+#### 6.4 清理临时文件（必须完成）
+在提交代码前，必须清理：
+- 项目根目录的 test_* 目录
+- 项目根目录的 test_*.cpp/test_*.c 文件
+- 任何临时的测试构建目录
+- 验证清理结果：`ls -la` 确保没有残留测试文件
 
 ### 7. 💾 提交代码
 - 查看修改：`git status`
@@ -345,12 +399,32 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ## 禁止事项
 
-- ❌ 不要跳过文档阅读步骤
-- ❌ 不要一次实现多个功能
-- ❌ 不要在未测试的情况下标记功能为完成
-- ❌ 不要留下不可编译的代码
-- ❌ 不要修改或删除已有的功能项
-- ❌ 不要忽略任务清单的更新
+### 文件和目录管理
+- ❌ **不要**在项目根目录创建 test_* 文件或目录
+- ❌ **不要**创建独立的测试 CMakeLists.txt
+- ❌ **不要**生成多余的文档或说明文件
+- ✅ **所有工作记录**都保留在 .claude_sessions/ 中
+
+### 开发流程
+- ❌ **不要**跳过文档阅读步骤
+- ❌ **不要**只输出"建议运行..."而**不实际执行测试**
+- ❌ **不要**一次实现多个功能
+- ❌ **不要**在未实际测试的情况下标记功能为完成
+- ❌ **不要**留下不可编译的代码
+
+### 状态管理
+- ❌ **不要**修改或删除已有的功能项
+- ❌ **不要**修改 feature_list.json 的结构
+- ❌ **不要**忘记更新 feature_list.json 的 status
+- ❌ **不要**忘记更新对应的 todolist.md
+- ❌ **不要**会话结束时留下临时文件
+
+### 会话完整性（重要！）
+- ✅ **必须**确保 feature_list.json 状态正确更新
+- ✅ **必须**确保所有文件都已 git add
+- ✅ **必须**确保代码已提交
+- ✅ **必须**清理所有临时文件
+- ✅ **必须**验证下一个会话可以正常开始
 
 ## 模块文档映射速查
 
@@ -378,6 +452,24 @@ run_claude_session() {
 
     local prompt_file="$LOG_DIR/prompt_session_${session_num}.txt"
     local output_file="$LOG_DIR/output_session_${session_num}.txt"
+
+    # 会话前清理：删除测试用的临时目录和文件
+    log_msg INFO "清理临时文件..."
+    find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+    find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
+    find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
+    find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
+
+    # 验证 feature_list.json 格式
+    if ! python3 -c "import json; json.load(open('$KALE_ROOT/feature_list.json'))" 2>/dev/null; then
+        log_msg ERROR "feature_list.json 格式错误，尝试修复..."
+        # 备份损坏的文件
+        cp "$KALE_ROOT/feature_list.json" "$LOG_DIR/feature_list_backup_${session_num}.json"
+        # 尝试使用 git 恢复
+        if [ -d "$KALE_ROOT/.git" ]; then
+            git -C "$KALE_ROOT" checkout feature_list.json 2>/dev/null || true
+        fi
+    fi
 
     # 生成 prompt
     generate_prompt > "$prompt_file"
@@ -421,6 +513,13 @@ run_claude_session() {
             if [ $exit_code -eq 0 ]; then
                 log_msg SUCCESS "✓ 会话 #$session_num 完成"
 
+                # 会话后清理
+                log_msg INFO "清理临时文件..."
+                find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+                find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
+                find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
+                find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
+
                 # 记录成功
                 {
                     echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -430,6 +529,10 @@ run_claude_session() {
                 } >> "$SESSION_LOG"
             else
                 log_msg ERROR "✗ 会话 #$session_num 失败 (退出码: $exit_code)"
+
+                # 即使失败也尝试清理
+                log_msg INFO "清理临时文件..."
+                find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
 
                 # 记录失败
                 {
@@ -443,6 +546,10 @@ run_claude_session() {
             fi
         else
             log_msg ERROR "✗ 会话 #$session_num 执行失败"
+
+            # 清理
+            find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+
             {
                 echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
                 echo "状态: 执行失败"

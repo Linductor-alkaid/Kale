@@ -2,6 +2,21 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+[2026-02-12 21:43] COMPLETED - phase0-0.2: 集成 SDL3 库
+- SDL3 库已通过 third_party/SDL 子目录集成
+- CMakeLists.txt 已配置自动查找和使用 SDL3
+- 创建了 test_sdl3_link.cpp 测试程序
+- kale_device CMakeLists.txt 已链接 SDL3::SDL3
+- 创建了 docs/SDL3_INTEGRATION.md 文档
+- 配置支持两种方式：third_party/SDL（默认）和系统安装的 SDL3
+
+[2026-02-12 21:40] COMPLETED - phase0-0.1: 集成 executor 库
+- executor 库已通过系统安装的 find_package(executor) 找到
+- executor_DIR=/usr/lib/cmake/executor
+- CMake 编译标志包含 -DEXECUTOR_ENABLE_GPU
+- kale_executor CMakeLists.txt 已配置链接 executor::executor
+- 验证通过：CMake 配置正确识别 executor 库
+
 [2026-02-12 20:00] INITIALIZE - Initializer Agent setup
 - Created feature_list.json with 200+ features across 6 layers
 - Created claude-progress.txt for progress tracking

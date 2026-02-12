@@ -43,6 +43,8 @@ _deps/
 # IDE
 .idea/
 .vscode/
+.claude/
+.claude_sessions/
 *.swp
 *.swo
 *~
@@ -66,3 +68,7 @@ Desktop.ini
 *.temp
 *.bak
 *.cache
+test_*/
+test_*.c
+test_*.cpp
+CMakeLists_test.txt
