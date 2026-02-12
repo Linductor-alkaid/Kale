@@ -3,6 +3,17 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.2 ResourceCache 基础
+状态：已完成
+- 实现 CacheEntry 结构（resource, path, refCount, isReady, typeId）
+- 实现 Register<T>(path, resource, ready)、RegisterPlaceholder<T>(path)
+- 实现 Get<T>(handle)、IsReady<T>(handle)、SetResource、SetReady
+- 实现 FindByPath(path, typeId)（path+typeId 复合键）
+- 实现 AddRef / Release 引用计数，refCount=0 时移除条目并清理 pathToId_
+- entries_、pathToId_ 用 mutex 保护，线程安全
+- 新增 resource_cache.hpp，placeholder 验证编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.1 资源句柄类型
 状态：已完成
 - 实现 ResourceHandle<T> 模板（id, IsValid, operator==, operator!=）

@@ -23,15 +23,15 @@
 
 ### 1.2 ResourceCache 基础实现
 
-- [ ] 实现 `CacheEntry` 结构（resource, path, refCount, isReady, typeId）
-- [ ] 实现 `Register<T>(path, resource, ready)` 登记资源
-- [ ] 实现 `RegisterPlaceholder<T>(path)` 预注册占位条目
-- [ ] 实现 `Get<T>(handle)` 获取资源
-- [ ] 实现 `IsReady<T>(handle)` 检查就绪状态
-- [ ] 实现 `SetResource(handle, resource)` 和 `SetReady(handle)`
-- [ ] 实现 `FindByPath(path, typeId)` 路径查找
-- [ ] 实现 `AddRef` / `Release` 引用计数
-- [ ] 线程安全：entries_、pathToId_ 的 mutex 保护
+- [x] 实现 `CacheEntry` 结构（resource, path, refCount, isReady, typeId）
+- [x] 实现 `Register<T>(path, resource, ready)` 登记资源
+- [x] 实现 `RegisterPlaceholder<T>(path)` 预注册占位条目
+- [x] 实现 `Get<T>(handle)` 获取资源
+- [x] 实现 `IsReady<T>(handle)` 检查就绪状态
+- [x] 实现 `SetResource(handle, resource)` 和 `SetReady(handle)`
+- [x] 实现 `FindByPath(path, typeId)` 路径查找
+- [x] 实现 `AddRef` / `Release` 引用计数
+- [x] 线程安全：entries_、pathToId_ 的 mutex 保护
 
 ### 1.3 IResourceLoader 接口
 
