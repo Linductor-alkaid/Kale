@@ -52,6 +52,9 @@ _deps/
 # feature_list.json      # Feature list with status tracking
 # init.sh                # Environment initialization script
 
+# Auto development sessions
+.claude_sessions/
+
 # 系统文件
 .DS_Store
 Thumbs.db
