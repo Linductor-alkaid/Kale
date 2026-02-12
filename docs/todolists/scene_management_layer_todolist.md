@@ -73,9 +73,9 @@
 
 ### 2.2 视锥剔除
 
-- [ ] 实现 `FrustumPlanes` 结构（planes[6]，left/right/bottom/top/near/far）
-- [ ] 实现 `ExtractFrustumPlanes(const glm::mat4& viewProj)` 从 VP 矩阵提取
-- [ ] 实现 `IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)`
+- [x] 实现 `FrustumPlanes` 结构（planes[6]，left/right/bottom/top/near/far）
+- [x] 实现 `ExtractFrustumPlanes(const glm::mat4& viewProj)` 从 VP 矩阵提取
+- [x] 实现 `IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)`
 
 ### 2.3 CullScene 单相机
 

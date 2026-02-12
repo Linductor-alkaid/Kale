@@ -5,6 +5,7 @@
 add_library(kale_scene STATIC
     placeholder.cpp
     scene_manager.cpp
+    frustum.cpp
     # 待实现：scene_node.cpp, entity_manager.cpp, culling.cpp
 )
 

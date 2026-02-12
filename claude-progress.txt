@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.8 视锥剔除
+状态：已完成
+- 实现 FrustumPlanes 结构（planes[6]，left/right/bottom/top/near/far）
+- 实现 ExtractFrustumPlanes(const glm::mat4& viewProj) 从 VP 矩阵提取
+- 实现 IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)
+- 新增 kale_scene/frustum.hpp、frustum.cpp，编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.7 BoundingBox 与数学
 状态：已完成
 - BoundingBox 结构已在 phase3-3.6 定义于 resource_types.hpp（min, max）

@@ -646,7 +646,7 @@
         "实现 ExtractFrustumPlanes(const glm::mat4& viewProj) 从 VP 矩阵提取",
         "实现 IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.7"],
       "test_verification": "视锥剔除正确识别可视对象"
