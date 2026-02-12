@@ -17,7 +17,9 @@ LOG_DIR="$KALE_ROOT/.claude_sessions"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$LOG_DIR/auto_dev_${TIMESTAMP}.log"
 SESSION_LOG="$LOG_DIR/session_log.txt"
-CLAUDE_BIN="claude"
+
+# CLI 工具（根据 AGENT_MODE 设置）
+# agent 模式使用 Cursor CLI，claude 模式使用 Claude CLI
 
 # 默认参数
 NUM_RUNS=1
@@ -25,6 +27,7 @@ MODEL="sonnet"
 DRY_RUN=false
 CONTINUE=false
 START_SESSION=1
+AGENT_MODE="agent"  # agent 或 claude
 
 # ==================== 函数定义 ====================
 
@@ -77,25 +80,40 @@ show_usage() {
 ${GREEN}用法${NC}: $0 <次数> [选项]
 
 ${GREEN}参数${NC}:
-    <次数>              要运行的 Claude Code 会话次数
+    <次数>              要运行的会话次数
 
 ${GREEN}选项${NC}:
     --model <model>     使用的模型 (默认: sonnet，可选: sonnet, opus, haiku)
+    --agent <cli>       CLI 工具选择 (默认: agent，可选: agent, claude)
+                        - agent: 使用 Cursor CLI (命令: agent)
+                        - claude: 使用 Claude Code CLI (命令: claude)
     --continue          从上次中断处继续
     --dry-run           只显示命令，不实际执行
     -h, --help          显示此帮助信息
 
 ${GREEN}示例${NC}:
-    $0 5                运行 5 次开发会话
-    $0 10 --model opus  使用 Opus 模型运行 10 次
-    $0 3 --dry-run      预览将要执行的 3 次会话
-    $0 --continue       继续上次的中断
+    $0 5                         运行 5 次 Cursor Agent 会话（默认）
+    $0 10 --agent claude         运行 10 次 Claude Code 会话
+    $0 3 --model opus            使用 Opus 模型运行 3 次
+    $0 --dry-run                 预览将要执行的会话
+    $0 --continue                从上次中断处继续
+
+${GREEN}CLI 工具说明${NC}:
+    agent (Cursor CLI, 默认):
+      - 命令: agent
+      - Cursor IDE 的命令行工具
+      - 支持自主的 Agent 模式
+
+    claude (Claude Code CLI):
+      - 命令: claude
+      - Anthropic Claude Code 命令行工具
+      - 更详细的指令跟踪
 
 ${GREEN}工作流程${NC}:
     每次会话将自动完成以下步骤：
-    1. 📖 读取 claude-progress.txt 了解当前状态
-    2. 📋 读取 feature_list.json 选择下一个功能
-    3. 🔨 实现该功能
+    1. 📖 读取状态文件了解当前进度
+    2. 📋 选择并阅读相关文档
+    3. 🔨 实现功能
     4. ✅ 运行测试验证
     5. 📝 更新状态文件
     6. 💾 提交 git commit
@@ -161,6 +179,15 @@ parse_args() {
                 MODEL="$2"
                 shift 2
                 ;;
+            --agent)
+                AGENT_MODE="$2"
+                if [ "$AGENT_MODE" != "agent" ] && [ "$AGENT_MODE" != "claude" ]; then
+                    echo "错误: --agent 参数必须是 'agent' 或 'claude'"
+                    show_usage
+                    exit 1
+                fi
+                shift 2
+                ;;
             --dry-run)
                 DRY_RUN=true
                 shift
@@ -178,12 +205,25 @@ parse_args() {
 check_environment() {
     log_msg INFO "检查环境..."
 
-    # 检查 claude 命令
-    if ! command -v $CLAUDE_BIN &> /dev/null; then
-        log_msg ERROR "Claude Code CLI 未找到。请先安装 Claude Code。"
+    # 根据 AGENT_MODE 检查对应的 CLI
+    local cli_name=""
+    if [ "$AGENT_MODE" = "agent" ]; then
+        cli_name="agent"
+    else
+        cli_name="claude"
+    fi
+
+    # 检查 CLI 命令
+    if ! command -v $cli_name &> /dev/null; then
+        log_msg ERROR "$cli_name CLI 未找到。请先安装对应的 CLI 工具。"
+        if [ "$AGENT_MODE" = "claude" ]; then
+            log_msg ERROR "Claude Code 安装: https://claude.ai/download"
+        else
+            log_msg ERROR "Cursor CLI: 请安装 Cursor IDE 并确保 agent 命令可用"
+        fi
         exit 1
     fi
-    log_msg SUCCESS "✓ Claude Code 已安装"
+    log_msg SUCCESS "✓ $cli_name CLI 已安装"
 
     # 检查必要文件
     if [ ! -f "$KALE_ROOT/feature_list.json" ]; then
@@ -221,225 +261,58 @@ check_environment() {
     echo ""
 }
 
-# 生成初始 prompt
+# 生成 Agent 模式的 prompt（更自主）
+
+# 生成 Claude 模式的 prompt（更详细的指令）
+
+# 根据模式生成 prompt
 generate_prompt() {
     cat << 'EOF'
-你是 Kale 渲染引擎项目的 Coding Agent。请按照以下标准工作流程完成一次开发会话：
+你是 Kale 渲染引擎项目的开发 Agent。请按照以下工作流程完成一次开发会话：
 
 ## 工作流程
 
-### 1. 了解当前状态（必须首先执行）
+1. **了解当前状态**
+   - 读取 claude-progress.txt 和 feature_list.json
+   - 验证 feature_list.json 格式正确
 
-#### 1.1 验证环境
-- 运行 `pwd` 确认工作目录（必须是 /home/linductor/kale）
-- 检查是否有未提交的更改：`git status`
-- 如果有未提交的更改，先了解情况再决定是否需要处理
+2. **选择下一个功能**
+   - 找一个 status 为 "pending" 的功能
+   - 确保依赖已完成
+   - 优先级：critical > high > medium
 
-#### 1.2 读取状态文件
-- 读取 `claude-progress.txt` 了解项目进度
-- 读取 `feature_list.json` **验证格式正确**
-  - 运行 `python3 -c "import json; json.load(open('feature_list.json'))"` 验证
-  - 如果格式错误，使用 `git checkout feature_list.json` 恢复
-- 统计当前进度：`grep -c '"status": "completed"' feature_list.json`
+3. **阅读相关文档**
+   - docs/design/rendering_engine_design.md (总设计)
+   - docs/design/<模块>_layer_design.md (模块设计)
+   - docs/todolists/<模块>_todolist.md (任务清单)
 
-#### 1.3 构建状态检查
-- 运行 `./init.sh` 或检查构建状态
-- 查看 build/ 目录是否存在
-- 如果 build/ 目录有问题，删除重建：`rm -rf build && mkdir build && cd build && cmake ..`
+4. **实现功能**
+   - 按步骤逐一实现
+   - 遵循设计文档
 
-### 2. 选择下一个功能
-- 在 feature_list.json 中找到一个 status 为 "pending" 的功能
-- 确保该功能的所有依赖（dependencies）都已完成
-- 优先选择优先级高（priority: "critical" 或 "high"）的功能
-- 一次只实现一个功能
+5. **测试验证**（必须实际执行）
+   ```bash
+   cd build && cmake --build . -j$(nproc)
+   ```
 
-### 3. 📖 完整阅读相关文档（重要！）
+6. **更新文档**
+   - feature_list.json: status → "completed"
+   - claude-progress.txt: 添加进度记录
+   - todolist.md: 勾选完成的子任务
 
-根据选定的功能，识别其所属的模块（layer 字段），然后按以下顺序阅读：
+7. **清理并提交**
+   - 清理 test_* 临时文件
+   - git add .
+   - git commit
 
-#### 3.1 识别模块并映射到文档
-feature_list.json 中的 layer 字段对应：
-- `device_abstraction_layer` → 设备抽象层
-- `executor_layer` → 执行器层
-- `resource_management_layer` → 资源管理层
-- `scene_management_layer` → 场景管理层
-- `rendering_pipeline_layer` → 渲染管线层
-- `kale_engine` → 引擎层
+## 重要
 
-#### 3.2 阅读文档顺序
-**先阅读设计文档：**
-1. `docs/design/rendering_engine_design.md` - 项目总设计（必读）
-2. `docs/design/<模块>_layer_design.md` - 对应模块的设计文档（必读）
-3. `docs/design/rendering_engine_code_examples.md` - 代码示例（如需要）
+- ✅ 必须实际执行测试，不能只输出建议
+- ❌ 不要在项目根目录创建 test_* 文件
+- ✅ 必须清理临时文件
+- ✅ 必须更新 feature_list.json
 
-**再阅读任务清单：**
-4. `docs/todolists/project_development_flow.md` - 项目开发流程总览
-5. `docs/todolists/<模块>_todolist.md` - 对应模块的详细任务清单
-
-#### 3.3 文档阅读要点
-阅读设计文档时，重点关注：
-- 模块的职责边界
-- 接口定义和设计意图
-- 与其他模块的依赖关系
-- 关键设计决策和权衡
-
-阅读任务清单时，重点关注：
-- 当前功能在整个开发流程中的位置
-- 当前功能的依赖关系和后续功能
-- 实现细节和验收标准
-- 测试方法
-
-### 4. 🔨 实现功能
-
-#### 4.1 实现前准备
-- 根据功能描述，在任务清单中找到对应的条目
-- 确认要完成的子任务清单（- [ ] 项）
-- 理解每个步骤的实现要点
-
-#### 4.2 按步骤实现
-- 按照 feature_list.json 中的 steps 逐一实现
-- 遵循设计文档中的架构和接口定义
-- 参考代码示例中的实现模式
-- 保持代码风格与项目一致
-
-#### 4.3 实现要点
-- 一次只实现一个功能，不要贪多
-- 遵循模块化设计原则
-- 注意接口的清晰和完整性
-- 添加必要的注释说明设计意图
-
-### 5. ✅ 测试验证
-
-#### 5.1 必须实际执行测试（重要！）
-**禁止**：只输出"建议运行..."或"预期输出..."的提示
-**必须**：实际执行测试命令并验证结果
-
-测试方法：
-```bash
-# 构建项目（必须执行）
-cd build && cmake --build . -j$(nproc)
-
-# 运行单元测试（如果有）
-cd build && ctest --output-on-failure
-
-# 运行示例应用验证
-./build/apps/hello_kale/hello_kale
-```
-
-#### 5.2 测试文件管理规则
-- ❌ **不要**在项目根目录创建 test_* 文件或目录
-- ❌ **不要**创建独立的 CMakeLists_test.txt
-- ✅ **应该**在 build/ 目录中进行所有测试
-- ✅ **应该**使用项目现有的测试框架（tests/ 目录）
-- ✅ **应该**测试完成后清理 build 目录中的临时文件
-
-#### 5.3 验证标准
-- 根据 feature_list.json 中的 test_verification 进行验证
-- **只有测试实际通过后才能标记为完成**
-- 如果测试失败，修复问题后重新测试
-
-### 6. 📝 更新文档（重要！）
-
-#### 6.1 更新 feature_list.json（必须完成）
-- 将该功能的 status 改为 "completed"
-- **不要**删除或修改其他功能
-- **不要**修改 features 数组的结构
-- 使用 Edit 工具精确修改 status 字段
-
-#### 6.2 更新 claude-progress.txt
-在文件顶部添加：
-```
-[YYYY-MM-DD HH:MM] COMPLETED - feature_id: Feature title
-- 实现的主要功能点
-- 遇到的问题和解决方案（如有）
-- 实际测试结果（必须包含真实输出）
-```
-
-#### 6.3 更新任务清单（必须完成）
-- 在 `docs/todolists/<模块>_todolist.md` 中
-- 将对应的 `- [ ]` 改为 `- [x]`
-- 确保子任务的完成状态准确反映
-- 只更新本次实现的任务
-
-#### 6.4 清理临时文件（必须完成）
-在提交代码前，必须清理：
-- 项目根目录的 test_* 目录
-- 项目根目录的 test_*.cpp/test_*.c 文件
-- 任何临时的测试构建目录
-- 验证清理结果：`ls -la` 确保没有残留测试文件
-
-### 7. 💾 提交代码
-- 查看修改：`git status`
-- 添加文件：`git add .`
-- 提交：使用描述性的 commit message
-
-Commit message 格式：
-```
-<模块>: <简短描述>
-
-<详细描述实现的功能>
-
-- 实现点1
-- 实现点2
-- 实现点3
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-```
-
-## 重要原则
-
-- **📚 文档优先**：实现前必须完整阅读相关文档
-- **🎯 精确定位**：根据任务确定模块，阅读对应文档
-- **📋 对照清单**：对照任务清单的子任务逐一完成
-- **✏️ 更新文档**：完成后更新 feature_list.json 和任务清单
-- **🔍 增量开发**：一次只实现一个功能
-- **🧹 清洁状态**：会话结束时代码必须可编译、可运行
-- **✅ 完整测试**：标记为完成前必须经过测试验证
-- **💾 Git 提交**：每个功能完成后必须提交
-
-## 禁止事项
-
-### 文件和目录管理
-- ❌ **不要**在项目根目录创建 test_* 文件或目录
-- ❌ **不要**创建独立的测试 CMakeLists.txt
-- ❌ **不要**生成多余的文档或说明文件
-- ✅ **所有工作记录**都保留在 .claude_sessions/ 中
-
-### 开发流程
-- ❌ **不要**跳过文档阅读步骤
-- ❌ **不要**只输出"建议运行..."而**不实际执行测试**
-- ❌ **不要**一次实现多个功能
-- ❌ **不要**在未实际测试的情况下标记功能为完成
-- ❌ **不要**留下不可编译的代码
-
-### 状态管理
-- ❌ **不要**修改或删除已有的功能项
-- ❌ **不要**修改 feature_list.json 的结构
-- ❌ **不要**忘记更新 feature_list.json 的 status
-- ❌ **不要**忘记更新对应的 todolist.md
-- ❌ **不要**会话结束时留下临时文件
-
-### 会话完整性（重要！）
-- ✅ **必须**确保 feature_list.json 状态正确更新
-- ✅ **必须**确保所有文件都已 git add
-- ✅ **必须**确保代码已提交
-- ✅ **必须**清理所有临时文件
-- ✅ **必须**验证下一个会话可以正常开始
-
-## 模块文档映射速查
-
-| Layer | 设计文档 | 任务清单 |
-|-------|---------|---------|
-| device_abstraction_layer | device_abstraction_layer_design.md | device_abstraction_layer_todolist.md |
-| executor_layer | executor_layer_design.md | executor_layer_todolist.md |
-| resource_management_layer | resource_management_layer_design.md | resource_management_layer_todolist.md |
-| scene_management_layer | scene_management_layer_design.md | scene_management_layer_todolist.md |
-| rendering_pipeline_layer | rendering_pipeline_layer_design.md | rendering_pipeline_layer_todolist.md |
-| kale_engine | rendering_engine_design.md (引擎集成部分) | project_development_flow.md |
-
----
-
-开始工作吧！请先读取状态文件，选择功能，然后**完整阅读相关文档**后再开始实现。
+开始工作！
 EOF
 }
 
@@ -487,27 +360,25 @@ run_claude_session() {
     log_msg INFO "会话 #$session_num 开始..."
     echo ""
 
-    # 构建 Claude 命令
-    local claude_cmd="$CLAUDE_BIN --permission-mode acceptEdits --model $MODEL"
-
-    # 检查是否使用非交互模式
-    if [ "${CLAUDE_NON_INTERACTIVE:-false}" = "true" ]; then
-        claude_cmd="$claude_cmd --print"
+    # 根据 AGENT_MODE 选择 CLI 命令
+    local cli_cmd=""
+    if [ "$AGENT_MODE" = "agent" ]; then
+        cli_cmd="agent"
+    else
+        cli_cmd="claude --permission-mode acceptEdits --model $MODEL"
     fi
-
-    claude_cmd="$claude_cmd \"\$(cat $prompt_file)\""
 
     # 执行或显示命令
     if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] 将要执行的命令:${NC}"
-        echo "$claude_cmd"
+        echo "$cli_cmd \"\$(cat $prompt_file)\""
         echo ""
     else
-        log_msg INFO "运行 Claude Code..."
+        log_msg INFO "运行 $AGENT_MODE..."
         echo ""
 
-        # 运行 Claude 并记录输出
-        if eval "$claude_cmd" 2>&1 | tee "$output_file"; then
+        # 运行 CLI 并记录输出
+        if eval "$cli_cmd \"\$(cat $prompt_file)\"" 2>&1 | tee "$output_file"; then
             local exit_code=${PIPESTATUS[0]}
 
             if [ $exit_code -eq 0 ]; then
@@ -647,6 +518,7 @@ main() {
     echo "配置:"
     echo "  项目目录: $KALE_ROOT"
     echo "  运行次数: $NUM_RUNS"
+    echo "  CLI 工具: $AGENT_MODE"
     echo "  使用模型: $MODEL"
     echo "  开始会话: #$START_SESSION"
     echo "  日志文件: $LOG_FILE"
