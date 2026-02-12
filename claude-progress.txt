@@ -2,6 +2,16 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-12 23:45:00 ===
+功能：phase2-2.3 CommandList 接口
+状态：已完成
+- 实现 CommandList 纯虚接口（command_list.hpp）
+- BeginRenderPass/EndRenderPass、BindPipeline、BindDescriptorSet
+- BindVertexBuffer、BindIndexBuffer、SetPushConstants
+- Draw、DrawIndexed、Dispatch、Barrier
+- ClearColor、ClearDepth、SetViewport、SetScissor
+- render_device.hpp 包含 command_list.hpp，编译通过
+
 === 2026-02-12 23:30:00 ===
 功能：phase2-2.2 IRenderDevice 接口定义
 状态：已完成

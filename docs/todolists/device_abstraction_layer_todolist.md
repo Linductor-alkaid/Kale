@@ -86,15 +86,15 @@
 
 ### 2.3 CommandList 接口
 
-- [ ] 实现 `CommandList` 纯虚接口
-- [ ] 实现 Render Pass：`BeginRenderPass`、`EndRenderPass`
-- [ ] 实现管线绑定：`BindPipeline`、`BindDescriptorSet`
-- [ ] 实现资源绑定：`BindVertexBuffer`、`BindIndexBuffer`
-- [ ] 实现 `SetPushConstants`
-- [ ] 实现 Draw：`Draw`、`DrawIndexed`
-- [ ] 实现 Compute：`Dispatch`
-- [ ] 实现 `Barrier`（纹理资源屏障）
-- [ ] 实现 Clear / Viewport / Scissor：`ClearColor`、`ClearDepth`、`SetViewport`、`SetScissor`
+- [x] 实现 `CommandList` 纯虚接口
+- [x] 实现 Render Pass：`BeginRenderPass`、`EndRenderPass`
+- [x] 实现管线绑定：`BindPipeline`、`BindDescriptorSet`
+- [x] 实现资源绑定：`BindVertexBuffer`、`BindIndexBuffer`
+- [x] 实现 `SetPushConstants`
+- [x] 实现 Draw：`Draw`、`DrawIndexed`
+- [x] 实现 Compute：`Dispatch`
+- [x] 实现 `Barrier`（纹理资源屏障）
+- [x] 实现 Clear / Viewport / Scissor：`ClearColor`、`ClearDepth`、`SetViewport`、`SetScissor`
 
 ### 2.4 Vulkan Backend 资源
 
