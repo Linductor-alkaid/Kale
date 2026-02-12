@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.3 IResourceLoader 接口
+状态：已完成
+- 实现 IResourceLoader 纯虚基类（Supports、Load、GetResourceType）
+- 定义 ResourceLoadContext 结构（device, stagingMgr, resourceManager）
+- 新增 resource_loader.hpp，StagingMemoryManager/ResourceManager 前向声明
+- placeholder 包含新头文件并验证编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.2 ResourceCache 基础
 状态：已完成
 - 实现 CacheEntry 结构（resource, path, refCount, isReady, typeId）

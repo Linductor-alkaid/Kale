@@ -35,11 +35,11 @@
 
 ### 1.3 IResourceLoader 接口
 
-- [ ] 实现 `IResourceLoader` 纯虚基类
-- [ ] 实现 `Supports(path)` 判断是否支持该路径
-- [ ] 实现 `Load(path, ResourceLoadContext& ctx)` 同步加载
-- [ ] 实现 `GetResourceType()` 返回 type_index
-- [ ] 定义 `ResourceLoadContext` 结构（device, stagingMgr, resourceManager）
+- [x] 实现 `IResourceLoader` 纯虚基类
+- [x] 实现 `Supports(path)` 判断是否支持该路径
+- [x] 实现 `Load(path, ResourceLoadContext& ctx)` 同步加载
+- [x] 实现 `GetResourceType()` 返回 type_index
+- [x] 定义 `ResourceLoadContext` 结构（device, stagingMgr, resourceManager）
 
 ### 1.4 ResourceManager 接口与 Loader 注册
 

@@ -2,6 +2,7 @@
 
 #include <kale_resource/resource_cache.hpp>
 #include <kale_resource/resource_handle.hpp>
+#include <kale_resource/resource_loader.hpp>
 
 namespace kale::resource {
 
@@ -26,6 +27,11 @@ void placeholder() {
     cache.AddRef(ToAny(h));
     cache.Release(ToAny(h));
     cache.Release(ToAny(h));
+
+    // 验证 IResourceLoader 接口与 ResourceLoadContext 可编译
+    ResourceLoadContext ctx;
+    (void)ctx;
+    // IResourceLoader 为纯虚基类，由 TextureLoader/ModelLoader 等实现
 }
 
 }  // namespace kale::resource
