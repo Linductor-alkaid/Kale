@@ -4,7 +4,8 @@
 
 add_library(kale_resource STATIC
     placeholder.cpp
-    # 待实现：resource_manager.cpp, resource_cache.cpp, texture_loader.cpp, model_loader.cpp
+    resource_manager.cpp
+    # 待实现：texture_loader.cpp, model_loader.cpp
 )
 
 target_include_directories(kale_resource

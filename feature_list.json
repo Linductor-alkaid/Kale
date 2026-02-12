@@ -422,7 +422,7 @@
         "实现 AddPathAlias(alias, path) 路径别名",
         "实现 ResolvePath(path) 解析完整路径"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2", "phase3-3.2"],
       "test_verification": "资源管理器可以注册和查找加载器"

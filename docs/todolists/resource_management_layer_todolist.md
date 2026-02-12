@@ -43,12 +43,12 @@
 
 ### 1.4 ResourceManager 接口与 Loader 注册
 
-- [ ] 实现 `ResourceManager` 构造函数（scheduler, device, stagingMgr）
-- [ ] 实现 `RegisterLoader(std::unique_ptr<IResourceLoader> loader)`
-- [ ] 实现 `FindLoader(path, typeId)` 查找 Loader
-- [ ] 实现 `SetAssetPath(path)` 设置资源根路径
-- [ ] 实现 `AddPathAlias(alias, path)` 路径别名
-- [ ] 实现 `ResolvePath(path)` 解析完整路径
+- [x] 实现 `ResourceManager` 构造函数（scheduler, device, stagingMgr）
+- [x] 实现 `RegisterLoader(std::unique_ptr<IResourceLoader> loader)`
+- [x] 实现 `FindLoader(path, typeId)` 查找 Loader
+- [x] 实现 `SetAssetPath(path)` 设置资源根路径
+- [x] 实现 `AddPathAlias(alias, path)` 路径别名
+- [x] 实现 `ResolvePath(path)` 解析完整路径
 
 ### 1.5 同步 Load 实现
 

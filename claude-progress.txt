@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.4 ResourceManager 接口与 Loader 注册
+状态：已完成
+- 实现 ResourceManager 构造函数（scheduler, device, stagingMgr）
+- 实现 RegisterLoader、FindLoader、SetAssetPath、AddPathAlias、ResolvePath
+- 新增 resource_manager.hpp / resource_manager.cpp，placeholder 验证编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.3 IResourceLoader 接口
 状态：已完成
 - 实现 IResourceLoader 纯虚基类（Supports、Load、GetResourceType）

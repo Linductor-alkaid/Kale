@@ -3,6 +3,7 @@
 #include <kale_resource/resource_cache.hpp>
 #include <kale_resource/resource_handle.hpp>
 #include <kale_resource/resource_loader.hpp>
+#include <kale_resource/resource_manager.hpp>
 
 namespace kale::resource {
 
@@ -32,6 +33,20 @@ void placeholder() {
     ResourceLoadContext ctx;
     (void)ctx;
     // IResourceLoader 为纯虚基类，由 TextureLoader/ModelLoader 等实现
+
+    // 验证 ResourceManager：构造、SetAssetPath、AddPathAlias、ResolvePath、RegisterLoader、FindLoader
+    ResourceManager mgr(nullptr, nullptr, nullptr);
+    mgr.SetAssetPath("/data/assets");
+    std::string r0 = mgr.ResolvePath("models/box.gltf");
+    (void)r0;
+    mgr.AddPathAlias("@models", "assets/models");
+    std::string r1 = mgr.ResolvePath("@models/box.gltf");
+    (void)r1;
+    mgr.SetLastError("test error");
+    std::string err = mgr.GetLastError();
+    (void)err;
+    IResourceLoader* loader = mgr.FindLoader("dummy.png", typeid(Texture));
+    (void)loader;
 }
 
 }  // namespace kale::resource
