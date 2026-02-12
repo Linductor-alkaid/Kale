@@ -1164,6 +1164,14 @@ void VulkanRenderDevice::ResetFence(FenceHandle fence) {
         vkResetFences(context_.GetDevice(), 1, &it->second);
 }
 
+bool VulkanRenderDevice::IsFenceSignaled(FenceHandle fence) const {
+    if (!fence.IsValid() || !context_.IsInitialized()) return false;
+    auto it = fences_.find(fence.id);
+    if (it == fences_.end()) return false;
+    VkResult r = vkGetFenceStatus(context_.GetDevice(), it->second);
+    return (r == VK_SUCCESS);
+}
+
 SemaphoreHandle VulkanRenderDevice::CreateSemaphore() {
     if (!context_.IsInitialized()) return SemaphoreHandle{};
     VkSemaphoreCreateInfo info = {};

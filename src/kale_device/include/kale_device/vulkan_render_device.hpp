@@ -120,6 +120,7 @@ public:
     FenceHandle CreateFence(bool signaled = false) override;
     void WaitForFence(FenceHandle fence, std::uint64_t timeout = UINT64_MAX) override;
     void ResetFence(FenceHandle fence) override;
+    bool IsFenceSignaled(FenceHandle fence) const override;
     SemaphoreHandle CreateSemaphore() override;
 
     std::uint32_t AcquireNextImage() override;

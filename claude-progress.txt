@@ -3,6 +3,15 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase6-6.2 Staging Buffer 池化
+状态：已完成
+- IRenderDevice 新增 IsFenceSignaled(FenceHandle) 非阻塞查询，Vulkan 后端 vkGetFenceStatus 实现
+- StagingMemoryManager：Free(alloc, fence) 延迟回收，pendingFrees_ 存 (StagingAllocation, FenceHandle)
+- ReclaimCompleted() 检查已 signal 的 Fence 并将对应分配回收到池
+- Allocate 不足时先 ReclaimCompleted() 再重试一次，再扩展新池块；RecycleAlloc 抽取公共回收逻辑
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase6-6.1 StagingMemoryManager
 状态：已完成
 - 实现 StagingMemoryManager(IRenderDevice* device)，StagingAllocation（buffer, mappedPtr, size, offset）

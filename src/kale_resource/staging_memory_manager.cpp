@@ -20,40 +20,49 @@ StagingAllocation StagingMemoryManager::Allocate(std::size_t size) {
     const std::size_t align = 256;  /* 常见上传对齐 */
     const std::size_t alignedSize = (size + align - 1) & ~(align - 1);
 
-    /* 1) 在现有池中找空闲块：first fit */
-    for (size_t i = 0; i < poolBuffers_.size(); ++i) {
-        auto& freeList = freeLists_[i];
-        for (auto it = freeList.begin(); it != freeList.end(); ++it) {
-            if (it->size >= alignedSize) {
-                StagingAllocation alloc;
-                alloc.buffer = poolBuffers_[i].handle;
-                alloc.offset = it->offset;
-                alloc.size = alignedSize;
-                alloc.mappedPtr = poolBuffers_[i].mappedPtr
-                    ? static_cast<char*>(poolBuffers_[i].mappedPtr) + it->offset
-                    : nullptr;
-                if (it->size == alignedSize)
-                    freeList.erase(it);
-                else {
-                    it->offset += alignedSize;
-                    it->size -= alignedSize;
+    for (int reclaimPass = 0; reclaimPass < 2; ++reclaimPass) {
+        /* 1) 在现有池中找空闲块：first fit */
+        for (size_t i = 0; i < poolBuffers_.size(); ++i) {
+            auto& freeList = freeLists_[i];
+            for (auto it = freeList.begin(); it != freeList.end(); ++it) {
+                if (it->size >= alignedSize) {
+                    StagingAllocation alloc;
+                    alloc.buffer = poolBuffers_[i].handle;
+                    alloc.offset = it->offset;
+                    alloc.size = alignedSize;
+                    alloc.mappedPtr = poolBuffers_[i].mappedPtr
+                        ? static_cast<char*>(poolBuffers_[i].mappedPtr) + it->offset
+                        : nullptr;
+                    if (it->size == alignedSize)
+                        freeList.erase(it);
+                    else {
+                        it->offset += alignedSize;
+                        it->size -= alignedSize;
+                    }
+                    return alloc;
                 }
+            }
+            /* 2) 线性分配：从 usedOffset 往后 */
+            PoolBuffer& pb = poolBuffers_[i];
+            if (pb.usedOffset + alignedSize <= pb.totalSize) {
+                StagingAllocation alloc;
+                alloc.buffer = pb.handle;
+                alloc.offset = pb.usedOffset;
+                alloc.size = alignedSize;
+                alloc.mappedPtr = pb.mappedPtr
+                    ? static_cast<char*>(pb.mappedPtr) + pb.usedOffset
+                    : nullptr;
+                pb.usedOffset += alignedSize;
                 return alloc;
             }
         }
-        /* 2) 线性分配：从 usedOffset 往后 */
-        PoolBuffer& pb = poolBuffers_[i];
-        if (pb.usedOffset + alignedSize <= pb.totalSize) {
-            StagingAllocation alloc;
-            alloc.buffer = pb.handle;
-            alloc.offset = pb.usedOffset;
-            alloc.size = alignedSize;
-            alloc.mappedPtr = pb.mappedPtr
-                ? static_cast<char*>(pb.mappedPtr) + pb.usedOffset
-                : nullptr;
-            pb.usedOffset += alignedSize;
-            return alloc;
+
+        /* 分配不足时先尝试回收已 signal 的 Fence 对应分配，再重试一次 */
+        if (reclaimPass == 0) {
+            ReclaimCompleted();
+            continue;
         }
+        break;
     }
 
     /* 3) 分配新池块 */
@@ -81,12 +90,37 @@ StagingAllocation StagingMemoryManager::Allocate(std::size_t size) {
     return alloc;
 }
 
-void StagingMemoryManager::Free(const StagingAllocation& alloc) {
+void StagingMemoryManager::RecycleAlloc(const StagingAllocation& alloc) {
     if (!alloc.IsValid()) return;
     for (size_t i = 0; i < poolBuffers_.size(); ++i) {
         if (poolBuffers_[i].handle.id != alloc.buffer.id) continue;
         freeLists_[i].push_back(FreeBlock{ alloc.offset, alloc.size });
         return;
+    }
+}
+
+void StagingMemoryManager::Free(const StagingAllocation& alloc) {
+    RecycleAlloc(alloc);
+}
+
+void StagingMemoryManager::Free(const StagingAllocation& alloc, kale_device::FenceHandle fence) {
+    if (!alloc.IsValid()) return;
+    if (!fence.IsValid()) {
+        RecycleAlloc(alloc);
+        return;
+    }
+    pendingFrees_.emplace_back(alloc, fence);
+}
+
+void StagingMemoryManager::ReclaimCompleted() {
+    auto it = pendingFrees_.begin();
+    while (it != pendingFrees_.end()) {
+        if (device_->IsFenceSignaled(it->second)) {
+            RecycleAlloc(it->first);
+            it = pendingFrees_.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 

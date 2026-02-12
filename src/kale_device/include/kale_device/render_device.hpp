@@ -101,6 +101,8 @@ public:
     virtual FenceHandle CreateFence(bool signaled = false) = 0;
     virtual void WaitForFence(FenceHandle fence, std::uint64_t timeout = UINT64_MAX) = 0;
     virtual void ResetFence(FenceHandle fence) = 0;
+    /** 非阻塞查询 Fence 是否已 signal（供 Staging 池回收等使用） */
+    virtual bool IsFenceSignaled(FenceHandle fence) const = 0;
     virtual SemaphoreHandle CreateSemaphore() = 0;
 
     // --- 交换链 ---

@@ -131,10 +131,10 @@
 
 ### 3.2 Staging Buffer 池化
 
-- [ ] 维护 `stagingPool_` 预分配 Buffer 列表
-- [ ] 实现线性分配或块分配策略
-- [ ] 分配不足时扩展池或等待 GPU 完成回收
-- [ ] 与 Fence 关联：GPU 完成时 Free 回池
+- [x] 维护 `stagingPool_` 预分配 Buffer 列表
+- [x] 实现线性分配或块分配策略
+- [x] 分配不足时扩展池或等待 GPU 完成回收
+- [x] 与 Fence 关联：GPU 完成时 Free 回池
 
 ### 3.3 Upload Queue 与 Copy 命令
 
