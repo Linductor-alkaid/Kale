@@ -3,6 +3,16 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.2 SceneNode 核心
+状态：已完成
+- 实现 SceneNode 类（scene_node.hpp）：localTransform_、worldMatrix_、children_、parent_、handle_
+- SetLocalTransform/GetLocalTransform、GetWorldMatrix、SetWorldMatrix（private，friend SceneManager）
+- AddChild(std::unique_ptr<SceneNode>) 返回 SceneNode*，设置 parent_ 并加入 children_
+- GetParent()/GetChildren()、GetHandle()
+- SceneManager::RegisterNode 内设置 node->handle_，保证创建/注册时句柄一致
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.1 句柄与类型定义
 状态：已完成
 - 定义 SceneNodeHandle、kInvalidSceneNodeHandle（scene_types.hpp）

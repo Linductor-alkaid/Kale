@@ -4,6 +4,7 @@
  */
 
 #include <kale_scene/scene_manager.hpp>
+#include <kale_scene/scene_node.hpp>
 
 namespace kale::scene {
 
@@ -26,6 +27,7 @@ SceneNodeHandle SceneManager::RegisterNode(SceneNode* node) {
     SceneNodeHandle h = nextHandle_++;
     handleRegistry_[h] = node;
     nodeToHandle_[node] = h;
+    node->handle_ = h;  // phase5-5.2: SceneNode handle_ 由 SceneManager 在注册时设置
     return h;
 }
 

@@ -25,15 +25,15 @@
 
 ### 1.2 SceneNode 核心
 
-- [ ] 实现 `SceneNode` 类
-- [ ] 实现 `localTransform_`、`worldMatrix_`（glm::mat4）
-- [ ] 实现 `SetLocalTransform(const glm::mat4& t)` / `GetLocalTransform()`
-- [ ] 实现 `GetWorldMatrix()`（由 SceneManager::Update 计算后只读）
-- [ ] 实现 `SetWorldMatrix(const glm::mat4& m)`（friend 关系，仅供 SceneManager 调用）
-- [ ] 实现 `AddChild(std::unique_ptr<SceneNode> child)` 返回 `SceneNode*`
-- [ ] 实现 `GetParent()` / `GetChildren()` 父子层级访问
-- [ ] 实现 `GetHandle()` 返回 SceneNodeHandle
-- [ ] 实现 `handle_` 成员，由 SceneManager 在 CreateScene/AddChild 时设置
+- [x] 实现 `SceneNode` 类
+- [x] 实现 `localTransform_`、`worldMatrix_`（glm::mat4）
+- [x] 实现 `SetLocalTransform(const glm::mat4& t)` / `GetLocalTransform()`
+- [x] 实现 `GetWorldMatrix()`（由 SceneManager::Update 计算后只读）
+- [x] 实现 `SetWorldMatrix(const glm::mat4& m)`（friend 关系，仅供 SceneManager 调用）
+- [x] 实现 `AddChild(std::unique_ptr<SceneNode> child)` 返回 `SceneNode*`
+- [x] 实现 `GetParent()` / `GetChildren()` 父子层级访问
+- [x] 实现 `GetHandle()` 返回 SceneNodeHandle
+- [x] 实现 `handle_` 成员，由 SceneManager 在 CreateScene/AddChild 时设置
 
 ### 1.3 SceneManager 生命周期
 
