@@ -1,12 +1,46 @@
 /**
  * @file scene_manager.cpp
- * @brief SceneManager 实现：句柄注册表、CreateScene、SetActiveScene、Update、UpdateRecursive、UnregisterSubtree
+ * @brief SceneManager 实现：句柄注册表、CreateScene、SetActiveScene、Update、CullScene、UpdateRecursive、UnregisterSubtree
  */
 
 #include <kale_scene/scene_manager.hpp>
 #include <kale_scene/scene_node.hpp>
+#include <kale_scene/camera_node.hpp>
+#include <kale_scene/renderable.hpp>
+#include <kale_scene/frustum.hpp>
+#include <kale_resource/resource_types.hpp>
+
+#include <functional>
 
 namespace kale::scene {
+
+std::vector<SceneNode*> SceneManager::CullScene(CameraNode* camera) {
+    std::vector<SceneNode*> visibleNodes;
+    if (!camera || !activeRoot_) return visibleNodes;
+
+    glm::mat4 viewProj = camera->projectionMatrix * camera->viewMatrix;
+    FrustumPlanes frustum = ExtractFrustumPlanes(viewProj);
+
+    std::function<void(SceneNode*)> cullRecursive = [&](SceneNode* node) {
+        if (!node->GetRenderable()) {
+            for (const auto& child : node->GetChildren())
+                cullRecursive(child.get());
+            return;
+        }
+
+        kale::resource::BoundingBox worldBounds =
+            kale::resource::TransformBounds(node->GetRenderable()->GetBounds(), node->GetWorldMatrix());
+        if (!IsBoundsInFrustum(worldBounds, frustum)) return;
+
+        visibleNodes.push_back(node);
+
+        for (const auto& child : node->GetChildren())
+            cullRecursive(child.get());
+    };
+
+    cullRecursive(activeRoot_);
+    return visibleNodes;
+}
 
 void SceneManager::Update(float deltaTime) {
     (void)deltaTime;

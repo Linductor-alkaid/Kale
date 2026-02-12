@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase5-5.9 CullScene 单相机
+状态：已完成
+- 实现 SceneManager::CullScene(CameraNode* camera) 返回 std::vector<SceneNode*>
+- 递归遍历场景图，无 Renderable 的节点只遍历子节点，有 Renderable 的节点用 TransformBounds + IsBoundsInFrustum 视锥测试
+- 新增 CameraNode（camera_node.hpp）、最小 Renderable 接口 GetBounds()（renderable.hpp）供 CullScene 使用
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.8 视锥剔除
 状态：已完成
 - 实现 FrustumPlanes 结构（planes[6]，left/right/bottom/top/near/far）

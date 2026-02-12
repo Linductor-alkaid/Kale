@@ -666,7 +666,7 @@
         "通过视锥测试的节点加入 visibleNodes",
         "需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.4", "phase5-5.8"],
       "test_verification": "剔除返回正确的可见节点列表"

@@ -15,8 +15,11 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace kale::scene {
+
+class CameraNode;
 
 /**
  * 场景管理器：管理场景图节点句柄注册表与活动场景生命周期。
@@ -54,6 +57,14 @@ public:
      * 返回当前活动场景根节点；无活动场景时返回 nullptr。
      */
     SceneNode* GetActiveRoot() const { return activeRoot_; }
+
+    /**
+     * 单相机场景剔除：递归遍历场景图，对带 Renderable 的节点做视锥测试，返回可见节点列表。
+     * 调用前应已调用 Update(deltaTime) 以保证世界矩阵有效。
+     * @param camera 相机节点，提供 viewMatrix、projectionMatrix；为 nullptr 时返回空列表
+     * @return 通过视锥测试的 SceneNode* 列表（有 Renderable 的节点）
+     */
+    std::vector<SceneNode*> CullScene(CameraNode* camera);
 
     /**
      * 根据节点指针查找其句柄。

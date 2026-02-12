@@ -79,12 +79,12 @@
 
 ### 2.3 CullScene 单相机
 
-- [ ] 实现 `SceneManager::CullScene(CameraNode* camera)` 返回 `std::vector<SceneNode*>`
-- [ ] 递归遍历场景图
-- [ ] 无 Renderable 的节点：只遍历子节点，不加入可见列表
-- [ ] 有 Renderable 的节点：用 `TransformBounds` 计算世界包围体，视锥测试
-- [ ] 通过视锥测试的节点加入 `visibleNodes`
-- [ ] 需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口
+- [x] 实现 `SceneManager::CullScene(CameraNode* camera)` 返回 `std::vector<SceneNode*>`
+- [x] 递归遍历场景图
+- [x] 无 Renderable 的节点：只遍历子节点，不加入可见列表
+- [x] 有 Renderable 的节点：用 `TransformBounds` 计算世界包围体，视锥测试
+- [x] 通过视锥测试的节点加入 `visibleNodes`
+- [x] 需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口
 
 ### 2.4 Renderable 抽象
 
