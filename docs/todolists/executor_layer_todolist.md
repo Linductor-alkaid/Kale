@@ -45,23 +45,23 @@
 
 ### 2.1 ExecutorPromise / ExecutorFuture
 
-- [ ] 实现 `ExecutorPromise<T>` 模板类
-- [ ] 实现 `set_value(T value)` 和 `set_exception(std::exception_ptr e)`
-- [ ] 实现 `ExecutorFuture<T>::get_future()` 获取 future
-- [ ] 实现 `ExecutorFuture<T>::get()` 阻塞直到就绪
-- [ ] 实现 `ExecutorFuture<T>::valid()` 有效性检查
+- [x] 实现 `ExecutorPromise<T>` 模板类
+- [x] 实现 `set_value(T value)` 和 `set_exception(std::exception_ptr e)`
+- [x] 实现 `ExecutorFuture<T>::get_future()` 获取 future
+- [x] 实现 `ExecutorFuture<T>::get()` 阻塞直到就绪
+- [x] 实现 `ExecutorFuture<T>::valid()` 有效性检查
 
 ### 2.2 then 续接
 
-- [ ] 实现 `then(Executor& ex, F&& func)` 在 executor 中续接
-- [ ] 返回 `ExecutorFuture<std::invoke_result_t<F, T>>`
-- [ ] 避免阻塞当前线程，由 executor 调度续接任务
+- [x] 实现 `then(Executor& ex, F&& func)` 在 executor 中续接
+- [x] 返回 `ExecutorFuture<std::invoke_result_t<F, T>>`
+- [x] 避免阻塞当前线程，由 executor 调度续接任务
 
 ### 2.3 集成与 API
 
-- [ ] 实现 `async_load<T>(Executor& ex, std::function<T()> loader)` API
+- [x] 实现 `async_load<T>(Executor& ex, std::function<T()> loader)` API
 - [ ] 集成到 `LoadResourceAsync` 等上层 API
-- [ ] 确保 `promise::set_value` 仅调用一次，标准库保证线程安全
+- [x] 确保 `promise::set_value` 仅调用一次，标准库保证线程安全
 
 ---
 
