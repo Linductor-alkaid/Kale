@@ -54,7 +54,7 @@
         "实现 PollEvents() 与 ShouldClose() 事件循环",
         "定义 WindowConfig 结构（width, height, title, fullscreen, resizable）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase0-0.2"],
       "test_verification": "创建窗口并显示，验证窗口大小和标题正确，事件循环正常工作"

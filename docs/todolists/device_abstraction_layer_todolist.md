@@ -17,14 +17,14 @@
 ### 1.1 SDL3 与窗口系统
 
 - [x] 集成 SDL3 库（`SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS`）
-- [ ] 实现 `WindowSystem` 类
-- [ ] 实现 `WindowSystem::Create(const WindowConfig& config)` 创建 SDL 窗口
-- [ ] 实现 `WindowSystem::Destroy()` 销毁窗口
-- [ ] 实现 `WindowSystem::GetWindow()` 返回 `SDL_Window*`
-- [ ] 实现 `WindowSystem::GetNativeHandle()` 供 Vulkan Surface / OpenGL Context 使用
-- [ ] 实现 `GetWidth()` / `GetHeight()` / `Resize()`
-- [ ] 实现 `PollEvents()` 与 `ShouldClose()` 事件循环
-- [ ] 定义 `WindowConfig` 结构（width, height, title, fullscreen, resizable）
+- [x] 实现 `WindowSystem` 类
+- [x] 实现 `WindowSystem::Create(const WindowConfig& config)` 创建 SDL 窗口
+- [x] 实现 `WindowSystem::Destroy()` 销毁窗口
+- [x] 实现 `WindowSystem::GetWindow()` 返回 `SDL_Window*`
+- [x] 实现 `WindowSystem::GetNativeHandle()` 供 Vulkan Surface / OpenGL Context 使用
+- [x] 实现 `GetWidth()` / `GetHeight()` / `Resize()`
+- [x] 实现 `PollEvents()` 与 `ShouldClose()` 事件循环
+- [x] 定义 `WindowConfig` 结构（width, height, title, fullscreen, resizable）
 
 ### 1.2 Vulkan 基础
 

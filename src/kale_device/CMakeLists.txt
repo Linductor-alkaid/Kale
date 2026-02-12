@@ -4,6 +4,7 @@
 
 add_library(kale_device STATIC
     placeholder.cpp
+    window_system.cpp
     # 待实现时添加：device.cpp, rdi.cpp, input_manager.cpp
 )
 

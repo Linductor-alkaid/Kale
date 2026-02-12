@@ -100,9 +100,9 @@ ${GREEN}示例${NC}:
 
 ${GREEN}CLI 工具说明${NC}:
     agent (Cursor CLI, 默认):
-      - 命令: agent
-      - Cursor IDE 的命令行工具
-      - 支持自主的 Agent 模式
+      - 命令: agent -p --force（非交互式/Headless 模式）
+      - 多会话需用 -p --force，否则第二次及后续会话会失败
+      - 脚本/CI 建议设置 CURSOR_API_KEY 环境变量
 
     claude (Claude Code CLI):
       - 命令: claude
@@ -361,9 +361,10 @@ run_claude_session() {
     echo ""
 
     # 根据 AGENT_MODE 选择 CLI 命令
+    # agent 模式必须使用 -p --force 以支持非交互式多会话（参见 Cursor Headless CLI 文档）
     local cli_cmd=""
     if [ "$AGENT_MODE" = "agent" ]; then
-        cli_cmd="agent"
+        cli_cmd="agent -p --force"
     else
         cli_cmd="claude --permission-mode acceptEdits --model $MODEL"
     fi
@@ -378,64 +379,52 @@ run_claude_session() {
         echo ""
 
         # 运行 CLI 并记录输出
-        if eval "$cli_cmd \"\$(cat $prompt_file)\"" 2>&1 | tee "$output_file"; then
-            local exit_code=${PIPESTATUS[0]}
+        # 使用 PIPESTATUS[0] 获取 agent/claude 的退出码（tee 几乎总是返回 0）
+        eval "$cli_cmd \"\$(cat $prompt_file)\"" 2>&1 | tee "$output_file"
+        local exit_code=${PIPESTATUS[0]}
 
-            if [ $exit_code -eq 0 ]; then
-                log_msg SUCCESS "✓ 会话 #$session_num 完成"
+        if [ $exit_code -eq 0 ]; then
+            log_msg SUCCESS "✓ 会话 #$session_num 完成"
 
-                # 会话后清理
-                log_msg INFO "清理临时文件..."
-                find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
-                find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
-                find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
-                find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
-
-                # 记录成功
-                {
-                    echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
-                    echo "状态: 成功"
-                    echo "输出文件: $output_file"
-                    echo ""
-                } >> "$SESSION_LOG"
-            else
-                log_msg ERROR "✗ 会话 #$session_num 失败 (退出码: $exit_code)"
-
-                # 即使失败也尝试清理
-                log_msg INFO "清理临时文件..."
-                find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
-
-                # 记录失败
-                {
-                    echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
-                    echo "状态: 失败 (退出码: $exit_code)"
-                    echo "输出文件: $output_file"
-                    echo ""
-                } >> "$SESSION_LOG"
-
-                return 1
-            fi
-        else
-            log_msg ERROR "✗ 会话 #$session_num 执行失败"
-
-            # 清理
+            # 会话后清理
+            log_msg INFO "清理临时文件..."
             find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+            find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
+            find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
+            find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
 
+            # 记录成功
             {
                 echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
-                echo "状态: 执行失败"
+                echo "状态: 成功"
+                echo "输出文件: $output_file"
                 echo ""
             } >> "$SESSION_LOG"
+        else
+            log_msg ERROR "✗ 会话 #$session_num 失败 (退出码: $exit_code)"
+
+            # 即使失败也尝试清理
+            log_msg INFO "清理临时文件..."
+            find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+
+            # 记录失败
+            {
+                echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+                echo "状态: 失败 (退出码: $exit_code)"
+                echo "输出文件: $output_file"
+                echo ""
+            } >> "$SESSION_LOG"
+
             return 1
         fi
     fi
 
     echo ""
 
-    # 会话间暂停
+    # 会话间暂停（给 Cursor 足够时间清理，避免后续会话失败）
     if [ $session_num -lt $total ]; then
-        log_msg INFO "等待 3 秒后开始下一个会话..."
-        sleep 3
+        log_msg INFO "等待 5 秒后开始下一个会话..."
+        sleep 5
         echo ""
     fi
 

@@ -2,6 +2,13 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+[2026-02-12] COMPLETED - phase1-1.1: SDL3 与窗口系统
+- 实现 WindowSystem 类与 WindowConfig 结构（width, height, title, fullscreen, resizable）
+- WindowSystem::Create() 创建 SDL 窗口（SDL_INIT_VIDEO | GAMEPAD | EVENTS，SDL_WINDOW_VULKAN）
+- WindowSystem::Destroy()、GetWindow()、GetNativeHandle()、GetWidth/GetHeight、Resize()
+- PollEvents() 与 ShouldClose() 处理 SDL_EVENT_QUIT / SDL_EVENT_WINDOW_CLOSE_REQUESTED
+- hello_kale 示例验证：创建 800x600 窗口、事件循环、尺寸与标题正确
+
 [2026-02-12 21:43] COMPLETED - phase0-0.2: 集成 SDL3 库
 - SDL3 库已通过 third_party/SDL 子目录集成
 - CMakeLists.txt 已配置自动查找和使用 SDL3
