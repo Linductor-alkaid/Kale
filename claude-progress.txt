@@ -2,6 +2,21 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-12 24:00:00 ===
+功能：phase2-2.4 Vulkan Backend 资源
+状态：已完成
+- 实现 VulkanRenderDevice 资源创建/销毁/更新（CreateBuffer、CreateTexture、CreateShader、CreatePipeline、CreateDescriptorSet）
+- 新增 vulkan_rdi_utils.hpp/cpp：RDI 到 Vulkan 类型转换（Format、BufferUsage、TextureUsage、ShaderStage 等）及资源存储结构
+- CreateBuffer：原生 Vulkan 分配（vkCreateBuffer + vkAllocateMemory），支持 cpuVisible 与 staging 上传
+- CreateTexture：VkImage + VMA 风格分配，支持初始数据 staging 上传，深度/模板 format 正确处理 aspect
+- CreateShader：VkShaderModule（SPIR-V），存储 ShaderStage 供 CreatePipeline 使用
+- CreatePipeline：VkPipelineLayout + VkGraphicsPipeline，从 context 获取 GetRenderPass()
+- CreateDescriptorSet：VkDescriptorSetLayout + VkDescriptorPool + 分配 set
+- Destroy* 系列完整实现；UpdateBuffer（cpuVisible 直接 map，否则 staging 拷贝）；UpdateTexture（staging buffer-to-image）
+- 上传用 CreateUploadCommandPoolAndBuffer / DestroyUploadCommandPoolAndBuffer，Shutdown 时释放所有资源
+- VulkanContext 新增 GetRenderPass() 供 RDI CreatePipeline 使用
+- 编译通过
+
 === 2026-02-12 23:45:00 ===
 功能：phase2-2.3 CommandList 接口
 状态：已完成

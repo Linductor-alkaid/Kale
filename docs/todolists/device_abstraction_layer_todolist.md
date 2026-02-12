@@ -98,14 +98,14 @@
 
 ### 2.4 Vulkan Backend 资源
 
-- [ ] 实现 `VulkanRenderDevice : public IRenderDevice`
-- [ ] 实现 `CreateBuffer` → VkBuffer + VMA 分配
-- [ ] 实现 `CreateTexture` → VkImage + VMA 分配
-- [ ] 实现 `CreateShader` → VkShaderModule（SPIR-V）
-- [ ] 实现 `CreatePipeline` → VkPipeline（含 layout）
-- [ ] 实现 `CreateDescriptorSet` → VkDescriptorSet / VkDescriptorPool
-- [ ] 实现 `Destroy*` 系列接口
-- [ ] 实现 `UpdateBuffer` / `UpdateTexture`（含 Staging Buffer 上传路径）
+- [x] 实现 `VulkanRenderDevice : public IRenderDevice`
+- [x] 实现 `CreateBuffer` → VkBuffer + VMA 分配
+- [x] 实现 `CreateTexture` → VkImage + VMA 分配
+- [x] 实现 `CreateShader` → VkShaderModule（SPIR-V）
+- [x] 实现 `CreatePipeline` → VkPipeline（含 layout）
+- [x] 实现 `CreateDescriptorSet` → VkDescriptorSet / VkDescriptorPool
+- [x] 实现 `Destroy*` 系列接口
+- [x] 实现 `UpdateBuffer` / `UpdateTexture`（含 Staging Buffer 上传路径）
 
 ### 2.5 Vulkan Backend 命令与同步
 

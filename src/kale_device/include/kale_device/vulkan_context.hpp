@@ -96,6 +96,9 @@ public:
     /// 是否已创建三角形渲染（CreateTriangleRendering 成功）
     bool HasTriangleRendering() const { return renderPass_ != nullptr; }
 
+    /// 获取当前 Render Pass（仅当 HasTriangleRendering 时有效，供 RDI CreatePipeline 使用）
+    VkRenderPass GetRenderPass() const { return renderPass_; }
+
     /// 获取下一帧 Swapchain 图像索引；内部会等待 Fence、Acquire。
     /// \param outImageIndex 输出图像索引
     /// \return 成功返回 true；若需重建 Swapchain（如 VK_ERROR_OUT_OF_DATE_KHR）返回 false

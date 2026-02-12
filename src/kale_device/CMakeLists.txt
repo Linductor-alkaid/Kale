@@ -6,6 +6,7 @@ add_library(kale_device STATIC
     placeholder.cpp
     window_system.cpp
     vulkan_context.cpp
+    vulkan_rdi_utils.cpp
     input_manager.cpp
     render_device.cpp
     vulkan_render_device.cpp

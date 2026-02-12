@@ -301,7 +301,7 @@
         "实现 Destroy* 系列接口",
         "实现 UpdateBuffer / UpdateTexture（含 Staging Buffer 上传路径）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "成功创建和管理 Vulkan 资源，无内存泄漏"

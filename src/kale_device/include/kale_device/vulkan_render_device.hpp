@@ -1,9 +1,9 @@
 /**
  * @file vulkan_render_device.hpp
- * @brief Vulkan 后端 IRenderDevice 实现（Phase 2.2 最小可初始化实现）
+ * @brief Vulkan 后端 IRenderDevice 实现
  *
- * 包装 VulkanContext，实现 Initialize/Shutdown/GetLastError；
- * 其余接口为占位，完整实现见 phase2-2.4 / 2.5 / 2.6。
+ * Phase 2.4: 资源创建/销毁/更新（Buffer、Texture、Shader、Pipeline、DescriptorSet）
+ * Phase 2.5/2.6: 命令与同步、Swapchain 由后续实现。
  */
 
 #pragma once
@@ -11,13 +11,15 @@
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_device/vulkan_context.hpp>
+#include <kale_device/vulkan_rdi_utils.hpp>
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace kale_device {
 
-/** Vulkan 后端渲染设备（当前仅保证可初始化，资源/命令/同步由后续 Phase 实现）*/
+/** Vulkan 后端渲染设备 */
 class VulkanRenderDevice : public IRenderDevice {
 public:
     VulkanRenderDevice() = default;
@@ -72,10 +74,35 @@ public:
     const VulkanContext* GetContext() const { return &context_; }
 
 private:
+    bool CreateVmaOrAllocBuffer(const BufferDesc& desc, const void* data,
+                                VkBuffer* outBuffer, VkDeviceMemory* outMemory, VkDeviceSize* outSize);
+    void DestroyVmaOrAllocBuffer(VkBuffer buffer, VkDeviceMemory memory);
+    bool CreateTextureInternal(const TextureDesc& desc, const void* data,
+                              VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outView);
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags props);
+    bool CreateUploadCommandPoolAndBuffer();
+    void DestroyUploadCommandPoolAndBuffer();
+
     VulkanContext context_;
     DeviceCapabilities capabilities_{};
     std::uint32_t currentImageIndex_ = 0;
     std::uint32_t currentFrameIndex_ = 0;
+
+    // 资源表（Phase 2.4）
+    std::unordered_map<std::uint64_t, VulkanBufferRes> buffers_;
+    std::unordered_map<std::uint64_t, VulkanTextureRes> textures_;
+    std::unordered_map<std::uint64_t, VulkanShaderRes> shaders_;
+    std::unordered_map<std::uint64_t, VulkanPipelineRes> pipelines_;
+    std::unordered_map<std::uint64_t, VulkanDescriptorSetRes> descriptorSets_;
+    std::uint64_t nextBufferId_ = 1;
+    std::uint64_t nextTextureId_ = 1;
+    std::uint64_t nextShaderId_ = 1;
+    std::uint64_t nextPipelineId_ = 1;
+    std::uint64_t nextDescriptorSetId_ = 1;
+
+    // 上传用（UpdateBuffer/UpdateTexture 的 staging 与 copy 命令）
+    VkCommandPool uploadCommandPool_ = nullptr;
+    VkCommandBuffer uploadCommandBuffer_ = nullptr;
 };
 
 }  // namespace kale_device
