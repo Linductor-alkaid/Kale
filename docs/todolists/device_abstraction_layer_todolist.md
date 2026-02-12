@@ -37,12 +37,12 @@
 
 ### 1.3 简单三角形渲染
 
-- [ ] 创建 Vulkan Command Pool 与 Command Buffer
-- [ ] 实现 Render Pass（单次 Color Attachment）
-- [ ] 创建三角形顶点 Buffer（Vertex + Index）
-- [ ] 加载 SPIR-V 着色器，创建 Shader Module
-- [ ] 创建 Graphics Pipeline（TriangleList）
-- [ ] 实现一帧完整流程：Acquire → Record → Submit → Present
+- [x] 创建 Vulkan Command Pool 与 Command Buffer
+- [x] 实现 Render Pass（单次 Color Attachment）
+- [x] 创建三角形顶点 Buffer（Vertex + Index）
+- [x] 加载 SPIR-V 着色器，创建 Shader Module
+- [x] 创建 Graphics Pipeline（TriangleList）
+- [x] 实现一帧完整流程：Acquire → Record → Submit → Present
 
 ### 1.4 输入系统基础
 

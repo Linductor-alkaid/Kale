@@ -94,7 +94,7 @@
         "创建 Graphics Pipeline（TriangleList）",
         "实现一帧完整流程：Acquire → Record → Submit → Present"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.2"],
       "test_verification": "成功在窗口中渲染一个三角形，验证每帧渲染流程正常"

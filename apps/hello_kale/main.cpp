@@ -1,5 +1,5 @@
 // Hello Kale - 最小示例
-// 验证 WindowSystem + Vulkan 基础：窗口、Vulkan Instance/Device/Surface/Swapchain
+// 验证 WindowSystem + Vulkan 基础 + 简单三角形渲染（phase1-1.3）
 
 #include <kale_device/window_system.hpp>
 #include <kale_device/vulkan_context.hpp>
@@ -10,7 +10,7 @@ int main() {
     kale_device::WindowConfig config;
     config.width = 800;
     config.height = 600;
-    config.title = "Hello Kale - Window + Vulkan";
+    config.title = "Hello Kale - Triangle";
 
     if (!window.Create(config)) {
         std::cerr << "WindowSystem::Create failed\n";
@@ -24,7 +24,7 @@ int main() {
     vkConfig.windowHandle = window.GetNativeHandle();
     vkConfig.width = window.GetWidth();
     vkConfig.height = window.GetHeight();
-    vkConfig.enableValidation = false;  // 设为 true 时需安装 Vulkan 验证层（如 Vulkan SDK）
+    vkConfig.enableValidation = false;
     vkConfig.vsync = true;
     vkConfig.backBufferCount = 3;
 
@@ -33,16 +33,32 @@ int main() {
         window.Destroy();
         return 1;
     }
-    std::cout << "Vulkan: instance=" << vulkan.GetInstance()
-              << " device=" << vulkan.GetDevice()
-              << " swapchain images=" << vulkan.GetSwapchainImageCount()
+    std::cout << "Vulkan: swapchain images=" << vulkan.GetSwapchainImageCount()
               << " size=" << vulkan.GetSwapchainWidth() << "x" << vulkan.GetSwapchainHeight() << "\n";
+
+    // 尝试多个着色器路径：从 build/apps/hello_kale 运行用 "shaders"，从 build 运行用 "apps/hello_kale/shaders"
+    if (!vulkan.CreateTriangleRendering("shaders") &&
+        !vulkan.CreateTriangleRendering("apps/hello_kale/shaders")) {
+        std::cerr << "CreateTriangleRendering failed: " << vulkan.GetLastError() << "\n";
+        vulkan.Shutdown();
+        window.Destroy();
+        return 1;
+    }
+    std::cout << "Triangle rendering initialized.\n";
 
     int frames = 0;
     while (window.PollEvents() && !window.ShouldClose()) {
+        uint32_t imageIndex = 0;
+        if (!vulkan.AcquireNextImage(imageIndex)) {
+            continue;  // OUT_OF_DATE 等，跳过本帧
+        }
+        vulkan.RecordCommandBuffer(imageIndex);
+        if (!vulkan.SubmitAndPresent(imageIndex)) {
+            continue;
+        }
         ++frames;
         if (frames <= 3 || frames % 60 == 0) {
-            std::cout << "Frame " << frames << " size=" << window.GetWidth() << "x" << window.GetHeight() << "\n";
+            std::cout << "Frame " << frames << "\n";
         }
     }
 

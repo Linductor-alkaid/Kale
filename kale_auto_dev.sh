@@ -1,6 +1,13 @@
 #!/bin/bash
 # kale_auto_dev.sh - 自动化运行多次 Claude Code 开发会话
 # 用法: ./kale_auto_dev.sh <次数> [选项]
+# 
+# 修复版本 - 解决第二次会话失败问题：
+# 1. 移除 eval 使用，直接执行命令
+# 2. 正确获取退出码
+# 3. 增加会话间隔时间
+# 4. 添加 Cursor 进程清理
+# 5. 检查必要的环境变量
 
 # ==================== 颜色定义 ====================
 RED='\033[0;31m'
@@ -28,6 +35,7 @@ DRY_RUN=false
 CONTINUE=false
 START_SESSION=1
 AGENT_MODE="agent"  # agent 或 claude
+SESSION_INTERVAL=10  # 会话间隔秒数（默认 10 秒）
 
 # ==================== 函数定义 ====================
 
@@ -43,6 +51,7 @@ log_msg() {
         SUCCESS) color="$GREEN" ;;
         WARNING) color="$YELLOW" ;;
         ERROR) color="$RED" ;;
+        DEBUG) color="$CYAN" ;;
         *) color="$NC" ;;
     esac
 
@@ -87,6 +96,7 @@ ${GREEN}选项${NC}:
     --agent <cli>       CLI 工具选择 (默认: agent，可选: agent, claude)
                         - agent: 使用 Cursor CLI (命令: agent)
                         - claude: 使用 Claude Code CLI (命令: claude)
+    --interval <秒>     会话间隔时间 (默认: 10 秒)
     --continue          从上次中断处继续
     --dry-run           只显示命令，不实际执行
     -h, --help          显示此帮助信息
@@ -95,6 +105,7 @@ ${GREEN}示例${NC}:
     $0 5                         运行 5 次 Cursor Agent 会话（默认）
     $0 10 --agent claude         运行 10 次 Claude Code 会话
     $0 3 --model opus            使用 Opus 模型运行 3 次
+    $0 5 --interval 15           运行 5 次，每次间隔 15 秒
     $0 --dry-run                 预览将要执行的会话
     $0 --continue                从上次中断处继续
 
@@ -103,6 +114,7 @@ ${GREEN}CLI 工具说明${NC}:
       - 命令: agent -p --force（非交互式/Headless 模式）
       - 多会话需用 -p --force，否则第二次及后续会话会失败
       - 脚本/CI 建议设置 CURSOR_API_KEY 环境变量
+      - 修复: 优化了退出码检测和进程清理
 
     claude (Claude Code CLI):
       - 命令: claude
@@ -121,6 +133,14 @@ ${GREEN}工作流程${NC}:
 ${GREEN}日志位置${NC}:
     - 主日志: $LOG_DIR/auto_dev_<timestamp>.log
     - 会话历史: $SESSION_LOG
+
+${GREEN}修复说明${NC}:
+    本版本解决了第二次会话失败的问题：
+    - 移除了 eval 命令执行
+    - 正确获取命令退出码
+    - 增加会话间隔（默认 10 秒）
+    - 添加 Cursor 后台进程清理
+    - 改进错误处理和日志记录
 
 EOF
 }
@@ -148,13 +168,13 @@ parse_args() {
             if [ -n "$LAST_SESSION" ]; then
                 START_SESSION=$((LAST_SESSION + 1))
                 NUM_RUNS=9999
-                echo "继续模式：将从会话 #$START_SESSION 开始"
+                log_msg INFO "继续模式：将从会话 #$START_SESSION 开始"
             else
-                echo "错误：无法找到之前的会话记录"
+                log_msg ERROR "无法找到之前的会话记录"
                 exit 1
             fi
         else
-            echo "错误：会话日志不存在: $SESSION_LOG"
+            log_msg ERROR "会话日志不存在: $SESSION_LOG"
             exit 1
         fi
         shift
@@ -166,7 +186,7 @@ parse_args() {
             NUM_RUNS=$1
             shift
         else
-            echo "错误：第一个参数必须是数字"
+            log_msg ERROR "第一个参数必须是数字"
             show_usage
             exit 1
         fi
@@ -182,8 +202,16 @@ parse_args() {
             --agent)
                 AGENT_MODE="$2"
                 if [ "$AGENT_MODE" != "agent" ] && [ "$AGENT_MODE" != "claude" ]; then
-                    echo "错误: --agent 参数必须是 'agent' 或 'claude'"
+                    log_msg ERROR "--agent 参数必须是 'agent' 或 'claude'"
                     show_usage
+                    exit 1
+                fi
+                shift 2
+                ;;
+            --interval)
+                SESSION_INTERVAL="$2"
+                if ! [[ "$SESSION_INTERVAL" =~ ^[0-9]+$ ]]; then
+                    log_msg ERROR "--interval 参数必须是数字"
                     exit 1
                 fi
                 shift 2
@@ -193,12 +221,40 @@ parse_args() {
                 shift
                 ;;
             *)
-                echo "未知选项: $1"
+                log_msg ERROR "未知选项: $1"
                 show_usage
                 exit 1
                 ;;
         esac
     done
+}
+
+# 清理 Cursor 后台进程
+cleanup_cursor_processes() {
+    if [ "$AGENT_MODE" = "agent" ]; then
+        log_msg DEBUG "检查并清理 Cursor 后台进程..."
+        
+        # 查找可能残留的 agent 进程
+        local agent_pids=$(pgrep -f "agent.*--force" 2>/dev/null || true)
+        if [ -n "$agent_pids" ]; then
+            log_msg WARNING "发现残留的 agent 进程: $agent_pids"
+            echo "$agent_pids" | xargs kill -9 2>/dev/null || true
+            sleep 2
+        fi
+        
+        # 清理可能的锁文件
+        local lock_files=(
+            "$HOME/.cursor/agent.lock"
+            "$HOME/.cursor/.agent.lock"
+            "/tmp/cursor-agent.lock"
+        )
+        for lock_file in "${lock_files[@]}"; do
+            if [ -f "$lock_file" ]; then
+                log_msg DEBUG "删除锁文件: $lock_file"
+                rm -f "$lock_file" 2>/dev/null || true
+            fi
+        done
+    fi
 }
 
 # 检查环境
@@ -224,6 +280,16 @@ check_environment() {
         exit 1
     fi
     log_msg SUCCESS "✓ $cli_name CLI 已安装"
+
+    # 检查 Cursor API Key（对 agent 模式）
+    if [ "$AGENT_MODE" = "agent" ]; then
+        if [ -z "$CURSOR_API_KEY" ]; then
+            log_msg WARNING "未设置 CURSOR_API_KEY 环境变量"
+            log_msg WARNING "建议设置以避免认证问题: export CURSOR_API_KEY=your_key"
+        else
+            log_msg SUCCESS "✓ CURSOR_API_KEY 已设置"
+        fi
+    fi
 
     # 检查必要文件
     if [ ! -f "$KALE_ROOT/feature_list.json" ]; then
@@ -258,12 +324,11 @@ check_environment() {
         fi
     fi
 
+    # 清理可能残留的进程
+    cleanup_cursor_processes
+
     echo ""
 }
-
-# 生成 Agent 模式的 prompt（更自主）
-
-# 生成 Claude 模式的 prompt（更详细的指令）
 
 # 根据模式生成 prompt
 generate_prompt() {
@@ -316,7 +381,7 @@ generate_prompt() {
 EOF
 }
 
-# 运行单次 Claude Code 会话
+# 运行单次开发会话
 run_claude_session() {
     local session_num=$1
     local total=$2
@@ -352,79 +417,107 @@ run_claude_session() {
         echo "=========================================="
         echo "开发会话 #${session_num}/${total}"
         echo "开始时间: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "CLI 工具: $AGENT_MODE"
         echo "模型: $MODEL"
         echo "=========================================="
         echo ""
     } >> "$SESSION_LOG"
 
     log_msg INFO "会话 #$session_num 开始..."
+    log_msg DEBUG "Prompt 文件: $prompt_file"
+    log_msg DEBUG "输出文件: $output_file"
     echo ""
-
-    # 根据 AGENT_MODE 选择 CLI 命令
-    # agent 模式必须使用 -p --force 以支持非交互式多会话（参见 Cursor Headless CLI 文档）
-    local cli_cmd=""
-    if [ "$AGENT_MODE" = "agent" ]; then
-        cli_cmd="agent -p --force"
-    else
-        cli_cmd="claude --permission-mode acceptEdits --model $MODEL"
-    fi
 
     # 执行或显示命令
     if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] 将要执行的命令:${NC}"
-        echo "$cli_cmd \"\$(cat $prompt_file)\""
-        echo ""
-    else
-        log_msg INFO "运行 $AGENT_MODE..."
-        echo ""
-
-        # 运行 CLI 并记录输出
-        # 使用 PIPESTATUS[0] 获取 agent/claude 的退出码（tee 几乎总是返回 0）
-        eval "$cli_cmd \"\$(cat $prompt_file)\"" 2>&1 | tee "$output_file"
-        local exit_code=${PIPESTATUS[0]}
-
-        if [ $exit_code -eq 0 ]; then
-            log_msg SUCCESS "✓ 会话 #$session_num 完成"
-
-            # 会话后清理
-            log_msg INFO "清理临时文件..."
-            find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
-            find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
-            find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
-            find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
-
-            # 记录成功
-            {
-                echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
-                echo "状态: 成功"
-                echo "输出文件: $output_file"
-                echo ""
-            } >> "$SESSION_LOG"
+        if [ "$AGENT_MODE" = "agent" ]; then
+            echo "agent -p --force \"\$(cat $prompt_file)\""
         else
-            log_msg ERROR "✗ 会话 #$session_num 失败 (退出码: $exit_code)"
-
-            # 即使失败也尝试清理
-            log_msg INFO "清理临时文件..."
-            find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
-
-            # 记录失败
-            {
-                echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
-                echo "状态: 失败 (退出码: $exit_code)"
-                echo "输出文件: $output_file"
-                echo ""
-            } >> "$SESSION_LOG"
-
-            return 1
+            echo "claude --permission-mode acceptEdits --model $MODEL \"\$(cat $prompt_file)\""
         fi
+        echo ""
+        return 0
+    fi
+
+    log_msg INFO "运行 $AGENT_MODE CLI..."
+    echo ""
+
+    # 根据 AGENT_MODE 执行命令
+    # 修复：直接执行命令，不使用 eval，正确获取退出码
+    local exit_code=0
+    
+    if [ "$AGENT_MODE" = "agent" ]; then
+        # Cursor Agent 模式
+        cd "$KALE_ROOT" || exit 1
+        agent -p --force "$(cat "$prompt_file")" > "$output_file" 2>&1
+        exit_code=$?
+    else
+        # Claude Code 模式
+        cd "$KALE_ROOT" || exit 1
+        claude --permission-mode acceptEdits --model "$MODEL" "$(cat "$prompt_file")" > "$output_file" 2>&1
+        exit_code=$?
+    fi
+
+    # 显示输出
+    cat "$output_file"
+    echo ""
+
+    # 检查执行结果
+    if [ $exit_code -eq 0 ]; then
+        log_msg SUCCESS "✓ 会话 #$session_num 完成 (退出码: $exit_code)"
+
+        # 会话后清理
+        log_msg INFO "清理临时文件..."
+        find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+        find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.cpp" -delete 2>/dev/null || true
+        find "$KALE_ROOT" -maxdepth 1 -type f -name "test_*.c" -delete 2>/dev/null || true
+        find "$KALE_ROOT" -maxdepth 1 -type f -name "CMakeLists_test.txt" -delete 2>/dev/null || true
+
+        # 记录成功
+        {
+            echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "状态: 成功 (退出码: $exit_code)"
+            echo "输出文件: $output_file"
+            echo ""
+        } >> "$SESSION_LOG"
+    else
+        log_msg ERROR "✗ 会话 #$session_num 失败 (退出码: $exit_code)"
+        log_msg ERROR "详细信息请查看: $output_file"
+
+        # 即使失败也尝试清理
+        log_msg INFO "清理临时文件..."
+        find "$KALE_ROOT" -maxdepth 1 -type d -name "test_*" -exec rm -rf {} + 2>/dev/null || true
+
+        # 清理可能残留的进程
+        cleanup_cursor_processes
+
+        # 记录失败
+        {
+            echo "完成时间: $(date '+%Y-%m-%d %H:%M:%S')"
+            echo "状态: 失败 (退出码: $exit_code)"
+            echo "输出文件: $output_file"
+            echo ""
+        } >> "$SESSION_LOG"
+
+        return 1
     fi
 
     echo ""
 
-    # 会话间暂停（给 Cursor 足够时间清理，避免后续会话失败）
+    # 会话间暂停（给 CLI 工具足够时间清理）
     if [ $session_num -lt $total ]; then
-        log_msg INFO "等待 5 秒后开始下一个会话..."
-        sleep 5
+        log_msg INFO "等待 $SESSION_INTERVAL 秒后开始下一个会话..."
+        
+        # 清理进程
+        cleanup_cursor_processes
+        
+        # 倒计时显示
+        for ((i=SESSION_INTERVAL; i>0; i--)); do
+            echo -ne "\r剩余 $i 秒...  "
+            sleep 1
+        done
+        echo -e "\r\033[K"  # 清除倒计时行
         echo ""
     fi
 
@@ -457,7 +550,7 @@ show_summary() {
 
     # Git 统计
     if [ -d "$KALE_ROOT/.git" ]; then
-        echo "Git 提交统计:"
+        echo "Git 提交统计 (最近 10 次):"
         git -C "$KALE_ROOT" log --oneline -10 2>/dev/null | while read commit; do
             echo "  ✓ $commit"
         done
@@ -500,7 +593,7 @@ main() {
 
     # 打印标题
     print_separator
-    echo -e "${MAGENTA}🤖 Kale 渲染引擎 - 自动化开发系统${NC}"
+    echo -e "${MAGENTA}🤖 Kale 渲染引擎 - 自动化开发系统 (修复版)${NC}"
     print_separator
     echo ""
 
@@ -510,6 +603,7 @@ main() {
     echo "  CLI 工具: $AGENT_MODE"
     echo "  使用模型: $MODEL"
     echo "  开始会话: #$START_SESSION"
+    echo "  会话间隔: $SESSION_INTERVAL 秒"
     echo "  日志文件: $LOG_FILE"
     if [ "$DRY_RUN" = true ]; then
         echo -e "  ${YELLOW}模式: DRY RUN${NC}"
@@ -531,6 +625,10 @@ main() {
             ((successful++))
         else
             log_msg WARNING "会话 #$i 失败，继续下一个会话..."
+            
+            # 失败后额外等待，确保环境清理
+            log_msg INFO "等待额外 5 秒确保环境清理..."
+            sleep 5
         fi
     done
 
