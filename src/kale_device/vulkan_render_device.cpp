@@ -36,6 +36,10 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
         Shutdown();
         return false;
     }
+    if (!CreateFrameSyncObjects() || !CreateCommandPoolsAndBuffers()) {
+        Shutdown();
+        return false;
+    }
 
     capabilities_.maxTextureSize = 4096;
     capabilities_.maxComputeWorkGroupSize[0] = 256;
@@ -85,6 +89,8 @@ void VulkanRenderDevice::Shutdown() {
     }
     descriptorSets_.clear();
 
+    DestroyCommandPoolsAndBuffers();
+    DestroyFrameSyncObjects();
     DestroyUploadCommandPoolAndBuffer();
     context_.Shutdown();
     capabilities_ = DeviceCapabilities{};
@@ -941,6 +947,81 @@ bool VulkanRenderDevice::CreateUploadCommandPoolAndBuffer() {
     return true;
 }
 
+bool VulkanRenderDevice::CreateFrameSyncObjects() {
+    VkDevice dev = context_.GetDevice();
+    frameFences_.resize(kMaxFramesInFlight);
+    frameImageAvailableSemaphores_.resize(kMaxFramesInFlight);
+    frameRenderFinishedSemaphores_.resize(kMaxFramesInFlight);
+
+    VkSemaphoreCreateInfo semInfo = {};
+    semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VkFenceCreateInfo fenceInfo = {};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = 0;
+    for (std::uint32_t i = 0; i < kMaxFramesInFlight; ++i) {
+        if (vkCreateSemaphore(dev, &semInfo, nullptr, &frameImageAvailableSemaphores_[i]) != VK_SUCCESS) return false;
+        if (vkCreateSemaphore(dev, &semInfo, nullptr, &frameRenderFinishedSemaphores_[i]) != VK_SUCCESS) return false;
+        fenceInfo.flags = (i == 0) ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
+        if (vkCreateFence(dev, &fenceInfo, nullptr, &frameFences_[i]) != VK_SUCCESS) return false;
+    }
+    return true;
+}
+
+void VulkanRenderDevice::DestroyFrameSyncObjects() {
+    VkDevice dev = context_.GetDevice();
+    for (auto s : frameImageAvailableSemaphores_) { if (s != VK_NULL_HANDLE) vkDestroySemaphore(dev, s, nullptr); }
+    frameImageAvailableSemaphores_.clear();
+    for (auto s : frameRenderFinishedSemaphores_) { if (s != VK_NULL_HANDLE) vkDestroySemaphore(dev, s, nullptr); }
+    frameRenderFinishedSemaphores_.clear();
+    for (auto f : frameFences_) { if (f != VK_NULL_HANDLE) vkDestroyFence(dev, f, nullptr); }
+    frameFences_.clear();
+    for (auto& [id, vkf] : fences_) { if (vkf != VK_NULL_HANDLE) vkDestroyFence(dev, vkf, nullptr); }
+    fences_.clear();
+    for (auto& [id, vks] : semaphores_) { if (vks != VK_NULL_HANDLE) vkDestroySemaphore(dev, vks, nullptr); }
+    semaphores_.clear();
+}
+
+bool VulkanRenderDevice::CreateCommandPoolsAndBuffers() {
+    VkDevice dev = context_.GetDevice();
+    std::uint32_t queueFamily = context_.GetGraphicsQueueFamilyIndex();
+    const std::uint32_t maxThreads = 1u;
+    commandPools_.resize(maxThreads);
+    commandBuffers_.resize(maxThreads);
+    commandListPool_.resize(maxThreads);
+
+    for (std::uint32_t ti = 0; ti < maxThreads; ++ti) {
+        VkCommandPoolCreateInfo poolInfo = {};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = queueFamily;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        if (vkCreateCommandPool(dev, &poolInfo, nullptr, &commandPools_[ti]) != VK_SUCCESS) return false;
+
+        commandBuffers_[ti].resize(kMaxFramesInFlight);
+        VkCommandBufferAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = commandPools_[ti];
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = kMaxFramesInFlight;
+        if (vkAllocateCommandBuffers(dev, &allocInfo, commandBuffers_[ti].data()) != VK_SUCCESS) return false;
+
+        commandListPool_[ti].resize(kMaxFramesInFlight);
+        for (std::uint32_t fi = 0; fi < kMaxFramesInFlight; ++fi)
+            commandListPool_[ti][fi] = std::make_unique<VulkanCommandList>(this, commandBuffers_[ti][fi], 0u);
+    }
+    return true;
+}
+
+void VulkanRenderDevice::DestroyCommandPoolsAndBuffers() {
+    VkDevice dev = context_.GetDevice();
+    commandListPool_.clear();
+    for (auto& perThread : commandBuffers_) perThread.clear();
+    commandBuffers_.clear();
+    for (auto pool : commandPools_) {
+        if (pool != VK_NULL_HANDLE) vkDestroyCommandPool(dev, pool, nullptr);
+    }
+    commandPools_.clear();
+}
+
 void VulkanRenderDevice::DestroyUploadCommandPoolAndBuffer() {
     VkDevice dev = context_.GetDevice();
     if (uploadCommandPool_ != VK_NULL_HANDLE) {
@@ -954,52 +1035,156 @@ void VulkanRenderDevice::DestroyUploadCommandPoolAndBuffer() {
 }
 
 // =============================================================================
-// 命令 / 同步 / 交换链（占位，Phase 2.5/2.6）
+// 命令与同步（Phase 2.5）
 // =============================================================================
 
-CommandList* VulkanRenderDevice::BeginCommandList(std::uint32_t) {
-    return nullptr;
+CommandList* VulkanRenderDevice::BeginCommandList(std::uint32_t threadIndex) {
+    if (!context_.IsInitialized()) return nullptr;
+    if (threadIndex >= commandListPool_.size()) return nullptr;
+    std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
+    VulkanCommandList* cmd = commandListPool_[threadIndex][frameIndex].get();
+    VkCommandBuffer buf = commandBuffers_[threadIndex][frameIndex];
+    vkResetCommandBuffer(buf, 0);
+    VkCommandBufferBeginInfo beginInfo = {};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    if (vkBeginCommandBuffer(buf, &beginInfo) != VK_SUCCESS) return nullptr;
+    cmd->SetSwapchainImageIndex(currentImageIndex_);
+    return cmd;
 }
 
-void VulkanRenderDevice::EndCommandList(CommandList*) {}
+void VulkanRenderDevice::EndCommandList(CommandList* cmd) {
+    if (!cmd) return;
+    auto* vc = static_cast<VulkanCommandList*>(cmd);
+    vkEndCommandBuffer(vc->GetCommandBuffer());
+}
 
-void VulkanRenderDevice::Submit(const std::vector<CommandList*>&,
-                               const std::vector<SemaphoreHandle>&,
-                               const std::vector<SemaphoreHandle>&,
-                               FenceHandle) {}
+void VulkanRenderDevice::Submit(const std::vector<CommandList*>& cmdLists,
+                               const std::vector<SemaphoreHandle>& waitSemaphores,
+                               const std::vector<SemaphoreHandle>& signalSemaphores,
+                               FenceHandle fence) {
+    if (!context_.IsInitialized() || cmdLists.empty()) return;
+    VkDevice dev = context_.GetDevice();
+    VkQueue queue = context_.GetGraphicsQueue();
+    std::vector<VkCommandBuffer> vkBuffers;
+    vkBuffers.reserve(cmdLists.size());
+    for (CommandList* c : cmdLists) {
+        auto* vc = static_cast<VulkanCommandList*>(c);
+        vkBuffers.push_back(vc->GetCommandBuffer());
+    }
+
+    std::vector<VkSemaphore> waitSems;
+    std::vector<VkPipelineStageFlags> waitStages;
+    if (waitSemaphores.empty()) {
+        waitSems.push_back(frameImageAvailableSemaphores_[currentFrameIndex_ % kMaxFramesInFlight]);
+        waitStages.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    } else {
+        for (const auto& h : waitSemaphores) {
+            auto it = semaphores_.find(h.id);
+            if (it != semaphores_.end()) { waitSems.push_back(it->second); waitStages.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT); }
+        }
+    }
+    std::vector<VkSemaphore> signalSems;
+    if (signalSemaphores.empty())
+        signalSems.push_back(frameRenderFinishedSemaphores_[currentFrameIndex_ % kMaxFramesInFlight]);
+    else {
+        for (const auto& h : signalSemaphores) {
+            auto it = semaphores_.find(h.id);
+            if (it != semaphores_.end()) signalSems.push_back(it->second);
+        }
+    }
+    VkFence submitFence = VK_NULL_HANDLE;
+    if (fence.IsValid()) {
+        auto it = fences_.find(fence.id);
+        if (it != fences_.end()) submitFence = it->second;
+    } else
+        submitFence = frameFences_[currentFrameIndex_ % kMaxFramesInFlight];
+
+    VkSubmitInfo submitInfo = {};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.waitSemaphoreCount = static_cast<std::uint32_t>(waitSems.size());
+    submitInfo.pWaitSemaphores = waitSems.data();
+    submitInfo.pWaitDstStageMask = waitStages.data();
+    submitInfo.commandBufferCount = static_cast<std::uint32_t>(vkBuffers.size());
+    submitInfo.pCommandBuffers = vkBuffers.data();
+    submitInfo.signalSemaphoreCount = static_cast<std::uint32_t>(signalSems.size());
+    submitInfo.pSignalSemaphores = signalSems.data();
+    vkQueueSubmit(queue, 1, &submitInfo, submitFence);
+}
 
 void VulkanRenderDevice::WaitIdle() {
     if (context_.IsInitialized())
         vkDeviceWaitIdle(context_.GetDevice());
 }
 
-FenceHandle VulkanRenderDevice::CreateFence(bool) {
-    return FenceHandle{};
+FenceHandle VulkanRenderDevice::CreateFence(bool signaled) {
+    if (!context_.IsInitialized()) return FenceHandle{};
+    VkFenceCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    info.flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0u;
+    VkFence f = VK_NULL_HANDLE;
+    if (vkCreateFence(context_.GetDevice(), &info, nullptr, &f) != VK_SUCCESS) return FenceHandle{};
+    std::uint64_t id = nextFenceId_++;
+    fences_[id] = f;
+    FenceHandle h;
+    h.id = id;
+    return h;
 }
 
-void VulkanRenderDevice::WaitForFence(FenceHandle, std::uint64_t) {}
+void VulkanRenderDevice::WaitForFence(FenceHandle fence, std::uint64_t timeout) {
+    if (!fence.IsValid() || !context_.IsInitialized()) return;
+    auto it = fences_.find(fence.id);
+    if (it != fences_.end())
+        vkWaitForFences(context_.GetDevice(), 1, &it->second, VK_TRUE, timeout);
+}
 
-void VulkanRenderDevice::ResetFence(FenceHandle) {}
+void VulkanRenderDevice::ResetFence(FenceHandle fence) {
+    if (!fence.IsValid() || !context_.IsInitialized()) return;
+    auto it = fences_.find(fence.id);
+    if (it != fences_.end())
+        vkResetFences(context_.GetDevice(), 1, &it->second);
+}
 
 SemaphoreHandle VulkanRenderDevice::CreateSemaphore() {
-    return SemaphoreHandle{};
+    if (!context_.IsInitialized()) return SemaphoreHandle{};
+    VkSemaphoreCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VkSemaphore s = VK_NULL_HANDLE;
+    if (vkCreateSemaphore(context_.GetDevice(), &info, nullptr, &s) != VK_SUCCESS) return SemaphoreHandle{};
+    std::uint64_t id = nextSemaphoreId_++;
+    semaphores_[id] = s;
+    SemaphoreHandle h;
+    h.id = id;
+    return h;
 }
 
 std::uint32_t VulkanRenderDevice::AcquireNextImage() {
     if (!context_.IsInitialized()) return 0;
-    uint32_t idx = 0;
-    if (context_.AcquireNextImage(idx)) {
-        currentImageIndex_ = idx;
-        return idx;
-    }
-    return 0;
+    VkDevice dev = context_.GetDevice();
+    std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
+    vkWaitForFences(dev, 1, &frameFences_[frameIndex], VK_TRUE, UINT64_MAX);
+    vkResetFences(dev, 1, &frameFences_[frameIndex]);
+    std::uint32_t imageIndex = 0;
+    VkResult err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,
+                                         frameImageAvailableSemaphores_[frameIndex], VK_NULL_HANDLE, &imageIndex);
+    if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_SUBOPTIMAL_KHR) { /* 调用方可处理 */ }
+    if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) return 0;
+    currentImageIndex_ = imageIndex;
+    return imageIndex;
 }
 
 void VulkanRenderDevice::Present() {
-    if (context_.IsInitialized() && context_.HasTriangleRendering()) {
-        context_.SubmitAndPresent(currentImageIndex_);
-    }
-    currentFrameIndex_ = (currentFrameIndex_ + 1) % 2;
+    if (!context_.IsInitialized()) return;
+    VkSwapchainKHR swapchain = context_.GetSwapchain();
+    VkPresentInfoKHR presentInfo = {};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &frameRenderFinishedSemaphores_[frameIndex];
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = &swapchain;
+    presentInfo.pImageIndices = &currentImageIndex_;
+    vkQueuePresentKHR(context_.GetPresentQueue(), &presentInfo);
+    currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
 }
 
 TextureHandle VulkanRenderDevice::GetBackBuffer() {
@@ -1014,6 +1199,145 @@ std::uint32_t VulkanRenderDevice::GetCurrentFrameIndex() const {
 
 const DeviceCapabilities& VulkanRenderDevice::GetCapabilities() const {
     return capabilities_;
+}
+
+// =============================================================================
+// VulkanCommandList 实现
+// =============================================================================
+
+VulkanCommandList::VulkanCommandList(VulkanRenderDevice* device, VkCommandBuffer buffer,
+                                     std::uint32_t swapchainImageIndex)
+    : device_(device), commandBuffer_(buffer), swapchainImageIndex_(swapchainImageIndex) {}
+
+void VulkanCommandList::BeginRenderPass(const std::vector<TextureHandle>& colorAttachments,
+                                        TextureHandle depthAttachment) {
+    (void)depthAttachment;
+    if (!device_ || !commandBuffer_ || colorAttachments.empty()) return;
+    VulkanContext* ctx = device_->GetContext();
+    VkRenderPass rp = ctx->GetRenderPass();
+    if (!rp) return;
+    std::uint32_t scCount = ctx->GetSwapchainImageCount();
+    std::uint32_t width = ctx->GetSwapchainWidth();
+    std::uint32_t height = ctx->GetSwapchainHeight();
+    VkFramebuffer fb = VK_NULL_HANDLE;
+    if (colorAttachments[0].id >= 1 && colorAttachments[0].id <= scCount)
+        fb = ctx->GetFramebuffer(static_cast<std::uint32_t>(colorAttachments[0].id - 1));
+    if (!fb) return;
+    VkClearValue clear = {};
+    clear.color = {{ 0.0f, 0.0f, 0.1f, 1.0f }};
+    VkRenderPassBeginInfo rpBegin = {};
+    rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    rpBegin.renderPass = rp;
+    rpBegin.framebuffer = fb;
+    rpBegin.renderArea = {{ 0, 0 }, { width, height }};
+    rpBegin.clearValueCount = 1;
+    rpBegin.pClearValues = &clear;
+    vkCmdBeginRenderPass(commandBuffer_, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void VulkanCommandList::EndRenderPass() {
+    if (commandBuffer_) vkCmdEndRenderPass(commandBuffer_);
+}
+
+void VulkanCommandList::BindPipeline(PipelineHandle pipeline) {
+    if (!device_ || !commandBuffer_ || !pipeline.IsValid()) return;
+    auto it = device_->pipelines_.find(pipeline.id);
+    if (it == device_->pipelines_.end()) return;
+    currentPipelineLayout_ = it->second.layout;
+    vkCmdBindPipeline(commandBuffer_, VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
+}
+
+void VulkanCommandList::BindDescriptorSet(std::uint32_t set, DescriptorSetHandle descriptorSet) {
+    if (!device_ || !commandBuffer_ || !descriptorSet.IsValid() || !currentPipelineLayout_) return;
+    auto it = device_->descriptorSets_.find(descriptorSet.id);
+    if (it == device_->descriptorSets_.end()) return;
+    vkCmdBindDescriptorSets(commandBuffer_, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            currentPipelineLayout_, set, 1, &it->second.set, 0, nullptr);
+}
+
+void VulkanCommandList::BindVertexBuffer(std::uint32_t binding, BufferHandle buffer, std::size_t offset) {
+    if (!device_ || !commandBuffer_ || !buffer.IsValid()) return;
+    auto it = device_->buffers_.find(buffer.id);
+    if (it == device_->buffers_.end()) return;
+    VkDeviceSize o = offset;
+    vkCmdBindVertexBuffers(commandBuffer_, binding, 1, &it->second.buffer, &o);
+}
+
+void VulkanCommandList::BindIndexBuffer(BufferHandle buffer, std::size_t offset, bool is16Bit) {
+    if (!device_ || !commandBuffer_ || !buffer.IsValid()) return;
+    auto it = device_->buffers_.find(buffer.id);
+    if (it == device_->buffers_.end()) return;
+    vkCmdBindIndexBuffer(commandBuffer_, it->second.buffer, offset,
+                         is16Bit ? VK_INDEX_TYPE_UINT16 : VK_INDEX_TYPE_UINT32);
+}
+
+void VulkanCommandList::SetPushConstants(const void* data, std::size_t size, std::size_t offset) {
+    if (!device_ || !commandBuffer_ || !data || !currentPipelineLayout_) return;
+    vkCmdPushConstants(commandBuffer_, currentPipelineLayout_, VK_SHADER_STAGE_ALL, static_cast<std::uint32_t>(offset),
+                       static_cast<std::uint32_t>(size), data);
+}
+
+void VulkanCommandList::Draw(std::uint32_t vertexCount, std::uint32_t instanceCount,
+                             std::uint32_t firstVertex, std::uint32_t firstInstance) {
+    if (commandBuffer_)
+        vkCmdDraw(commandBuffer_, vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+void VulkanCommandList::DrawIndexed(std::uint32_t indexCount, std::uint32_t instanceCount,
+                                   std::uint32_t firstIndex, std::int32_t vertexOffset,
+                                   std::uint32_t firstInstance) {
+    if (commandBuffer_)
+        vkCmdDrawIndexed(commandBuffer_, indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+void VulkanCommandList::Dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY,
+                                 std::uint32_t groupCountZ) {
+    if (commandBuffer_)
+        vkCmdDispatch(commandBuffer_, groupCountX, groupCountY, groupCountZ);
+}
+
+void VulkanCommandList::Barrier(const std::vector<TextureHandle>& textures) {
+    if (!device_ || !commandBuffer_ || textures.empty()) return;
+    std::vector<VkImageMemoryBarrier> barriers;
+    for (const auto& th : textures) {
+        auto it = device_->textures_.find(th.id);
+        if (it == device_->textures_.end()) continue;
+        VkImageMemoryBarrier b = {};
+        b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        b.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        b.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        b.image = it->second.image;
+        b.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        b.subresourceRange.levelCount = b.subresourceRange.layerCount = 1;
+        barriers.push_back(b);
+    }
+    if (!barriers.empty())
+        vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                             0, 0, nullptr, 0, nullptr, static_cast<std::uint32_t>(barriers.size()), barriers.data());
+}
+
+void VulkanCommandList::ClearColor(TextureHandle texture, const float color[4]) {
+    (void)texture;
+    (void)color;
+}
+
+void VulkanCommandList::ClearDepth(TextureHandle texture, float depth, std::uint8_t stencil) {
+    (void)texture;
+    (void)depth;
+    (void)stencil;
+}
+
+void VulkanCommandList::SetViewport(float x, float y, float width, float height,
+                                    float minDepth, float maxDepth) {
+    if (!commandBuffer_) return;
+    VkViewport vp = { x, y, width, height, minDepth, maxDepth };
+    vkCmdSetViewport(commandBuffer_, 0, 1, &vp);
+}
+
+void VulkanCommandList::SetScissor(std::int32_t x, std::int32_t y, std::uint32_t width, std::uint32_t height) {
+    if (!commandBuffer_) return;
+    VkRect2D r = { { x, y }, { width, height } };
+    vkCmdSetScissor(commandBuffer_, 0, 1, &r);
 }
 
 }  // namespace kale_device

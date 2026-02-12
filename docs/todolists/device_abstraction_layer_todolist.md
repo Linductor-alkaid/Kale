@@ -109,13 +109,13 @@
 
 ### 2.5 Vulkan Backend 命令与同步
 
-- [ ] 实现 `VulkanCommandList` 封装 VkCommandBuffer
-- [ ] 实现 `BeginCommandList(threadIndex)` 从对应 CommandPool 分配
-- [ ] 实现 `EndCommandList` 结束录制
-- [ ] 实现 `Submit` 支持 waitSemaphores、signalSemaphores、fence
-- [ ] 实现 Fence：`CreateFence`、`WaitForFence`、`ResetFence`
-- [ ] 实现 Semaphore：`CreateSemaphore`
-- [ ] 实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal
+- [x] 实现 `VulkanCommandList` 封装 VkCommandBuffer
+- [x] 实现 `BeginCommandList(threadIndex)` 从对应 CommandPool 分配
+- [x] 实现 `EndCommandList` 结束录制
+- [x] 实现 `Submit` 支持 waitSemaphores、signalSemaphores、fence
+- [x] 实现 Fence：`CreateFence`、`WaitForFence`、`ResetFence`
+- [x] 实现 Semaphore：`CreateSemaphore`
+- [x] 实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal
 - [ ] 集成 VMA (Vulkan Memory Allocator)
 
 ### 2.6 Vulkan Swapchain 与呈现

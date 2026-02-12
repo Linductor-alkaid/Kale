@@ -2,6 +2,17 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-12 25:00:00 ===
+功能：phase2-2.5 Vulkan Backend 命令与同步
+状态：已完成
+- 实现 VulkanCommandList 封装 VkCommandBuffer，实现 CommandList 全部接口（BeginRenderPass/EndRenderPass、BindPipeline、BindDescriptorSet、BindVertexBuffer/BindIndexBuffer、SetPushConstants、Draw/DrawIndexed、Dispatch、Barrier、ClearColor/ClearDepth、SetViewport/SetScissor）
+- BeginCommandList(threadIndex) 从 per-thread CommandPool 按帧分配 VkCommandBuffer，复用 VulkanCommandList 池；EndCommandList 结束录制
+- Submit 支持 waitSemaphores、signalSemaphores、fence；默认使用帧流水线 semaphore/fence
+- CreateFence(signaled)、WaitForFence、ResetFence、CreateSemaphore 及句柄存储
+- 帧流水线：AcquireNextImage 内部 WaitForFence/ResetFence + vkAcquireNextImageKHR(signal frameImageAvailableSemaphore)；Present 使用 frameRenderFinishedSemaphore；Submit 默认 wait/signal 帧 semaphore、signal 帧 fence
+- VulkanContext 新增 GetFramebuffer(imageIndex) 供 RDI BeginRenderPass 使用
+- 编译通过（VMA 集成留待后续）
+
 === 2026-02-12 24:00:00 ===
 功能：phase2-2.4 Vulkan Backend 资源
 状态：已完成

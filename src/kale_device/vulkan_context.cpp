@@ -283,6 +283,11 @@ VkImage VulkanContext::GetSwapchainImage(uint32_t index) const {
     return swapchainImages_[index];
 }
 
+VkFramebuffer VulkanContext::GetFramebuffer(uint32_t imageIndex) const {
+    if (imageIndex >= framebuffers_.size()) return nullptr;
+    return framebuffers_[imageIndex];
+}
+
 // -----------------------------------------------------------------------------
 // 简单三角形渲染（phase1-1.3）
 // -----------------------------------------------------------------------------
