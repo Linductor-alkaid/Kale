@@ -5,6 +5,7 @@
 add_library(kale_resource STATIC
     placeholder.cpp
     resource_manager.cpp
+    staging_memory_manager.cpp
     texture_loader.cpp
     model_loader.cpp
 )

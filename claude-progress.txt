@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase6-6.1 StagingMemoryManager
+状态：已完成
+- 实现 StagingMemoryManager(IRenderDevice* device)，StagingAllocation（buffer, mappedPtr, size, offset）
+- Allocate(size) 从池 first-fit 或线性分配，不足时新建 64MB 池块；Free(alloc) 回收到空闲列表
+- RDI 新增 MapBuffer/UnmapBuffer，Vulkan 后端 cpuVisible buffer 持久映射，DestroyBuffer 时 unmap
+- 新增 kale_resource/staging_memory_manager.hpp、staging_memory_manager.cpp，编译通过
+
+=== 2026-02-13 ===
 功能：phase5-5.10 Renderable 抽象
 状态：已完成
 - 实现 Renderable 基类：GetBounds()、GetMesh()/GetMaterial()（默认 nullptr）、Draw(cmd, worldTransform) 虚函数

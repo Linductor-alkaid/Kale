@@ -123,11 +123,11 @@
 
 ### 3.1 StagingMemoryManager 实现
 
-- [ ] 实现 `StagingMemoryManager(IRenderDevice* device)` 构造函数
-- [ ] 定义 `StagingAllocation` 结构（buffer, mappedPtr, size, offset）
-- [ ] 实现 `Allocate(size)` 从池分配
-- [ ] 实现 `Free(alloc)` 回收到池
-- [ ] 实现 Staging Buffer 池初始化（默认 64MB poolSize_）
+- [x] 实现 `StagingMemoryManager(IRenderDevice* device)` 构造函数
+- [x] 定义 `StagingAllocation` 结构（buffer, mappedPtr, size, offset）
+- [x] 实现 `Allocate(size)` 从池分配
+- [x] 实现 `Free(alloc)` 回收到池
+- [x] 实现 Staging Buffer 池初始化（默认 64MB poolSize_）
 
 ### 3.2 Staging Buffer 池化
 

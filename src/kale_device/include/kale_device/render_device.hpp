@@ -81,6 +81,10 @@ public:
     // --- 资源更新 ---
     virtual void UpdateBuffer(BufferHandle handle, const void* data, std::size_t size,
                              std::size_t offset = 0) = 0;
+
+    /** 映射 CPU 可见 Buffer 的指定范围，返回可写指针；UnmapBuffer 前勿销毁 Buffer */
+    virtual void* MapBuffer(BufferHandle handle, std::size_t offset, std::size_t size) = 0;
+    virtual void UnmapBuffer(BufferHandle handle) = 0;
     virtual void UpdateTexture(TextureHandle handle, const void* data,
                               std::uint32_t mipLevel = 0) = 0;
 

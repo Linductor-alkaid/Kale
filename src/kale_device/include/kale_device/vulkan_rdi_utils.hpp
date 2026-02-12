@@ -30,6 +30,7 @@ struct VulkanBufferRes {
     VkDeviceMemory memory = VK_NULL_HANDLE;
     VkDeviceSize size = 0;
     bool cpuVisible = false;
+    void* mappedPtr = nullptr;  // 持久映射（仅 cpuVisible 时有效）
 };
 
 struct VulkanTextureRes {

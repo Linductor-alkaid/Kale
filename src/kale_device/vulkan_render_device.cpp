@@ -171,12 +171,7 @@ bool VulkanRenderDevice::CreateVmaOrAllocBuffer(const BufferDesc& desc, const vo
     *outSize = size;
 
     if (data && desc.cpuVisible) {
-        void* mapped = nullptr;
-        vkMapMemory(dev, *outMemory, 0, size, 0, &mapped);
-        if (mapped) {
-            memcpy(mapped, data, size);
-            vkUnmapMemory(dev, *outMemory);
-        }
+        /* cpuVisible 时由 CreateBuffer 内统一做持久映射并拷贝 */
     } else if (data && !desc.cpuVisible) {
         // Staging buffer upload
         VkBuffer stagingBuf = VK_NULL_HANDLE;
@@ -267,7 +262,16 @@ BufferHandle VulkanRenderDevice::CreateBuffer(const BufferDesc& desc, const void
     }
 
     std::uint64_t id = nextBufferId_++;
-    buffers_[id] = VulkanBufferRes{ buf, mem, size, desc.cpuVisible };
+    void* mappedPtr = nullptr;
+    if (desc.cpuVisible) {
+        VkDevice dev = context_.GetDevice();
+        void* mapped = nullptr;
+        if (vkMapMemory(dev, mem, 0, size, 0, &mapped) == VK_SUCCESS) {
+            mappedPtr = mapped;
+            if (data) memcpy(mapped, data, size);
+        }
+    }
+    buffers_[id] = VulkanBufferRes{ buf, mem, size, desc.cpuVisible, mappedPtr };
     BufferHandle h;
     h.id = id;
     return h;
@@ -716,7 +720,12 @@ void VulkanRenderDevice::DestroyBuffer(BufferHandle handle) {
     if (!handle.IsValid()) return;
     auto it = buffers_.find(handle.id);
     if (it == buffers_.end()) return;
-    DestroyVmaOrAllocBuffer(it->second.buffer, it->second.memory);
+    VulkanBufferRes& res = it->second;
+    if (res.mappedPtr) {
+        vkUnmapMemory(context_.GetDevice(), res.memory);
+        res.mappedPtr = nullptr;
+    }
+    DestroyVmaOrAllocBuffer(res.buffer, res.memory);
     buffers_.erase(it);
 }
 
@@ -774,13 +783,8 @@ void VulkanRenderDevice::UpdateBuffer(BufferHandle handle, const void* data, std
     if (offset + size > res.size) return;
 
     VkDevice dev = context_.GetDevice();
-    if (res.cpuVisible) {
-        void* mapped = nullptr;
-        vkMapMemory(dev, res.memory, offset, size, 0, &mapped);
-        if (mapped) {
-            memcpy(mapped, data, size);
-            vkUnmapMemory(dev, res.memory);
-        }
+    if (res.cpuVisible && res.mappedPtr) {
+        memcpy(static_cast<char*>(res.mappedPtr) + offset, data, size);
         return;
     }
 
@@ -830,6 +834,20 @@ void VulkanRenderDevice::UpdateBuffer(BufferHandle handle, const void* data, std
 
     vkDestroyBuffer(dev, stagingBuf, nullptr);
     vkFreeMemory(dev, stagingMem, nullptr);
+}
+
+void* VulkanRenderDevice::MapBuffer(BufferHandle handle, std::size_t offset, std::size_t size) {
+    if (!handle.IsValid()) return nullptr;
+    auto it = buffers_.find(handle.id);
+    if (it == buffers_.end() || !it->second.mappedPtr) return nullptr;
+    VulkanBufferRes& res = it->second;
+    if (offset + size > res.size) return nullptr;
+    return static_cast<char*>(res.mappedPtr) + offset;
+}
+
+void VulkanRenderDevice::UnmapBuffer(BufferHandle handle) {
+    (void)handle;
+    /* 持久映射，在 DestroyBuffer 时统一 unmap */
 }
 
 void VulkanRenderDevice::UpdateTexture(TextureHandle handle, const void* data, std::uint32_t mipLevel) {

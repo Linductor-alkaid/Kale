@@ -106,6 +106,9 @@ public:
     void UpdateTexture(TextureHandle handle, const void* data,
                        std::uint32_t mipLevel = 0) override;
 
+    void* MapBuffer(BufferHandle handle, std::size_t offset, std::size_t size) override;
+    void UnmapBuffer(BufferHandle handle) override;
+
     CommandList* BeginCommandList(std::uint32_t threadIndex = 0) override;
     void EndCommandList(CommandList* cmd) override;
     void Submit(const std::vector<CommandList*>& cmdLists,
