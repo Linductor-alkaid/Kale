@@ -3,6 +3,15 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.8 简单 ModelLoader
+状态：已完成
+- 实现 ModelLoader : public IResourceLoader（model_loader.hpp / model_loader.cpp）
+- 支持 .gltf、.glb（FetchContent 集成 tinygltf）
+- 实现 LoadGLTF(path)：tinygltf 解析顶点 POSITION/NORMAL/TEXCOORD_0、索引，合并为单 Mesh
+- 创建 vertexBuffer、indexBuffer 通过 RDI CreateBuffer，生成 Mesh（bounds、subMeshes）
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.7 简单 TextureLoader
 状态：已完成
 - 实现 TextureLoader : public IResourceLoader（texture_loader.hpp / texture_loader.cpp）

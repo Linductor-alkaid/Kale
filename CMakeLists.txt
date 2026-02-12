@@ -80,6 +80,19 @@ if(NOT TARGET stb)
     target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 endif()
 
+# tinygltf（glTF 2.0 解析，ModelLoader 使用）
+set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_GL_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_VALIDATOR_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_BUILDER_EXAMPLE OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(tinygltf
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf
+    GIT_TAG        v2.8.13
+)
+FetchContent_MakeAvailable(tinygltf)
+
 # executor 库：通过 -DKALE_EXECUTOR_PATH=/path/to/executor 指定
 if(KALE_EXECUTOR_PATH)
     add_subdirectory(${KALE_EXECUTOR_PATH} ${CMAKE_BINARY_DIR}/executor EXCLUDE_FROM_ALL)

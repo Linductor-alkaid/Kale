@@ -499,7 +499,7 @@
         "生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）",
         "可选：支持 .obj（使用 assimp 或简易解析）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.3", "phase2-2.4", "phase3-3.6"],
       "test_verification": "成功加载 glTF 模型，正确渲染"

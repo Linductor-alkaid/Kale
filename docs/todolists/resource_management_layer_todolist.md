@@ -69,11 +69,11 @@
 
 ### 1.7 简单 ModelLoader
 
-- [ ] 实现 `ModelLoader : public IResourceLoader`
-- [ ] 支持 .gltf（使用 tinygltf）
-- [ ] 实现 `LoadGLTF(path)` 解析顶点/索引
-- [ ] 创建 vertexBuffer、indexBuffer 通过 RDI
-- [ ] 生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）
+- [x] 实现 `ModelLoader : public IResourceLoader`
+- [x] 支持 .gltf（使用 tinygltf）
+- [x] 实现 `LoadGLTF(path)` 解析顶点/索引
+- [x] 创建 vertexBuffer、indexBuffer 通过 RDI
+- [x] 生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）
 - [ ] 可选：支持 .obj（使用 assimp 或简易解析）
 
 ### 1.8 Mesh 与 Texture 数据结构

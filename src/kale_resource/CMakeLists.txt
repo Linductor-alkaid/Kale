@@ -6,7 +6,7 @@ add_library(kale_resource STATIC
     placeholder.cpp
     resource_manager.cpp
     texture_loader.cpp
-    # 待实现：model_loader.cpp
+    model_loader.cpp
 )
 
 target_include_directories(kale_resource
@@ -22,4 +22,5 @@ target_link_libraries(kale_resource
         glm::glm
     PRIVATE
         stb
+        tinygltf
 )
