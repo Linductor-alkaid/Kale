@@ -61,11 +61,11 @@
 
 ### 1.6 简单 TextureLoader
 
-- [ ] 实现 `TextureLoader : public IResourceLoader`
-- [ ] 支持 .png、.jpg（使用 stb_image）
-- [ ] 实现 `LoadSTB(path)` 加载未压缩纹理
-- [ ] 创建 RDI Texture，直接传入数据（暂不通过 Staging）
-- [ ] 返回 `std::unique_ptr<Texture>` 或等价的 std::any
+- [x] 实现 `TextureLoader : public IResourceLoader`
+- [x] 支持 .png、.jpg（使用 stb_image）
+- [x] 实现 `LoadSTB(path)` 加载未压缩纹理
+- [x] 创建 RDI Texture，直接传入数据（暂不通过 Staging）
+- [x] 返回 `std::unique_ptr<Texture>` 或等价的 std::any
 
 ### 1.7 简单 ModelLoader
 

@@ -68,6 +68,18 @@ else()
     find_package(Vulkan QUIET)
 endif()
 
+# stb（单头文件库：stb_image 用于 PNG/JPG 加载）
+include(FetchContent)
+FetchContent_Declare(stb
+    GIT_REPOSITORY https://github.com/nothings/stb
+    GIT_TAG        master
+)
+FetchContent_Populate(stb)
+if(NOT TARGET stb)
+    add_library(stb INTERFACE)
+    target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+endif()
+
 # executor 库：通过 -DKALE_EXECUTOR_PATH=/path/to/executor 指定
 if(KALE_EXECUTOR_PATH)
     add_subdirectory(${KALE_EXECUTOR_PATH} ${CMAKE_BINARY_DIR}/executor EXCLUDE_FROM_ALL)

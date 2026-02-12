@@ -479,7 +479,7 @@
         "创建 RDI Texture，直接传入数据（暂不通过 Staging）",
         "返回 std::unique_ptr<Texture> 或等价的 std::any"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.3", "phase2-2.4"],
       "test_verification": "成功加载 PNG/JPG 纹理，正确显示"

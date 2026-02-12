@@ -3,6 +3,16 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.7 简单 TextureLoader
+状态：已完成
+- 实现 TextureLoader : public IResourceLoader（texture_loader.hpp / texture_loader.cpp）
+- 支持 .png、.jpg、.jpeg（使用 stb_image，FetchContent 集成 stb）
+- 实现 LoadSTB(path)：stbi_load → 通道映射 R8/RG8/RGBA8，RGB 扩展为 RGBA
+- 创建 RDI Texture 通过 ctx.device->CreateTexture(desc, data) 直接传入数据（暂不通过 Staging）
+- 返回 T* 由 ResourceManager 登记入 Cache；加载失败时 SetLastError
+- 编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.6 Mesh / Texture 数据结构
 状态：已完成
 - 定义 BoundingBox 结构（min, max，glm::vec3）
