@@ -16,6 +16,7 @@
 
 #include <kale_device/render_device.hpp>
 #include <kale_resource/resource_cache.hpp>
+#include <kale_resource/resource_handle.hpp>
 #include <kale_resource/resource_loader.hpp>
 
 namespace kale::resource {
@@ -78,6 +79,15 @@ public:
     std::string ResolvePath(const std::string& path) const;
 
     /**
+     * @brief 同步加载资源
+     * @tparam T 资源类型（Mesh、Texture、Material 等）
+     * @param path 资源路径（相对 assetPath 或带别名）
+     * @return 成功返回有效句柄并已登记入缓存（若已存在则 AddRef 后返回）；失败返回空句柄，GetLastError() 返回原因；失败不缓存
+     */
+    template <typename T>
+    ResourceHandle<T> Load(const std::string& path);
+
+    /**
      * @brief 获取最后一次错误信息（如 Load 失败原因）
      */
     std::string GetLastError() const;
@@ -107,5 +117,58 @@ private:
     std::unordered_map<std::string, std::string> pathAliases_;
     mutable std::string lastError_;
 };
+
+// -----------------------------------------------------------------------------
+// 同步 Load 模板实现（phase3-3.5）
+// -----------------------------------------------------------------------------
+template <typename T>
+ResourceHandle<T> ResourceManager::Load(const std::string& path) {
+    const std::string resolved = ResolvePath(path);
+    const std::type_index typeId = typeid(T);
+
+    // 检查缓存：若已存在则 AddRef 并返回
+    if (auto existing = cache_.FindByPath(resolved, typeId)) {
+        cache_.AddRef(*existing);
+        return ResourceHandle<T>{existing->id};
+    }
+
+    // 查找 Loader
+    IResourceLoader* loader = FindLoader(resolved, typeId);
+    if (!loader) {
+        SetLastError("No loader found for path: " + path);
+        return ResourceHandle<T>{};
+    }
+
+    // 调用 Loader 同步加载
+    ResourceLoadContext ctx{device_, stagingMgr_, this};
+    std::any result = loader->Load(resolved, ctx);
+
+    if (!result.has_value()) {
+        if (GetLastError().empty()) {
+            SetLastError("Load failed: " + path);
+        }
+        return ResourceHandle<T>{};
+    }
+
+    // 从 std::any 提取 T*：支持 unique_ptr<T> 或 T*
+    T* ptr = nullptr;
+    try {
+        if (auto* u = std::any_cast<std::unique_ptr<T>>(&result)) {
+            ptr = u->release();
+        } else if (auto* p = std::any_cast<T*>(&result)) {
+            ptr = *p;
+        }
+    } catch (const std::bad_any_cast&) {
+        SetLastError("Loader returned invalid type for: " + path);
+        return ResourceHandle<T>{};
+    }
+
+    if (!ptr) {
+        SetLastError("Loader returned null for: " + path);
+        return ResourceHandle<T>{};
+    }
+
+    return cache_.Register<T>(resolved, ptr, true);
+}
 
 }  // namespace kale::resource

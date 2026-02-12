@@ -52,12 +52,12 @@
 
 ### 1.5 同步 Load 实现
 
-- [ ] 实现 `Load<T>(path)` 模板方法
-- [ ] 检查缓存：若已存在则 AddRef 并返回
-- [ ] 查找 Loader 并调用 Load
-- [ ] 加载成功后 Register 入 Cache
-- [ ] 加载失败时 `GetLastError()` 返回原因
-- [ ] 失败不缓存，避免重复加载失败路径
+- [x] 实现 `Load<T>(path)` 模板方法
+- [x] 检查缓存：若已存在则 AddRef 并返回
+- [x] 查找 Loader 并调用 Load
+- [x] 加载成功后 Register 入 Cache
+- [x] 加载失败时 `GetLastError()` 返回原因
+- [x] 失败不缓存，避免重复加载失败路径
 
 ### 1.6 简单 TextureLoader
 

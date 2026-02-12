@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase3-3.5 同步 Load 实现
+状态：已完成
+- 实现 Load<T>(path) 模板方法：检查缓存（已存在则 AddRef 并返回）、查找 Loader、调用 Load、成功后 Register 入 Cache
+- 加载失败时 SetLastError/GetLastError 返回原因；失败不缓存
+- 支持 Loader 返回 std::unique_ptr<T> 或 T*，从 std::any 安全提取后登记
+- resource_manager.hpp 内联模板实现，编译通过
+
+=== 2026-02-13 ===
 功能：phase3-3.4 ResourceManager 接口与 Loader 注册
 状态：已完成
 - 实现 ResourceManager 构造函数（scheduler, device, stagingMgr）

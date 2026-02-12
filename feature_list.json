@@ -442,7 +442,7 @@
         "加载失败时 GetLastError() 返回原因",
         "失败不缓存，避免重复加载失败路径"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.4"],
       "test_verification": "同步加载正常工作，缓存正确，失败处理合理"
