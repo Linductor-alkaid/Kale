@@ -15,29 +15,29 @@
 
 ### 1.1 TaskChannel 核心实现
 
-- [ ] 实现 `TaskChannel<T, Capacity>` SPSC 无锁队列
-- [ ] 实现 `try_send(T&& value)` 非阻塞发送
-- [ ] 实现 `try_recv(T& out)` 非阻塞接收
-- [ ] 实现 `send(T&& value, timeout)` 阻塞发送（带超时）
-- [ ] 实现 `recv(T& out, timeout)` 阻塞接收（带超时）
-- [ ] 实现 `size()` 和 `empty()` 查询接口
-- [ ] 基于 `std::atomic` 和 CAS 实现无锁环形缓冲区
-- [ ] 使用固定容量，避免动态分配
+- [x] 实现 `TaskChannel<T, Capacity>` SPSC 无锁队列
+- [x] 实现 `try_send(T&& value)` 非阻塞发送
+- [x] 实现 `try_recv(T& out)` 非阻塞接收
+- [x] 实现 `send(T&& value, timeout)` 阻塞发送（带超时）
+- [x] 实现 `recv(T& out, timeout)` 阻塞接收（带超时）
+- [x] 实现 `size()` 和 `empty()` 查询接口
+- [x] 基于 `std::atomic` 和 CAS 实现无锁环形缓冲区
+- [x] 使用固定容量，避免动态分配
 
 ### 1.2 扩展与测试
 
-- [ ] 实现 MPSC（多生产者单消费者）变体（可选）
-- [ ] 单元测试：多线程 send/recv，无数据竞争
-- [ ] 单元测试：高并发压力测试
-- [ ] 保持与 executor 解耦，可独立使用
+- [x] 实现 MPSC（多生产者单消费者）变体（可选）
+- [x] 单元测试：多线程 send/recv，无数据竞争
+- [x] 单元测试：高并发压力测试
+- [x] 保持与 executor 解耦，可独立使用
 
 ### 1.3 无锁实现要点（附录 A）
 
-- [ ] 使用 `std::atomic<size_t>` 表示 head/tail
-- [ ] `try_send`：tail 循环 CAS 推进，保证单生产者
-- [ ] `try_recv`：head 循环 CAS 推进，保证单消费者
-- [ ] 可选：`std::atomic_thread_fence` 保证可见性
-- [ ] 避免 ABA 问题（tag/generation 或 2 的幂容量）
+- [x] 使用 `std::atomic<size_t>` 表示 head/tail
+- [x] `try_send`：tail 循环 CAS 推进，保证单生产者
+- [x] `try_recv`：head 循环 CAS 推进，保证单消费者
+- [x] 可选：`std::atomic_thread_fence` 保证可见性
+- [x] 避免 ABA 问题（tag/generation 或 2 的幂容量）
 
 ---
 

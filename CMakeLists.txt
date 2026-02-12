@@ -26,6 +26,7 @@ endif()
 option(KALE_BUILD_APPS "构建示例应用" ON)
 option(KALE_ENABLE_VALIDATION "启用 Vulkan Validation Layer（Debug）" ON)
 option(KALE_ENABLE_OPENGL_BACKEND "构建 OpenGL 后端" OFF)
+option(KALE_ENABLE_TSAN "启用 ThreadSanitizer 检测数据竞争" OFF)
 
 # 依赖路径（可通过 -D 传入）
 set(KALE_EXECUTOR_PATH "" CACHE PATH "executor 库路径（add_subdirectory 用）")
@@ -68,6 +69,20 @@ add_subdirectory(src/kale_engine)
 # 示例应用（可选）
 if(KALE_BUILD_APPS)
     add_subdirectory(apps)
+endif()
+
+# ThreadSanitizer（检测数据竞争，需在支持的环境中运行）
+if(KALE_ENABLE_TSAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -g")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
+    message(STATUS "ThreadSanitizer enabled")
+endif()
+
+# 测试（可选）
+option(KALE_BUILD_TESTS "构建测试" ON)
+if(KALE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 message(STATUS "Kale ${PROJECT_VERSION} - Build type: ${CMAKE_BUILD_TYPE}")
