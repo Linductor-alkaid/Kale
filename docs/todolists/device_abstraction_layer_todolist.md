@@ -28,12 +28,12 @@
 
 ### 1.2 Vulkan 基础
 
-- [ ] 创建 Vulkan Instance（支持 `enableValidation` 时启用 Validation Layer）
-- [ ] 选择 Physical Device 与 Queue Family
-- [ ] 创建 Logical Device
-- [ ] 使用 `SDL_Vulkan_CreateSurface(window, instance, &surface)` 创建 Surface
-- [ ] 创建基础 Swapchain（支持 vsync、backBufferCount）
-- [ ] 获取 Swapchain Image 句柄
+- [x] 创建 Vulkan Instance（支持 `enableValidation` 时启用 Validation Layer）
+- [x] 选择 Physical Device 与 Queue Family
+- [x] 创建 Logical Device
+- [x] 使用 `SDL_Vulkan_CreateSurface(window, instance, &surface)` 创建 Surface
+- [x] 创建基础 Swapchain（支持 vsync、backBufferCount）
+- [x] 获取 Swapchain Image 句柄
 
 ### 1.3 简单三角形渲染
 

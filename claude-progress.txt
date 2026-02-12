@@ -2,6 +2,15 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+[2026-02-12] COMPLETED - phase1-1.2: Vulkan 基础
+- 实现 VulkanContext 类（vulkan_context.hpp / vulkan_context.cpp）
+- CreateInstance：SDL_Vulkan_GetInstanceExtensions + 可选 VK_LAYER_KHRONOS_validation
+- CreateSurface：SDL_Vulkan_CreateSurface(window, instance, &surface)
+- SelectPhysicalDevice：选择支持 graphics + present 的 Queue Family
+- CreateLogicalDevice：VK_KHR_SWAPCHAIN，单队列族
+- CreateSwapchain：vsync(FIFO/MAILBOX)、backBufferCount、GetSwapchainImageCount/GetSwapchainImage
+- hello_kale 验证：窗口 + Vulkan 初始化成功，swapchain images=3，800x600
+
 [2026-02-12] COMPLETED - phase1-1.1: SDL3 与窗口系统
 - 实现 WindowSystem 类与 WindowConfig 结构（width, height, title, fullscreen, resizable）
 - WindowSystem::Create() 创建 SDL 窗口（SDL_INIT_VIDEO | GAMEPAD | EVENTS，SDL_WINDOW_VULKAN）

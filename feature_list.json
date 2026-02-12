@@ -74,7 +74,7 @@
         "创建基础 Swapchain（支持 vsync、backBufferCount）",
         "获取 Swapchain Image 句柄"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.1"],
       "test_verification": "成功创建 Vulkan 设备和 Swapchain，validation layers 正常工作"
