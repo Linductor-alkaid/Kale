@@ -1,8 +1,9 @@
 // Hello Kale - 最小示例
-// 验证 WindowSystem + Vulkan 基础 + 简单三角形渲染（phase1-1.3）
+// 验证 WindowSystem + Vulkan 基础 + 简单三角形渲染 + 输入系统（phase1-1.4）
 
 #include <kale_device/window_system.hpp>
 #include <kale_device/vulkan_context.hpp>
+#include <kale_device/input_manager.hpp>
 #include <iostream>
 
 int main() {
@@ -46,8 +47,15 @@ int main() {
     }
     std::cout << "Triangle rendering initialized.\n";
 
+    kale_device::InputManager input;
+    input.Initialize(window.GetWindow());
+
     int frames = 0;
-    while (window.PollEvents() && !window.ShouldClose()) {
+    while (!input.QuitRequested()) {
+        input.Update();
+        if (input.IsKeyJustPressed(kale_device::KeyCode::Escape)) {
+            break;
+        }
         uint32_t imageIndex = 0;
         if (!vulkan.AcquireNextImage(imageIndex)) {
             continue;  // OUT_OF_DATE 等，跳过本帧

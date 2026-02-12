@@ -46,12 +46,12 @@
 
 ### 1.4 输入系统基础
 
-- [ ] 实现 `InputManager` 类
-- [ ] 实现 `InputManager::Initialize(SDL_Window* window)`
-- [ ] 实现 `InputManager::Update()` 每帧轮询 SDL 事件
-- [ ] 实现键盘：`IsKeyPressed(KeyCode)` / `IsKeyJustPressed` / `IsKeyJustReleased`
-- [ ] 实现鼠标：`GetMousePosition()` / `GetMouseDelta()` / `IsMouseButtonPressed()` / `GetMouseWheelDelta()`
-- [ ] 定义 `KeyCode`、`MouseButton` 枚举（与 SDL 映射）
+- [x] 实现 `InputManager` 类
+- [x] 实现 `InputManager::Initialize(SDL_Window* window)`
+- [x] 实现 `InputManager::Update()` 每帧轮询 SDL 事件
+- [x] 实现键盘：`IsKeyPressed(KeyCode)` / `IsKeyJustPressed` / `IsKeyJustReleased`
+- [x] 实现鼠标：`GetMousePosition()` / `GetMouseDelta()` / `IsMouseButtonPressed()` / `GetMouseWheelDelta()`
+- [x] 定义 `KeyCode`、`MouseButton` 枚举（与 SDL 映射）
 
 ---
 

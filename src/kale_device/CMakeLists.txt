@@ -6,7 +6,8 @@ add_library(kale_device STATIC
     placeholder.cpp
     window_system.cpp
     vulkan_context.cpp
-    # 待实现时添加：device.cpp, rdi.cpp, input_manager.cpp
+    input_manager.cpp
+    # 待实现时添加：device.cpp, rdi.cpp
 )
 
 target_include_directories(kale_device
