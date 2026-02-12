@@ -1,0 +1,326 @@
+# 资源管理层 (Resource Management Layer) 实现任务清单
+
+> 基于 [resource_management_layer_design.md](../design/resource_management_layer_design.md)、[rendering_engine_design.md](../design/rendering_engine_design.md)、[rendering_engine_code_examples.md](../design/rendering_engine_code_examples.md) 设计文档构造。
+
+## 设计目标
+
+- **非阻塞主循环**：异步加载通过 executor 在后台执行，LoadAsync 返回 Future，不阻塞主线程
+- **占位符策略**：资源未就绪时使用占位符或跳过绘制，并触发 LoadAsync（若尚未触发）
+- **统一缓存**：所有资源类型通过 ResourceCache 统一管理，支持路径去重、引用计数
+- **Staging 复用**：Staging Buffer 池化，避免每帧大量分配；Upload Queue 与 RDI 配合完成 CPU→GPU 传输
+- **热重载**：开发期支持文件变化侦测与资源热重载
+
+---
+
+## Phase 1：基础框架（1–2 周）
+
+### 1.1 资源句柄类型
+
+- [ ] 实现 `ResourceHandle<T>` 模板（id, IsValid, operator==, operator!=）
+- [ ] 实现 `ResourceHandleAny` 类型擦除句柄（id + type_index）
+- [ ] 实现 `ToAny(ResourceHandle<T>)` 转换为 ResourceHandleAny
+- [ ] 定义 Mesh、Texture、Material 等资源句柄类型别名
+
+### 1.2 ResourceCache 基础实现
+
+- [ ] 实现 `CacheEntry` 结构（resource, path, refCount, isReady, typeId）
+- [ ] 实现 `Register<T>(path, resource, ready)` 登记资源
+- [ ] 实现 `RegisterPlaceholder<T>(path)` 预注册占位条目
+- [ ] 实现 `Get<T>(handle)` 获取资源
+- [ ] 实现 `IsReady<T>(handle)` 检查就绪状态
+- [ ] 实现 `SetResource(handle, resource)` 和 `SetReady(handle)`
+- [ ] 实现 `FindByPath(path, typeId)` 路径查找
+- [ ] 实现 `AddRef` / `Release` 引用计数
+- [ ] 线程安全：entries_、pathToId_ 的 mutex 保护
+
+### 1.3 IResourceLoader 接口
+
+- [ ] 实现 `IResourceLoader` 纯虚基类
+- [ ] 实现 `Supports(path)` 判断是否支持该路径
+- [ ] 实现 `Load(path, ResourceLoadContext& ctx)` 同步加载
+- [ ] 实现 `GetResourceType()` 返回 type_index
+- [ ] 定义 `ResourceLoadContext` 结构（device, stagingMgr, resourceManager）
+
+### 1.4 ResourceManager 接口与 Loader 注册
+
+- [ ] 实现 `ResourceManager` 构造函数（scheduler, device, stagingMgr）
+- [ ] 实现 `RegisterLoader(std::unique_ptr<IResourceLoader> loader)`
+- [ ] 实现 `FindLoader(path, typeId)` 查找 Loader
+- [ ] 实现 `SetAssetPath(path)` 设置资源根路径
+- [ ] 实现 `AddPathAlias(alias, path)` 路径别名
+- [ ] 实现 `ResolvePath(path)` 解析完整路径
+
+### 1.5 同步 Load 实现
+
+- [ ] 实现 `Load<T>(path)` 模板方法
+- [ ] 检查缓存：若已存在则 AddRef 并返回
+- [ ] 查找 Loader 并调用 Load
+- [ ] 加载成功后 Register 入 Cache
+- [ ] 加载失败时 `GetLastError()` 返回原因
+- [ ] 失败不缓存，避免重复加载失败路径
+
+### 1.6 简单 TextureLoader
+
+- [ ] 实现 `TextureLoader : public IResourceLoader`
+- [ ] 支持 .png、.jpg（使用 stb_image）
+- [ ] 实现 `LoadSTB(path)` 加载未压缩纹理
+- [ ] 创建 RDI Texture，直接传入数据（暂不通过 Staging）
+- [ ] 返回 `std::unique_ptr<Texture>` 或等价的 std::any
+
+### 1.7 简单 ModelLoader
+
+- [ ] 实现 `ModelLoader : public IResourceLoader`
+- [ ] 支持 .gltf（使用 tinygltf）
+- [ ] 实现 `LoadGLTF(path)` 解析顶点/索引
+- [ ] 创建 vertexBuffer、indexBuffer 通过 RDI
+- [ ] 生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）
+- [ ] 可选：支持 .obj（使用 assimp 或简易解析）
+
+### 1.8 Mesh 与 Texture 数据结构
+
+- [ ] 定义 `Mesh` 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, topology, bounds, subMeshes）
+- [ ] 定义 `SubMesh` 结构（indexOffset, indexCount, materialIndex）
+- [ ] 定义 `Texture` 结构（handle, width, height, format, mipLevels）
+- [ ] 定义 `BoundingBox` 结构
+
+---
+
+## Phase 2：异步加载（1–2 周）
+
+### 2.1 LoadAsync 与 executor 集成
+
+- [ ] 实现 `LoadAsync<T>(path)` 模板方法
+- [ ] 检查缓存：若已存在则 `MakeReadyFuture(handle)` 返回
+- [ ] 预注册占位条目：`RegisterPlaceholder<T>(path)`
+- [ ] 提交异步任务：`scheduler_->Submit([...]() -> ResourceHandle<T>)`
+- [ ] 任务内：FindLoader → Load → SetResource → SetReady
+- [ ] 返回 `Future<ResourceHandle<T>>`
+
+### 2.2 Future 返回与回调
+
+- [ ] 确保 Future 与 executor 的 submit 兼容
+- [ ] 实现 `ProcessLoadedCallbacks()`（可选，供主循环调用）
+- [ ] 加载失败时 Future 传递错误（异常或错误状态）
+
+### 2.3 占位符系统
+
+- [ ] 实现 `CreatePlaceholders()` 创建占位符资源
+- [ ] 实现 `GetPlaceholderMesh()` 返回占位符 Mesh
+- [ ] 实现 `GetPlaceholderTexture()` 返回占位符 Texture
+- [ ] 实现 `GetPlaceholderMaterial()` 返回占位符 Material
+- [ ] 占位符：简单几何体（如三角形/立方体）、默认纹理（1x1 纯色）、默认材质
+
+### 2.4 Draw 时资源检查与触发加载
+
+- [ ] 实现 `IsReady<T>(handle)` 供上层检查
+- [ ] 实现 `Get<T>(handle)` 未就绪返回 nullptr
+- [ ] 设计文档示例：StaticMesh::Draw 中若 mesh/material 未就绪则用占位符并触发 LoadAsync
+- [ ] 避免重复触发：LoadAsync 前检查是否已在加载中（占位条目存在即视为已触发）
+
+---
+
+## Phase 3：Staging 与上传（1–2 周）
+
+### 3.1 StagingMemoryManager 实现
+
+- [ ] 实现 `StagingMemoryManager(IRenderDevice* device)` 构造函数
+- [ ] 定义 `StagingAllocation` 结构（buffer, mappedPtr, size, offset）
+- [ ] 实现 `Allocate(size)` 从池分配
+- [ ] 实现 `Free(alloc)` 回收到池
+- [ ] 实现 Staging Buffer 池初始化（默认 64MB poolSize_）
+
+### 3.2 Staging Buffer 池化
+
+- [ ] 维护 `stagingPool_` 预分配 Buffer 列表
+- [ ] 实现线性分配或块分配策略
+- [ ] 分配不足时扩展池或等待 GPU 完成回收
+- [ ] 与 Fence 关联：GPU 完成时 Free 回池
+
+### 3.3 Upload Queue 与 Copy 命令
+
+- [ ] 实现 `SubmitUpload(cmd, src, dstTexture, mipLevel)` Buffer→Texture
+- [ ] 实现 `SubmitUpload(cmd, src, dstBuffer, dstOffset)` Buffer→Buffer
+- [ ] 收集 `pendingUploads_` 待执行上传
+- [ ] 实现 `FlushUploads(device)` 在 Execute 前提交 Copy 命令
+
+### 3.4 TextureLoader 集成 Staging 上传
+
+- [ ] TextureLoader 使用 StagingMemoryManager::Allocate 获取暂存缓冲
+- [ ] 将解码后的像素数据写入 mappedPtr
+- [ ] 通过 SubmitUpload 提交 Copy 到 GPU Texture
+- [ ] 等待 GPU 完成后 Free StagingAllocation
+- [ ] 支持 Mipmap 链上传（逐级 Copy）
+
+### 3.5 ModelLoader 集成 Staging 上传
+
+- [ ] ModelLoader 顶点/索引数据通过 Staging 上传
+- [ ] Allocate 获取 StagingAllocation
+- [ ] SubmitUpload 到 vertexBuffer、indexBuffer
+- [ ] 上传完成后 Free
+
+---
+
+## Phase 4：完整 Loader（2 周）
+
+### 4.1 完整 ModelLoader
+
+- [ ] 支持 glTF 材质引用
+- [ ] 解析 glTF 中的 material 索引，关联 Material 路径
+- [ ] 支持 SubMesh 与材质映射
+- [ ] 可选：支持 .obj、.fbx（通过 assimp）
+- [ ] 支持 LOD（若有多个 mesh）
+
+### 4.2 MaterialLoader
+
+- [ ] 实现 `MaterialLoader : public IResourceLoader`
+- [ ] 实现 `LoadJSON(path)` 解析 JSON 材质定义
+- [ ] 格式：`{ "albedo": "textures/brick.png", "metallic": 0.2, ... }`
+- [ ] 依赖加载：解析 textures 数组，调用 `ctx.resourceManager->Load<Texture>(texPath)`
+- [ ] 创建 Material 并设置纹理句柄与参数
+- [ ] 返回 `std::unique_ptr<Material>`
+
+### 4.3 ShaderCompiler
+
+- [ ] 实现 `ShaderCompiler` 类（非 IResourceLoader，独立接口）
+- [ ] 实现 `Compile(path, stage, device)` 加载并编译
+- [ ] 实现 `LoadSPIRV(path)` 加载 .spv 文件
+- [ ] 实现 `CompileGLSLToSPIRV(path, stage)` 使用 glslang/shaderc
+- [ ] 支持 .vert、.frag、.comp、.spv
+- [ ] 实现 `Recompile(path, stage, device)` 热重载时重新编译
+
+### 4.4 压缩纹理支持
+
+- [ ] TextureLoader 支持 .ktx（使用 basis_universal 或 KTX-Software）
+- [ ] TextureLoader 支持 .dds（BC、ASTC、ETC2 等）
+- [ ] 实现 `LoadKTX(path)` 加载 KTX 格式
+- [ ] 实现 `LoadDDS(path)` 加载 DDS 格式（可选）
+- [ ] 根据格式选择 RDI CreateTexture 的 Format
+
+### 4.5 资源依赖解析
+
+- [ ] MaterialLoader 内部解析 JSON 时引用 Texture 路径
+- [ ] 同步加载依赖：`ctx.resourceManager->Load<Texture>(texPath)`
+- [ ] 或加入依赖队列，异步加载后再设置
+- [ ] 处理循环依赖（材质 A 依赖材质 B 依赖纹理 C）
+
+---
+
+## Phase 5：热重载与优化（1 周）
+
+### 5.1 文件变化侦测
+
+- [ ] 实现 `EnableHotReload(bool enable)` 开关
+- [ ] 实现 `ProcessHotReload()` 每帧调用
+- [ ] 检查已加载资源的文件时间戳
+- [ ] 使用 inotify/watchdog 或轮询 GetFileModificationTime
+- [ ] 记录 path → lastModified 映射
+
+### 5.2 热重载流程
+
+- [ ] 检测到文件变化时重新 Load
+- [ ] 替换 Cache 中的资源（SetResource）
+- [ ] 若正在使用则等待下一帧或同步
+- [ ] 材质/着色器热重载：替换后重新创建 Pipeline
+- [ ] ShaderCompiler::Recompile 集成
+
+### 5.3 引用计数与延迟释放
+
+- [ ] Register 时 refCount=1
+- [ ] AddRef 增；Release 减
+- [ ] refCount=0 时加入待释放队列
+- [ ] 下一帧统一 Destroy（避免渲染中使用时被释放）
+- [ ] 实现 `Unload(ResourceHandleAny handle)` 释放资源
+
+### 5.4 预加载与批量加载
+
+- [ ] 实现 `Preload(paths)` 预加载一批资源
+- [ ] 实现 `LoadAsyncBatch<T>(paths)` 返回 `std::vector<Future<ResourceHandle<T>>>`
+- [ ] 场景切换前调用 Preload 预加载新场景资源
+
+### 5.5 性能测试与调优
+
+- [ ] 验证 LoadAsync 不阻塞主线程
+- [ ] 验证 Staging Buffer 池化无频繁分配
+- [ ] 验证引用计数正确释放
+- [ ] 热重载性能：文件变化到资源更新延迟
+
+---
+
+## 与上层集成
+
+### RenderEngine 初始化
+
+- [ ] `StagingMemoryManager` 在 ResourceManager 之前创建
+- [ ] `ResourceManager(scheduler, device, stagingMgr)` 构造
+- [ ] `resourceManager_->SetAssetPath(config.assetPath)`
+- [ ] 注册 Loader：ModelLoader、TextureLoader、MaterialLoader
+- [ ] `CreatePlaceholders()` 创建占位符
+
+### 主循环中的资源处理
+
+- [ ] `Run()` 中每帧调用 `resourceManager_->ProcessHotReload()`
+- [ ] 可选：`ProcessLoadedCallbacks()` 处理加载完成回调
+- [ ] 与 RenderEngine::Run 流程对齐
+
+### 依赖关系
+
+| 上层模块 | 依赖资源管理层 |
+|----------|----------------|
+| Render Graph | Material, Texture, Shader |
+| Scene Manager | Mesh |
+| Application | 所有资源类型 |
+| Material System | Texture, Shader |
+
+### 下层依赖
+
+| 资源管理层组件 | 依赖下层 |
+|---------------|----------|
+| ResourceManager | RenderTaskScheduler, IRenderDevice |
+| StagingMemoryManager | IRenderDevice |
+| Loaders | IRenderDevice, StagingMemoryManager |
+| ModelLoader / TextureLoader | StagingMemoryManager（上传） |
+| MaterialLoader | ResourceManager（依赖 Texture） |
+| ShaderCompiler | IRenderDevice |
+
+---
+
+## 错误处理与生命周期
+
+### 加载失败
+
+- [ ] `Load()` 返回空句柄，`GetLastError()` 返回原因
+- [ ] `LoadAsync()` 的 Future 通过异常或错误状态传递失败
+- [ ] 失败时不缓存，避免重复加载失败路径
+
+### Staging Buffer 生命周期
+
+- [ ] Allocate 从池中取或扩展
+- [ ] Upload 提交后需等待 GPU 完成再回收
+- [ ] 与 Fence 关联，GPU 完成时 Free 回池
+
+### 资源释放时机
+
+- [ ] 释放仅在帧边界或显式 Unload 时
+- [ ] 避免渲染中使用时被释放：refCount=0 延迟到下一帧
+
+---
+
+## 技术栈
+
+### 推荐第三方库
+
+- [ ] **tinygltf**：glTF 解析
+- [ ] **stb_image**：PNG/JPG 加载
+- [ ] **basis_universal**：KTX 压缩纹理
+- [ ] **assimp**：多格式模型（可选）
+- [ ] **glslang** / **shaderc**：GLSL→SPIR-V 编译
+
+---
+
+## 参考文档
+
+- [resource_management_layer_design.md](../design/resource_management_layer_design.md) - 资源管理层完整设计
+- [rendering_engine_design.md](../design/rendering_engine_design.md) - 渲染引擎架构
+- [rendering_engine_code_examples.md](../design/rendering_engine_code_examples.md) - 代码示例
+- [executor_layer_design.md](../design/executor_layer_design.md) - 异步加载协作
+- [device_abstraction_layer_design.md](../design/device_abstraction_layer_design.md) - RDI 与 Staging 协作

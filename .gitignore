@@ -1,0 +1,60 @@
+# 构建输出
+build/
+cmake-build-*/
+out/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# 编译产物
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+
+# 调试与性能
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.iobj
+*.ipdb
+*.gcno
+*.gcda
+*.gcov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 日志与临时
+*.log
+*.tmp
+*.temp
+*.bak
+*.cache
