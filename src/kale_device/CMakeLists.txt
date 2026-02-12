@@ -7,7 +7,8 @@ add_library(kale_device STATIC
     window_system.cpp
     vulkan_context.cpp
     input_manager.cpp
-    # 待实现时添加：device.cpp, rdi.cpp
+    render_device.cpp
+    vulkan_render_device.cpp
 )
 
 target_include_directories(kale_device

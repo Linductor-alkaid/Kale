@@ -1,0 +1,124 @@
+/**
+ * @file render_device.hpp
+ * @brief IRenderDevice 渲染设备抽象接口与工厂
+ *
+ * 设备抽象层核心：统一资源创建、命令录制、同步与交换链。
+ * 与 device_abstraction_layer_design.md 对齐。
+ */
+
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include <kale_device/rdi_types.hpp>
+
+namespace kale_device {
+
+// =============================================================================
+// 前向声明
+// =============================================================================
+
+class CommandList;
+
+// =============================================================================
+// 设备配置与能力
+// =============================================================================
+
+/** 渲染设备初始化配置 */
+struct DeviceConfig {
+    void* windowHandle = nullptr;
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+    bool enableValidation = false;
+    bool vsync = true;
+    std::uint32_t backBufferCount = 3;
+};
+
+/** 设备能力查询结果 */
+struct DeviceCapabilities {
+    std::uint32_t maxTextureSize = 0;
+    std::uint32_t maxComputeWorkGroupSize[3] = {0, 0, 0};
+    bool supportsGeometryShader = false;
+    bool supportsTessellation = false;
+    bool supportsComputeShader = false;
+    bool supportsRayTracing = false;
+};
+
+/** 渲染后端枚举 */
+enum class Backend {
+    Vulkan,
+    OpenGL,
+};
+
+// =============================================================================
+// 渲染设备接口
+// =============================================================================
+
+/** 渲染设备抽象接口：资源、命令、同步、交换链 */
+class IRenderDevice {
+public:
+    virtual ~IRenderDevice() = default;
+
+    // --- 设备管理 ---
+    virtual bool Initialize(const DeviceConfig& config) = 0;
+    virtual void Shutdown() = 0;
+
+    /** 初始化失败时的详细错误信息 */
+    virtual const std::string& GetLastError() const = 0;
+
+    // --- 资源创建 ---
+    virtual BufferHandle CreateBuffer(const BufferDesc& desc, const void* data = nullptr) = 0;
+    virtual TextureHandle CreateTexture(const TextureDesc& desc, const void* data = nullptr) = 0;
+    virtual ShaderHandle CreateShader(const ShaderDesc& desc) = 0;
+    virtual PipelineHandle CreatePipeline(const PipelineDesc& desc) = 0;
+    virtual DescriptorSetHandle CreateDescriptorSet(const DescriptorSetLayoutDesc& layout) = 0;
+
+    // --- 资源销毁 ---
+    virtual void DestroyBuffer(BufferHandle handle) = 0;
+    virtual void DestroyTexture(TextureHandle handle) = 0;
+    virtual void DestroyShader(ShaderHandle handle) = 0;
+    virtual void DestroyPipeline(PipelineHandle handle) = 0;
+    virtual void DestroyDescriptorSet(DescriptorSetHandle handle) = 0;
+
+    // --- 资源更新 ---
+    virtual void UpdateBuffer(BufferHandle handle, const void* data, std::size_t size,
+                             std::size_t offset = 0) = 0;
+    virtual void UpdateTexture(TextureHandle handle, const void* data,
+                              std::uint32_t mipLevel = 0) = 0;
+
+    // --- 命令录制（多线程时每线程独立 CommandPool）---
+    virtual CommandList* BeginCommandList(std::uint32_t threadIndex = 0) = 0;
+    virtual void EndCommandList(CommandList* cmd) = 0;
+    virtual void Submit(const std::vector<CommandList*>& cmdLists,
+                        const std::vector<SemaphoreHandle>& waitSemaphores = {},
+                        const std::vector<SemaphoreHandle>& signalSemaphores = {},
+                        FenceHandle fence = {}) = 0;
+
+    // --- 同步 ---
+    virtual void WaitIdle() = 0;
+    virtual FenceHandle CreateFence(bool signaled = false) = 0;
+    virtual void WaitForFence(FenceHandle fence, std::uint64_t timeout = UINT64_MAX) = 0;
+    virtual void ResetFence(FenceHandle fence) = 0;
+    virtual SemaphoreHandle CreateSemaphore() = 0;
+
+    // --- 交换链 ---
+    virtual std::uint32_t AcquireNextImage() = 0;
+    virtual void Present() = 0;
+    virtual TextureHandle GetBackBuffer() = 0;
+    virtual std::uint32_t GetCurrentFrameIndex() const = 0;
+
+    // --- 查询 ---
+    virtual const DeviceCapabilities& GetCapabilities() const = 0;
+};
+
+// =============================================================================
+// 工厂
+// =============================================================================
+
+/** 根据后端创建渲染设备实例 */
+std::unique_ptr<IRenderDevice> CreateRenderDevice(Backend backend);
+
+}  // namespace kale_device

@@ -256,7 +256,7 @@
         "实现 GetLastError() 错误信息（初始化失败时）",
         "实现 CreateRenderDevice(Backend backend) 工厂函数"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.1"],
       "test_verification": "接口定义完整，编译通过，Vulkan 实现可以初始化"

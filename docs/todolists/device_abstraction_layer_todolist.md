@@ -71,18 +71,18 @@
 
 ### 2.2 IRenderDevice 接口定义
 
-- [ ] 实现 `IRenderDevice` 纯虚基类
-- [ ] 实现 `Initialize(const DeviceConfig& config)` / `Shutdown()`
-- [ ] 实现资源创建：`CreateBuffer`、`CreateTexture`、`CreateShader`、`CreatePipeline`、`CreateDescriptorSet`
-- [ ] 实现资源销毁：`DestroyBuffer`、`DestroyTexture`、`DestroyShader`、`DestroyPipeline`、`DestroyDescriptorSet`
-- [ ] 实现资源更新：`UpdateBuffer`、`UpdateTexture`
-- [ ] 实现 `BeginCommandList(uint32_t threadIndex)` / `EndCommandList` / `Submit`
-- [ ] 实现同步：`WaitIdle`、`CreateFence`、`WaitForFence`、`ResetFence`、`CreateSemaphore`
-- [ ] 实现交换链：`AcquireNextImage`、`Present`、`GetBackBuffer`、`GetCurrentFrameIndex`
-- [ ] 实现 `GetCapabilities()` 返回 `DeviceCapabilities`
-- [ ] 定义 `DeviceConfig`、`DeviceCapabilities` 结构
-- [ ] 实现 `GetLastError()` 错误信息（初始化失败时）
-- [ ] 实现 `CreateRenderDevice(Backend backend)` 工厂函数
+- [x] 实现 `IRenderDevice` 纯虚基类
+- [x] 实现 `Initialize(const DeviceConfig& config)` / `Shutdown()`
+- [x] 实现资源创建：`CreateBuffer`、`CreateTexture`、`CreateShader`、`CreatePipeline`、`CreateDescriptorSet`
+- [x] 实现资源销毁：`DestroyBuffer`、`DestroyTexture`、`DestroyShader`、`DestroyPipeline`、`DestroyDescriptorSet`
+- [x] 实现资源更新：`UpdateBuffer`、`UpdateTexture`
+- [x] 实现 `BeginCommandList(uint32_t threadIndex)` / `EndCommandList` / `Submit`
+- [x] 实现同步：`WaitIdle`、`CreateFence`、`WaitForFence`、`ResetFence`、`CreateSemaphore`
+- [x] 实现交换链：`AcquireNextImage`、`Present`、`GetBackBuffer`、`GetCurrentFrameIndex`
+- [x] 实现 `GetCapabilities()` 返回 `DeviceCapabilities`
+- [x] 定义 `DeviceConfig`、`DeviceCapabilities` 结构
+- [x] 实现 `GetLastError()` 错误信息（初始化失败时）
+- [x] 实现 `CreateRenderDevice(Backend backend)` 工厂函数
 
 ### 2.3 CommandList 接口
 

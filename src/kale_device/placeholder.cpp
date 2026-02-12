@@ -2,9 +2,12 @@
 // 实现时用实际源文件替换
 
 #include <kale_device/rdi_types.hpp>
+#include <kale_device/render_device.hpp>
 
-namespace kale::device {
+namespace kale_device {
 
-void placeholder() {}
+void placeholder() {
+    (void)CreateRenderDevice(Backend::Vulkan);
+}
 
-}  // namespace kale::device
+}  // namespace kale_device

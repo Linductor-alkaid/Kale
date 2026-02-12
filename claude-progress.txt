@@ -2,6 +2,18 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-12 23:30:00 ===
+功能：phase2-2.2 IRenderDevice 接口定义
+状态：已完成
+- 实现 IRenderDevice 纯虚基类（render_device.hpp）
+- 定义 DeviceConfig、DeviceCapabilities、Backend 与 CommandList 前向声明
+- 实现 Initialize/Shutdown、资源创建/销毁/更新、BeginCommandList/EndCommandList/Submit
+- 实现同步 WaitIdle、CreateFence、WaitForFence、ResetFence、CreateSemaphore
+- 实现交换链 AcquireNextImage、Present、GetBackBuffer、GetCurrentFrameIndex、GetCapabilities、GetLastError
+- 实现 CreateRenderDevice(Backend) 工厂（render_device.cpp）
+- 实现 VulkanRenderDevice 最小可初始化（vulkan_render_device.hpp/cpp），包装 VulkanContext
+- 编译通过，Vulkan 后端可成功 Initialize
+
 === 2026-02-12 23:00:00 ===
 功能：phase2-2.1 资源句柄与描述符类型
 状态：已完成
