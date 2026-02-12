@@ -47,6 +47,11 @@ _deps/
 *.swo
 *~
 
+# agent - These files are now part of the development workflow
+# claude-progress.txt    # Progress tracking for long-running agents
+# feature_list.json      # Feature list with status tracking
+# init.sh                # Environment initialization script
+
 # 系统文件
 .DS_Store
 Thumbs.db

@@ -1,0 +1,944 @@
+{
+  "project": "Kale Rendering Engine",
+  "version": "0.1.0",
+  "description": "Vulkan + SDL3 rendering engine with modular layered architecture",
+  "last_updated": "2026-02-12",
+  "features": [
+    {
+      "id": "phase0-0.1",
+      "category": "infrastructure",
+      "layer": "executor_layer",
+      "phase": "0",
+      "title": "集成 executor 库",
+      "description": "通过 find_package(executor) 或 add_subdirectory 集成 executor 库",
+      "steps": [
+        "配置 CMake 查找 executor 库",
+        "添加 executor 子目录或使用 find_package",
+        "验证 executor 链接成功"
+      ],
+      "status": "pending",
+      "priority": "critical",
+      "dependencies": []
+    },
+    {
+      "id": "phase0-0.2",
+      "category": "infrastructure",
+      "layer": "device_abstraction_layer",
+      "phase": "0",
+      "title": "集成 SDL3",
+      "description": "集成 SDL3 库用于窗口与输入管理",
+      "steps": [
+        "配置 CMake 查找 SDL3",
+        "验证 SDL3 头文件可用",
+        "验证 SDL3 链接成功"
+      ],
+      "status": "pending",
+      "priority": "critical",
+      "dependencies": []
+    },
+    {
+      "id": "phase1-1.1",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "1",
+      "title": "SDL3 与窗口系统",
+      "description": "实现 WindowSystem 类，创建 SDL 窗口，支持事件循环、窗口属性查询和调整大小",
+      "steps": [
+        "集成 SDL3 库（SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_EVENTS）",
+        "实现 WindowSystem 类",
+        "实现 WindowSystem::Create(const WindowConfig& config) 创建 SDL 窗口",
+        "实现 WindowSystem::Destroy() 销毁窗口",
+        "实现 WindowSystem::GetWindow() 返回 SDL_Window*",
+        "实现 WindowSystem::GetNativeHandle() 供 Vulkan Surface 使用",
+        "实现 GetWidth() / GetHeight() / Resize()",
+        "实现 PollEvents() 与 ShouldClose() 事件循环",
+        "定义 WindowConfig 结构（width, height, title, fullscreen, resizable）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase0-0.2"],
+      "test_verification": "创建窗口并显示，验证窗口大小和标题正确，事件循环正常工作"
+    },
+    {
+      "id": "phase1-1.2",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "1",
+      "title": "Vulkan 基础",
+      "description": "创建 Vulkan Instance、选择 Physical Device、创建 Logical Device 和 Surface、创建基础 Swapchain",
+      "steps": [
+        "创建 Vulkan Instance（支持 enableValidation 时启用 Validation Layer）",
+        "选择 Physical Device 与 Queue Family",
+        "创建 Logical Device",
+        "使用 SDL_Vulkan_CreateSurface(window, instance, &surface) 创建 Surface",
+        "创建基础 Swapchain（支持 vsync、backBufferCount）",
+        "获取 Swapchain Image 句柄"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase1-1.1"],
+      "test_verification": "成功创建 Vulkan 设备和 Swapchain，validation layers 正常工作"
+    },
+    {
+      "id": "phase1-1.3",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "1",
+      "title": "简单三角形渲染",
+      "description": "实现完整的渲染流程，包括 Command Buffer、Render Pass、Pipeline 和三角形绘制",
+      "steps": [
+        "创建 Vulkan Command Pool 与 Command Buffer",
+        "实现 Render Pass（单次 Color Attachment）",
+        "创建三角形顶点 Buffer（Vertex + Index）",
+        "加载 SPIR-V 着色器，创建 Shader Module",
+        "创建 Graphics Pipeline（TriangleList）",
+        "实现一帧完整流程：Acquire → Record → Submit → Present"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase1-1.2"],
+      "test_verification": "成功在窗口中渲染一个三角形，验证每帧渲染流程正常"
+    },
+    {
+      "id": "phase1-1.4",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "1",
+      "title": "输入系统基础",
+      "description": "实现 InputManager 类，支持键盘、鼠标输入查询和状态跟踪",
+      "steps": [
+        "实现 InputManager 类",
+        "实现 InputManager::Initialize(SDL_Window* window)",
+        "实现 InputManager::Update() 每帧轮询 SDL 事件",
+        "实现键盘：IsKeyPressed(KeyCode) / IsKeyJustPressed / IsKeyJustReleased",
+        "实现鼠标：GetMousePosition() / GetMouseDelta() / IsMouseButtonPressed() / GetMouseWheelDelta()",
+        "定义 KeyCode、MouseButton 枚举（与 SDL 映射）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase1-1.1"],
+      "test_verification": "键盘和鼠标输入正常响应，按键状态和鼠标位置准确"
+    },
+    {
+      "id": "phase1-1.5",
+      "category": "functional",
+      "layer": "executor_layer",
+      "phase": "1",
+      "title": "TaskChannel 核心实现",
+      "description": "实现 TaskChannel<T, Capacity> SPSC 无锁队列",
+      "steps": [
+        "实现 TaskChannel<T, Capacity> SPSC 无锁队列",
+        "实现 try_send(T&& value) 非阻塞发送",
+        "实现 try_recv(T& out) 非阻塞接收",
+        "实现 send(T&& value, timeout) 阻塞发送（带超时）",
+        "实现 recv(T& out, timeout) 阻塞接收（带超时）",
+        "实现 size() 和 empty() 查询接口",
+        "基于 std::atomic 和 CAS 实现无锁环形缓冲区",
+        "使用固定容量，避免动态分配"
+      ],
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["phase0-0.1"],
+      "test_verification": "多线程 send/recv 无数据竞争，高并发压力测试通过"
+    },
+    {
+      "id": "phase1-1.6",
+      "category": "functional",
+      "layer": "executor_layer",
+      "phase": "1",
+      "title": "TaskChannel 扩展与测试",
+      "description": "实现 MPSC 变体，编写单元测试",
+      "steps": [
+        "实现 MPSC（多生产者单消费者）变体（可选）",
+        "单元测试：多线程 send/recv，无数据竞争",
+        "单元测试：高并发压力测试",
+        "保持与 executor 解耦，可独立使用"
+      ],
+      "status": "completed",
+      "priority": "medium",
+      "dependencies": ["phase1-1.5"],
+      "test_verification": "单元测试通过，验证无数据竞争"
+    },
+    {
+      "id": "phase1-1.7",
+      "category": "functional",
+      "layer": "executor_layer",
+      "phase": "1",
+      "title": "ExecutorPromise / ExecutorFuture",
+      "description": "实现 Promise/Future 模式用于异步任务结果传递",
+      "steps": [
+        "实现 ExecutorPromise<T> 模板类",
+        "实现 set_value(T value) 和 set_exception(std::exception_ptr e)",
+        "实现 ExecutorFuture<T>::get_future() 获取 future",
+        "实现 ExecutorFuture<T>::get() 阻塞直到就绪",
+        "实现 ExecutorFuture<T>::valid() 有效性检查"
+      ],
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["phase0-0.1"],
+      "test_verification": "Promise/Future 异步结果传递正常工作"
+    },
+    {
+      "id": "phase1-1.8",
+      "category": "functional",
+      "layer": "executor_layer",
+      "phase": "1",
+      "title": "then 续接",
+      "description": "实现 then 方法支持链式异步操作",
+      "steps": [
+        "实现 then(Executor& ex, F&& func) 在 executor 中续接",
+        "返回 ExecutorFuture<std::invoke_result_t<F, T>>",
+        "避免阻塞当前线程，由 executor 调度续接任务"
+      ],
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["phase1-1.7"],
+      "test_verification": "链式异步操作正确执行，不阻塞主线程"
+    },
+    {
+      "id": "phase1-1.9",
+      "category": "functional",
+      "layer": "executor_layer",
+      "phase": "1",
+      "title": "async_load API",
+      "description": "实现异步加载 API，集成到上层资源管理系统",
+      "steps": [
+        "实现 async_load<T>(Executor& ex, std::function<T()> loader) API",
+        "集成到 LoadResourceAsync 等上层 API",
+        "确保 promise::set_value 仅调用一次，标准库保证线程安全"
+      ],
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["phase1-1.7"],
+      "test_verification": "异步加载不阻塞主线程，返回正确的 Future"
+    },
+    {
+      "id": "phase2-2.1",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "资源句柄与描述符类型",
+      "description": "实现 Handle<T> 模板和资源描述符类型",
+      "steps": [
+        "实现 Handle<T> 模板（id, IsValid, operator==, operator!=）",
+        "定义 BufferHandle、TextureHandle、ShaderHandle、PipelineHandle",
+        "定义 DescriptorSetHandle、FenceHandle、SemaphoreHandle",
+        "定义 Format、BufferUsage、TextureUsage 枚举",
+        "定义 BufferDesc、TextureDesc、ShaderDesc 结构",
+        "定义 DescriptorBinding、DescriptorSetLayoutDesc（含 DescriptorType）",
+        "定义 VertexInputBinding、VertexInputAttribute",
+        "定义 BlendState、DepthStencilState、RasterizationState",
+        "定义 PipelineDesc（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase1-1.3"],
+      "test_verification": "句柄和描述符类型定义完整，编译通过"
+    },
+    {
+      "id": "phase2-2.2",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "IRenderDevice 接口定义",
+      "description": "定义渲染设备抽象接口",
+      "steps": [
+        "实现 IRenderDevice 纯虚基类",
+        "实现 Initialize(const DeviceConfig& config) / Shutdown()",
+        "实现资源创建：CreateBuffer、CreateTexture、CreateShader、CreatePipeline、CreateDescriptorSet",
+        "实现资源销毁：DestroyBuffer、DestroyTexture、DestroyShader、DestroyPipeline、DestroyDescriptorSet",
+        "实现资源更新：UpdateBuffer、UpdateTexture",
+        "实现 BeginCommandList(uint32_t threadIndex) / EndCommandList / Submit",
+        "实现同步：WaitIdle、CreateFence、WaitForFence、ResetFence、CreateSemaphore",
+        "实现交换链：AcquireNextImage、Present、GetBackBuffer、GetCurrentFrameIndex",
+        "实现 GetCapabilities() 返回 DeviceCapabilities",
+        "定义 DeviceConfig、DeviceCapabilities 结构",
+        "实现 GetLastError() 错误信息（初始化失败时）",
+        "实现 CreateRenderDevice(Backend backend) 工厂函数"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.1"],
+      "test_verification": "接口定义完整，编译通过，Vulkan 实现可以初始化"
+    },
+    {
+      "id": "phase2-2.3",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "CommandList 接口",
+      "description": "定义命令列表接口",
+      "steps": [
+        "实现 CommandList 纯虚接口",
+        "实现 Render Pass：BeginRenderPass、EndRenderPass",
+        "实现管线绑定：BindPipeline、BindDescriptorSet",
+        "实现资源绑定：BindVertexBuffer、BindIndexBuffer",
+        "实现 SetPushConstants",
+        "实现 Draw：Draw、DrawIndexed",
+        "实现 Compute：Dispatch",
+        "实现 Barrier（纹理资源屏障）",
+        "实现 Clear / Viewport / Scissor：ClearColor、ClearDepth、SetViewport、SetScissor"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "test_verification": "接口定义完整，可以用于录制渲染命令"
+    },
+    {
+      "id": "phase2-2.4",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "Vulkan Backend 资源",
+      "description": "实现 Vulkan 后端的资源创建和管理",
+      "steps": [
+        "实现 VulkanRenderDevice : public IRenderDevice",
+        "实现 CreateBuffer → VkBuffer + VMA 分配",
+        "实现 CreateTexture → VkImage + VMA 分配",
+        "实现 CreateShader → VkShaderModule（SPIR-V）",
+        "实现 CreatePipeline → VkPipeline（含 layout）",
+        "实现 CreateDescriptorSet → VkDescriptorSet / VkDescriptorPool",
+        "实现 Destroy* 系列接口",
+        "实现 UpdateBuffer / UpdateTexture（含 Staging Buffer 上传路径）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "test_verification": "成功创建和管理 Vulkan 资源，无内存泄漏"
+    },
+    {
+      "id": "phase2-2.5",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "Vulkan Backend 命令与同步",
+      "description": "实现 Vulkan 命令录制和同步原语",
+      "steps": [
+        "实现 VulkanCommandList 封装 VkCommandBuffer",
+        "实现 BeginCommandList(threadIndex) 从对应 CommandPool 分配",
+        "实现 EndCommandList 结束录制",
+        "实现 Submit 支持 waitSemaphores、signalSemaphores、fence",
+        "实现 Fence：CreateFence、WaitForFence、ResetFence",
+        "实现 Semaphore：CreateSemaphore",
+        "实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal",
+        "集成 VMA (Vulkan Memory Allocator)"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.3", "phase2-2.4"],
+      "test_verification": "命令录制和同步正常工作，帧流水线无死锁"
+    },
+    {
+      "id": "phase2-2.6",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "2",
+      "title": "Vulkan Swapchain 与呈现",
+      "description": "实现 Swapchain 管理和图像呈现",
+      "steps": [
+        "实现 AcquireNextImage 返回 back buffer index，内部 signal semaphore",
+        "实现 Present 与 Swapchain 呈现",
+        "实现 GetBackBuffer 返回当前帧 TextureHandle",
+        "实现 GetCurrentFrameIndex 帧索引",
+        "处理 VK_ERROR_OUT_OF_DATE_KHR（resize 时重建 Swapchain）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.5"],
+      "test_verification": "Swapchain 正常工作，支持窗口调整大小"
+    },
+    {
+      "id": "phase3-3.1",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "资源句柄类型",
+      "description": "实现 ResourceHandle<T> 模板和 ResourceHandleAny 类型擦除",
+      "steps": [
+        "实现 ResourceHandle<T> 模板（id, IsValid, operator==, operator!=）",
+        "实现 ResourceHandleAny 类型擦除句柄（id + type_index）",
+        "实现 ToAny(ResourceHandle<T>) 转换为 ResourceHandleAny",
+        "定义 Mesh、Texture、Material 等资源句柄类型别名"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.1"],
+      "test_verification": "句柄类型定义完整，类型擦除正常工作"
+    },
+    {
+      "id": "phase3-3.2",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "ResourceCache 基础",
+      "description": "实现资源缓存系统",
+      "steps": [
+        "实现 CacheEntry 结构（resource, path, refCount, isReady, typeId）",
+        "实现 Register<T>(path, resource, ready) 登记资源",
+        "实现 RegisterPlaceholder<T>(path) 预注册占位条目",
+        "实现 Get<T>(handle) 获取资源",
+        "实现 IsReady<T>(handle) 检查就绪状态",
+        "实现 SetResource(handle, resource) 和 SetReady(handle)",
+        "实现 FindByPath(path, typeId) 路径查找",
+        "实现 AddRef / Release 引用计数",
+        "线程安全：entries_、pathToId_ 的 mutex 保护"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.1"],
+      "test_verification": "资源缓存正常工作，引用计数正确，线程安全"
+    },
+    {
+      "id": "phase3-3.3",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "IResourceLoader 接口",
+      "description": "定义资源加载器接口",
+      "steps": [
+        "实现 IResourceLoader 纯虚基类",
+        "实现 Supports(path) 判断是否支持该路径",
+        "实现 Load(path, ResourceLoadContext& ctx) 同步加载",
+        "实现 GetResourceType() 返回 type_index",
+        "定义 ResourceLoadContext 结构（device, stagingMgr, resourceManager）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "test_verification": "接口定义完整，可以实现自定义加载器"
+    },
+    {
+      "id": "phase3-3.4",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "ResourceManager 接口与 Loader 注册",
+      "description": "实现资源管理器和加载器注册机制",
+      "steps": [
+        "实现 ResourceManager 构造函数（scheduler, device, stagingMgr）",
+        "实现 RegisterLoader(std::unique_ptr<IResourceLoader> loader)",
+        "实现 FindLoader(path, typeId) 查找 Loader",
+        "实现 SetAssetPath(path) 设置资源根路径",
+        "实现 AddPathAlias(alias, path) 路径别名",
+        "实现 ResolvePath(path) 解析完整路径"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2", "phase3-3.2"],
+      "test_verification": "资源管理器可以注册和查找加载器"
+    },
+    {
+      "id": "phase3-3.5",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "同步 Load 实现",
+      "description": "实现同步资源加载",
+      "steps": [
+        "实现 Load<T>(path) 模板方法",
+        "检查缓存：若已存在则 AddRef 并返回",
+        "查找 Loader 并调用 Load",
+        "加载成功后 Register 入 Cache",
+        "加载失败时 GetLastError() 返回原因",
+        "失败不缓存，避免重复加载失败路径"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.4"],
+      "test_verification": "同步加载正常工作，缓存正确，失败处理合理"
+    },
+    {
+      "id": "phase3-3.6",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "Mesh / Texture 数据结构",
+      "description": "定义网格和纹理数据结构",
+      "steps": [
+        "定义 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, topology, bounds, subMeshes）",
+        "定义 SubMesh 结构（indexOffset, indexCount, materialIndex）",
+        "定义 Texture 结构（handle, width, height, format, mipLevels）",
+        "定义 BoundingBox 结构"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.1"],
+      "test_verification": "数据结构定义完整，可以表示各种资源"
+    },
+    {
+      "id": "phase3-3.7",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "简单 TextureLoader",
+      "description": "实现基础纹理加载器",
+      "steps": [
+        "实现 TextureLoader : public IResourceLoader",
+        "支持 .png、.jpg（使用 stb_image）",
+        "实现 LoadSTB(path) 加载未压缩纹理",
+        "创建 RDI Texture，直接传入数据（暂不通过 Staging）",
+        "返回 std::unique_ptr<Texture> 或等价的 std::any"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.3", "phase2-2.4"],
+      "test_verification": "成功加载 PNG/JPG 纹理，正确显示"
+    },
+    {
+      "id": "phase3-3.8",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "3",
+      "title": "简单 ModelLoader",
+      "description": "实现基础模型加载器",
+      "steps": [
+        "实现 ModelLoader : public IResourceLoader",
+        "支持 .gltf（使用 tinygltf）",
+        "实现 LoadGLTF(path) 解析顶点/索引",
+        "创建 vertexBuffer、indexBuffer 通过 RDI",
+        "生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）",
+        "可选：支持 .obj（使用 assimp 或简易解析）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.3", "phase2-2.4", "phase3-3.6"],
+      "test_verification": "成功加载 glTF 模型，正确渲染"
+    },
+    {
+      "id": "phase5-5.1",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "句柄与类型定义",
+      "description": "定义场景节点句柄和类型",
+      "steps": [
+        "定义 SceneNodeHandle = uint64_t 类型",
+        "定义 kInvalidSceneNodeHandle = 0 常量",
+        "实现 SceneManager::GetHandle(SceneNode* node) 句柄查找",
+        "实现 SceneManager::GetNode(SceneNodeHandle handle) 句柄解析（已销毁返回 nullptr）",
+        "实现 handleRegistry_（std::unordered_map<SceneNodeHandle, SceneNode*>）",
+        "节点创建时分配 handle 并注册，销毁时从注册表移除"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": [],
+      "test_verification": "句柄分配和解析正常工作"
+    },
+    {
+      "id": "phase5-5.2",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "SceneNode 核心",
+      "description": "实现场景节点核心功能",
+      "steps": [
+        "实现 SceneNode 类",
+        "实现 localTransform_、worldMatrix_（glm::mat4）",
+        "实现 SetLocalTransform(const glm::mat4& t) / GetLocalTransform()",
+        "实现 GetWorldMatrix()（由 SceneManager::Update 计算后只读）",
+        "实现 SetWorldMatrix(const glm::mat4& m)（friend 关系，仅供 SceneManager 调用）",
+        "实现 AddChild(std::unique_ptr<SceneNode> child) 返回 SceneNode*",
+        "实现 GetParent() / GetChildren() 父子层级访问",
+        "实现 GetHandle() 返回 SceneNodeHandle",
+        "实现 handle_ 成员，由 SceneManager 在 CreateScene/AddChild 时设置"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.1"],
+      "test_verification": "场景节点层级正确，变换计算准确"
+    },
+    {
+      "id": "phase5-5.3",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "SceneManager 生命周期",
+      "description": "实现场景管理器的生命周期管理",
+      "steps": [
+        "实现 SceneManager::CreateScene() 创建根节点、分配 handle、注册",
+        "实现 SetActiveScene(SceneNode* root) 销毁旧场景、激活新场景",
+        "实现 GetActiveRoot() 返回当前活动根",
+        "销毁旧场景时递归销毁节点并从 handleRegistry 移除",
+        "实现 nextHandle_ 分配递增 handle"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.2"],
+      "test_verification": "场景创建和切换正常，无内存泄漏"
+    },
+    {
+      "id": "phase5-5.4",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "世界矩阵计算",
+      "description": "实现场景节点世界矩阵递归计算",
+      "steps": [
+        "实现 SceneManager::Update(float deltaTime)",
+        "实现 UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld)",
+        "世界矩阵计算：world = parentWorld * node->GetLocalTransform()",
+        "递归更新所有子节点"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.3"],
+      "test_verification": "世界矩阵计算正确，层级变换正确传播"
+    },
+    {
+      "id": "phase5-5.5",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "Pass 标志",
+      "description": "实现渲染 Pass 标志",
+      "steps": [
+        "定义 PassFlags 枚举（ShadowCaster、Opaque、Transparent、All）",
+        "SceneNode 实现 SetPassFlags(PassFlags f) / GetPassFlags()",
+        "默认 PassFlags::All"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase5-5.2"],
+      "test_verification": "Pass 标志正确设置和查询"
+    },
+    {
+      "id": "phase5-5.6",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "Renderable 挂载",
+      "description": "实现 Renderable 挂载到 SceneNode",
+      "steps": [
+        "SceneNode 实现 SetRenderable(Renderable* r) / GetRenderable()",
+        "SceneNode 持有 Renderable 非占有指针（Renderable* renderable）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.2"],
+      "test_verification": "Renderable 正确挂载到节点"
+    },
+    {
+      "id": "phase5-5.7",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "BoundingBox 与数学",
+      "description": "实现包围盒和数学工具",
+      "steps": [
+        "实现 BoundingBox 结构（min, max，glm::vec3）",
+        "实现 BoundingBox::Transform(const glm::mat4& m) 变换包围体",
+        "实现 TransformBounds(const BoundingBox& box, const glm::mat4& m) 自由函数"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.6"],
+      "test_verification": "包围盒变换正确"
+    },
+    {
+      "id": "phase5-5.8",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "视锥剔除",
+      "description": "实现视锥剔除系统",
+      "steps": [
+        "实现 FrustumPlanes 结构（planes[6]，left/right/bottom/top/near/far）",
+        "实现 ExtractFrustumPlanes(const glm::mat4& viewProj) 从 VP 矩阵提取",
+        "实现 IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.7"],
+      "test_verification": "视锥剔除正确识别可视对象"
+    },
+    {
+      "id": "phase5-5.9",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "CullScene 单相机",
+      "description": "实现单相机场景剔除",
+      "steps": [
+        "实现 SceneManager::CullScene(CameraNode* camera) 返回 std::vector<SceneNode*>",
+        "递归遍历场景图",
+        "无 Renderable 的节点：只遍历子节点，不加入可见列表",
+        "有 Renderable 的节点：用 TransformBounds 计算世界包围体，视锥测试",
+        "通过视锥测试的节点加入 visibleNodes",
+        "需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.4", "phase5-5.8"],
+      "test_verification": "剔除返回正确的可见节点列表"
+    },
+    {
+      "id": "phase5-5.10",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "5",
+      "title": "Renderable 抽象",
+      "description": "实现 Renderable 基类",
+      "steps": [
+        "实现 Renderable 基类",
+        "实现 GetBounds() 返回 BoundingBox",
+        "实现 GetMesh() / GetMaterial()（或 mesh、material 成员）",
+        "实现 Draw(CommandList& cmd, const glm::mat4& worldTransform) 虚函数",
+        "定义 bounds 成员供 CullScene 使用"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase3-3.6", "phase5-5.6"],
+      "test_verification": "Renderable 可以正确渲染"
+    },
+    {
+      "id": "phase6-6.1",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "6",
+      "title": "StagingMemoryManager",
+      "description": "实现 Staging 内存管理器",
+      "steps": [
+        "实现 StagingMemoryManager(IRenderDevice* device) 构造函数",
+        "定义 StagingAllocation 结构（buffer, mappedPtr, size, offset）",
+        "实现 Allocate(size) 从池分配",
+        "实现 Free(alloc) 回收到池",
+        "实现 Staging Buffer 池初始化（默认 64MB poolSize_）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "test_verification": "Staging 内存分配和回收正常工作"
+    },
+    {
+      "id": "phase6-6.2",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "6",
+      "title": "Staging Buffer 池化",
+      "description": "实现 Staging Buffer 池化管理",
+      "steps": [
+        "维护 stagingPool_ 预分配 Buffer 列表",
+        "实现线性分配或块分配策略",
+        "分配不足时扩展池或等待 GPU 完成回收",
+        "与 Fence 关联：GPU 完成时 Free 回池"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.1"],
+      "test_verification": "池化管理减少分配次数"
+    },
+    {
+      "id": "phase6-6.3",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "6",
+      "title": "Upload Queue 与 Copy 命令",
+      "description": "实现上传队列和拷贝命令",
+      "steps": [
+        "实现 SubmitUpload(cmd, src, dstTexture, mipLevel) Buffer→Texture",
+        "实现 SubmitUpload(cmd, src, dstBuffer, dstOffset) Buffer→Buffer",
+        "收集 pendingUploads_ 待执行上传",
+        "实现 FlushUploads(device) 在 Execute 前提交 Copy 命令"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.2"],
+      "test_verification": "数据正确上传到 GPU"
+    },
+    {
+      "id": "phase6-6.4",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "6",
+      "title": "TextureLoader 集成 Staging",
+      "description": "TextureLoader 集成 Staging 上传",
+      "steps": [
+        "TextureLoader 使用 StagingMemoryManager::Allocate 获取暂存缓冲",
+        "将解码后的像素数据写入 mappedPtr",
+        "通过 SubmitUpload 提交 Copy 到 GPU Texture",
+        "等待 GPU 完成后 Free StagingAllocation",
+        "支持 Mipmap 链上传（逐级 Copy）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.3", "phase3-3.7"],
+      "test_verification": "纹理通过 Staging 正确上传"
+    },
+    {
+      "id": "phase6-6.5",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "6",
+      "title": "ModelLoader 集成 Staging",
+      "description": "ModelLoader 集成 Staging 上传",
+      "steps": [
+        "ModelLoader 顶点/索引数据通过 Staging 上传",
+        "Allocate 获取 StagingAllocation",
+        "SubmitUpload 到 vertexBuffer、indexBuffer",
+        "上传完成后 Free"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.3", "phase3-3.8"],
+      "test_verification": "模型数据通过 Staging 正确上传"
+    },
+    {
+      "id": "phase6-6.6",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "SubmittedDraw 与 RenderPassContext",
+      "description": "定义绘制提交和渲染 Pass 上下文结构",
+      "steps": [
+        "定义 SubmittedDraw 结构",
+        "实现 renderable 成员（Renderable*）",
+        "实现 worldTransform 成员（glm::mat4）",
+        "实现 passFlags 成员（PassFlags：ShadowCaster | Opaque | Transparent）",
+        "定义 RenderPassContext 结构",
+        "实现 GetSubmittedDraws() 返回 const std::vector<SubmittedDraw>&",
+        "实现 GetDrawsForPass(PassFlags pass) 按 Pass 过滤（过滤条件 (draw.passFlags & pass) != 0）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.10"],
+      "test_verification": "绘制提交和上下文结构正常工作"
+    },
+    {
+      "id": "phase6-6.7",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "PassFlags 与 RG 资源句柄",
+      "description": "定义 Pass 标志和 Render Graph 资源句柄",
+      "steps": [
+        "定义 PassFlags 枚举（ShadowCaster、Opaque、Transparent、All）",
+        "定义 RGResourceHandle = uint64_t 类型（RG 内部逻辑句柄）",
+        "Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase5-5.5"],
+      "test_verification": "Pass 标志和资源句柄定义正确"
+    },
+    {
+      "id": "phase6-6.8",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "RenderPassBuilder",
+      "description": "实现渲染 Pass 构建器",
+      "steps": [
+        "实现 RenderPassBuilder 类",
+        "实现 WriteColor(uint32_t slot, RGResourceHandle texture)",
+        "实现 WriteDepth(RGResourceHandle texture)",
+        "实现 ReadTexture(RGResourceHandle texture)",
+        "实现 WriteSwapchain() 声明写入当前 back buffer",
+        "Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.7"],
+      "test_verification": "Pass 构建器可以正确声明依赖"
+    },
+    {
+      "id": "phase6-6.9",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "RenderGraph 声明式接口",
+      "description": "实现 Render Graph 声明式接口",
+      "steps": [
+        "实现 RenderGraph 类",
+        "实现 DeclareTexture(const std::string& name, const TextureDesc& desc) 返回 RGResourceHandle",
+        "实现 DeclareBuffer(const std::string& name, const BufferDesc& desc) 返回 RGResourceHandle",
+        "实现 AddPass(const std::string& name, RenderPassSetup setup, RenderPassExecute execute) 返回 RenderPassHandle",
+        "定义 RenderPassSetup = std::function<void(RenderPassBuilder&)> 类型",
+        "定义 RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)> 类型",
+        "实现 SetResolution(uint32_t width, uint32_t height) 影响 DeclareTexture 尺寸"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.8"],
+      "test_verification": "可以声明 Pass 和资源"
+    },
+    {
+      "id": "phase6-6.10",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "应用层显式提交",
+      "description": "实现应用层显式提交绘制",
+      "steps": [
+        "实现 SubmitRenderable(Renderable* renderable, const glm::mat4& worldTransform, PassFlags passFlags = PassFlags::All)",
+        "实现 ClearSubmitted() 清空本帧提交",
+        "实现 submittedDraws_ 成员存储每帧提交的绘制项"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.9"],
+      "test_verification": "绘制提交和清空正常工作"
+    },
+    {
+      "id": "phase6-6.11",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "Compile 流程",
+      "description": "实现 Render Graph 编译流程",
+      "steps": [
+        "实现 Compile(IRenderDevice* device) 在分辨率/管线变化时调用",
+        "实现 Pass 依赖分析（ReadTexture/WriteTexture 推导 Pass 顺序）",
+        "实现资源分配：按 DeclareTexture 描述创建 RDI Texture",
+        "实现 RGResourceHandle → 实际 RDI TextureHandle/BufferHandle 的映射",
+        "构建 topologicalOrder_ Pass 拓扑序",
+        "Compile 失败时返回 false 或抛出，GetLastError 获取原因",
+        "资源分配失败时保证已分配资源可释放"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.9", "phase2-2.2"],
+      "test_verification": "编译正确分析依赖，分配资源"
+    },
+    {
+      "id": "phase6-6.12",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "Execute 流程单线程",
+      "description": "实现单线程渲染流程",
+      "steps": [
+        "实现 Execute(IRenderDevice* device) 每帧调用",
+        "实现 BuildFrameDrawList() 整理 submittedDraws_",
+        "实现 帧流水线：WaitForFence(frameFences_[currentFrameIndex_])",
+        "实现 ResetFence(frameFences_[currentFrameIndex_])",
+        "实现 AcquireNextImage() 获取 imageIndex",
+        "实现 RecordPasses(device) 按拓扑序单线程录制",
+        "实现 Submit(cmdLists, waitSem, signalSem, fence)",
+        "实现 ReleaseFrameResources() 帧末回收",
+        "实现 currentFrameIndex_ 轮转（kMaxFramesInFlight = 3）",
+        "实现 frameFences_、acquireSemaphore_、renderCompleteSemaphore_ 管理"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.11", "phase2-2.6"],
+      "test_verification": "单线程渲染流程正常工作"
+    },
+    {
+      "id": "phase6-6.13",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "6",
+      "title": "简单 Forward Pass",
+      "description": "实现简单的前向渲染 Pass",
+      "steps": [
+        "实现单 Pass 的 Forward 渲染（WriteSwapchain 直接绘制到 back buffer）",
+        "Setup 示例：DeclareTexture + AddPass 单一 Forward Pass",
+        "Execute 中 GetDrawsForPass(PassFlags::All) 绘制所有提交对象"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.12"],
+      "test_verification": "前向渲染正确显示场景"
+    }
+  ]
+}
