@@ -2,6 +2,16 @@
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
+=== 2026-02-12 23:00:00 ===
+功能：phase2-2.1 资源句柄与描述符类型
+状态：已完成
+- 实现 Handle<T> 模板（id, IsValid, operator==, operator!=）
+- 定义 BufferHandle、TextureHandle、ShaderHandle、PipelineHandle、DescriptorSetHandle、FenceHandle、SemaphoreHandle
+- 定义 Format、BufferUsage、TextureUsage 枚举及 BufferDesc、TextureDesc、ShaderDesc
+- 定义 DescriptorBinding、DescriptorSetLayoutDesc、DescriptorType
+- 定义 VertexInputBinding、VertexInputAttribute、BlendState、DepthStencilState、RasterizationState、PipelineDesc
+- 新增 rdi_types.hpp，placeholder.cpp 包含以验证编译通过
+
 [2026-02-12] COMPLETED - phase1-1.4: 输入系统基础
 - 实现 InputManager 类（input_manager.hpp / input_manager.cpp）
 - Initialize(SDL_Window*)、Update() 每帧轮询 SDL 事件（含 QUIT/窗口关闭、滚轮）

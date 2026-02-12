@@ -59,15 +59,15 @@
 
 ### 2.1 资源句柄与描述符类型
 
-- [ ] 实现 `Handle<T>` 模板（id, IsValid, operator==, operator!=）
-- [ ] 定义 `BufferHandle`、`TextureHandle`、`ShaderHandle`、`PipelineHandle`
-- [ ] 定义 `DescriptorSetHandle`、`FenceHandle`、`SemaphoreHandle`
-- [ ] 定义 `Format`、`BufferUsage`、`TextureUsage` 枚举
-- [ ] 定义 `BufferDesc`、`TextureDesc`、`ShaderDesc` 结构
-- [ ] 定义 `DescriptorBinding`、`DescriptorSetLayoutDesc`（含 DescriptorType）
-- [ ] 定义 `VertexInputBinding`、`VertexInputAttribute`
-- [ ] 定义 `BlendState`、`DepthStencilState`、`RasterizationState`
-- [ ] 定义 `PipelineDesc`（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）
+- [x] 实现 `Handle<T>` 模板（id, IsValid, operator==, operator!=）
+- [x] 定义 `BufferHandle`、`TextureHandle`、`ShaderHandle`、`PipelineHandle`
+- [x] 定义 `DescriptorSetHandle`、`FenceHandle`、`SemaphoreHandle`
+- [x] 定义 `Format`、`BufferUsage`、`TextureUsage` 枚举
+- [x] 定义 `BufferDesc`、`TextureDesc`、`ShaderDesc` 结构
+- [x] 定义 `DescriptorBinding`、`DescriptorSetLayoutDesc`（含 DescriptorType）
+- [x] 定义 `VertexInputBinding`、`VertexInputAttribute`
+- [x] 定义 `BlendState`、`DepthStencilState`、`RasterizationState`
+- [x] 定义 `PipelineDesc`（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）
 
 ### 2.2 IRenderDevice 接口定义
 
