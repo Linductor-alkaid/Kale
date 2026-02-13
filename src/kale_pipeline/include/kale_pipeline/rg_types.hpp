@@ -25,4 +25,13 @@ using RGResourceHandle = std::uint64_t;
 /** 无效的 RG 资源句柄，表示未声明或未分配 */
 constexpr RGResourceHandle kInvalidRGResourceHandle = 0;
 
+/**
+ * 渲染 Pass 句柄（AddPass 返回的索引/句柄）。
+ * 用于 Compile/Execute 阶段按拓扑序访问 Pass。
+ */
+using RenderPassHandle = std::uint32_t;
+
+/** 无效的 Pass 句柄 */
+constexpr RenderPassHandle kInvalidRenderPassHandle = ~static_cast<RenderPassHandle>(0);
+
 }  // namespace kale::pipeline

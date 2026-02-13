@@ -41,13 +41,13 @@
 
 ### 1.4 RenderGraph 声明式接口
 
-- [ ] 实现 `RenderGraph` 类
-- [ ] 实现 `DeclareTexture(const std::string& name, const TextureDesc& desc)` 返回 RGResourceHandle
-- [ ] 实现 `DeclareBuffer(const std::string& name, const BufferDesc& desc)` 返回 RGResourceHandle
-- [ ] 实现 `AddPass(const std::string& name, RenderPassSetup setup, RenderPassExecute execute)` 返回 RenderPassHandle
-- [ ] 定义 `RenderPassSetup = std::function<void(RenderPassBuilder&)>` 类型
-- [ ] 定义 `RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)>` 类型
-- [ ] 实现 `SetResolution(uint32_t width, uint32_t height)` 影响 DeclareTexture 尺寸
+- [x] 实现 `RenderGraph` 类
+- [x] 实现 `DeclareTexture(const std::string& name, const TextureDesc& desc)` 返回 RGResourceHandle
+- [x] 实现 `DeclareBuffer(const std::string& name, const BufferDesc& desc)` 返回 RGResourceHandle
+- [x] 实现 `AddPass(const std::string& name, RenderPassSetup setup, RenderPassExecute execute)` 返回 RenderPassHandle
+- [x] 定义 `RenderPassSetup = std::function<void(RenderPassBuilder&)>` 类型
+- [x] 定义 `RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)>` 类型
+- [x] 实现 `SetResolution(uint32_t width, uint32_t height)` 影响 DeclareTexture 尺寸
 
 ### 1.5 应用层显式提交
 

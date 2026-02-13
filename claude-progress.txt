@@ -1,3 +1,12 @@
+=== 2026-02-13 ===
+功能：phase6-6.9 RenderGraph 声明式接口
+状态：已完成
+- 实现 RenderGraph 类：DeclareTexture(name, desc)、DeclareBuffer(name, desc)、AddPass(name, setup, execute)、SetResolution(width, height)
+- 定义 RenderPassSetup、RenderPassExecute 类型；rg_types 新增 RenderPassHandle
+- DeclareTexture 当 width/height 为 0 时使用 SetResolution 的宽高；同名资源返回同一句柄
+- 新增 kale_pipeline/include/kale_pipeline/render_graph.hpp，placeholder 引用验证编译
+- 编译通过，ctest 通过，hello_kale 运行正常
+
 === 2026-02-13 09:36:22 ===
 功能：phase6-6.8 RenderPassBuilder
 状态：已完成

@@ -859,7 +859,7 @@
         "定义 RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)> 类型",
         "实现 SetResolution(uint32_t width, uint32_t height) 影响 DeclareTexture 尺寸"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.8"],
       "test_verification": "可以声明 Pass 和资源"
