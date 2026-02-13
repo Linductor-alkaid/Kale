@@ -1,4 +1,10 @@
 === 2026-02-13 ===
+功能：phase1-1.5 TaskChannel 核心实现、phase1-1.6 TaskChannel 扩展与测试（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过（test_task_channel、test_executor_future 均通过）
+- feature_list.json 中 phase1-1.5、phase1-1.6 的 status 更新为 completed
+
+=== 2026-02-13 ===
 功能：phase1-1.4 输入系统基础（验证）
 状态：已完成
 - 验证：编译通过，ctest 通过，hello_kale 使用 InputManager（Initialize/Update/QuitRequested/IsKeyJustPressed(Escape)）运行正常

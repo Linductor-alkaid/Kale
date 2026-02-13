@@ -139,7 +139,7 @@
         "基于 std::atomic 和 CAS 实现无锁环形缓冲区",
         "使用固定容量，避免动态分配"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase0-0.1"],
       "test_verification": "多线程 send/recv 无数据竞争，高并发压力测试通过"
@@ -157,7 +157,7 @@
         "单元测试：高并发压力测试",
         "保持与 executor 解耦，可独立使用"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase1-1.5"],
       "test_verification": "单元测试通过，验证无数据竞争"
