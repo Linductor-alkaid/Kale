@@ -179,7 +179,7 @@
         "单元测试：高并发压力测试",
         "保持与 executor 解耦，可独立使用"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "medium",
       "dependencies": [
         "phase1-1.5"
