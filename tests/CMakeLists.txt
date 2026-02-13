@@ -196,3 +196,12 @@ target_link_libraries(test_render_engine_init
         kale_engine
 )
 add_test(NAME test_render_engine_init COMMAND test_render_engine_init)
+set_tests_properties(test_render_engine_init PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
+add_executable(test_render_engine_run test_render_engine_run.cpp)
+target_link_libraries(test_render_engine_run
+    PRIVATE
+        kale_engine
+)
+add_test(NAME test_render_engine_run COMMAND test_render_engine_run)
+set_tests_properties(test_render_engine_run PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")

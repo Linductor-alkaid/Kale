@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.9 主循环 Run()
+状态：已完成
+- 实现：IApplication 接口（OnUpdate(deltaTime)、OnRender()）；RenderEngine::Run(IApplication* app) 主循环：inputManager->Update() → entityManager->Update(deltaTime) → sceneManager->Update(deltaTime) → app->OnUpdate(deltaTime) → app->OnRender() → renderDevice->Present()；RequestQuit() 供应用层请求退出；deltaTime 用 std::chrono::steady_clock 计算。hello_kale 改为使用 RenderEngine::Initialize + Run(HelloKaleApp)。
+- 验证：编译通过，ctest 26/26 通过（新增 test_render_engine_run：Run 顺序 OnUpdate→OnRender、RequestQuit 退出、null app/未初始化不崩溃、deltaTime 非负；test_render_engine_init/run 设置 SDL_VIDEODRIVER=dummy 以便无头运行）。device_abstraction_layer_todolist 主循环已勾选。
+- feature_list.json 中 phase11-11.9 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.8 RenderEngine 初始化顺序
 状态：已完成
 - 实现：RenderEngine 类（kale_engine/render_engine.hpp + render_engine.cpp），Config 结构，Initialize 顺序：WindowSystem::Create（含 SDL）→ CreateRenderDevice(DeviceConfig 来自 window）→ InputManager::Initialize → executor → scheduler → sceneManager → entityManager(scheduler, sceneManager) → resourceManager(scheduler, device) → renderGraph。GetLastError/Shutdown、各 Get* 访问器。内部用 void* impl_ 指向匿名命名空间 RenderEngineImpl，避免头文件 PIMPL 析构可见性问题。

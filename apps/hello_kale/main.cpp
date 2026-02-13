@@ -1,80 +1,71 @@
-// Hello Kale - 最小示例
-// 验证 WindowSystem + Vulkan(RDI) + RenderGraph 简单 Forward Pass + 输入（phase1-1.4, phase6-6.13）
+// Hello Kale - 最小示例（phase11-11.9 主循环 Run()）
+// 验证 RenderEngine::Initialize + Run(IApplication) 与 Forward Pass + 输入
 
-#include <kale_device/window_system.hpp>
+#include <kale_engine/render_engine.hpp>
 #include <kale_device/input_manager.hpp>
-#include <kale_device/render_device.hpp>
-#include <kale_pipeline/render_graph.hpp>
 #include <kale_pipeline/forward_pass.hpp>
 #include <iostream>
 
+struct HelloKaleApp : kale::IApplication {
+    kale::RenderEngine* engine = nullptr;
+    int frames = 0;
+
+    void OnUpdate(float /*deltaTime*/) override {
+        if (!engine) return;
+        kale_device::InputManager* input = engine->GetInputManager();
+        if (input && input->IsKeyJustPressed(kale_device::KeyCode::Escape))
+            engine->RequestQuit();
+    }
+
+    void OnRender() override {
+        if (!engine) return;
+        kale::pipeline::RenderGraph* rg = engine->GetRenderGraph();
+        kale_device::IRenderDevice* device = engine->GetRenderDevice();
+        if (rg && device) {
+            rg->ClearSubmitted();
+            rg->Execute(device);
+        }
+        ++frames;
+        if (frames <= 3 || frames % 60 == 0)
+            std::cout << "Frame " << frames << "\n";
+    }
+};
+
 int main() {
-    kale_device::WindowSystem window;
-    kale_device::WindowConfig config;
+    kale::RenderEngine engine;
+    kale::RenderEngine::Config config;
     config.width = 800;
     config.height = 600;
-    config.title = "Hello Kale - Forward Pass";
+    config.title = "Hello Kale - Run()";
+    config.enableValidation = false;
 
-    if (!window.Create(config)) {
-        std::cerr << "WindowSystem::Create failed\n";
+    if (!engine.Initialize(config)) {
+        std::cerr << "RenderEngine::Initialize failed: " << engine.GetLastError() << "\n";
         return 1;
     }
-    std::cout << "Window created: " << window.GetWidth() << "x" << window.GetHeight()
-              << " title=\"" << config.title << "\"\n";
+    std::cout << "RenderEngine initialized.\n";
 
-    auto device = kale_device::CreateRenderDevice(kale_device::Backend::Vulkan);
-    if (!device) {
-        std::cerr << "CreateRenderDevice failed\n";
-        window.Destroy();
+    kale::pipeline::RenderGraph* rg = engine.GetRenderGraph();
+    kale_device::IRenderDevice* device = engine.GetRenderDevice();
+    if (!rg || !device) {
+        std::cerr << "GetRenderGraph/GetRenderDevice failed\n";
+        engine.Shutdown();
         return 1;
     }
-    kale_device::DeviceConfig devConfig;
-    devConfig.windowHandle = window.GetNativeHandle();
-    devConfig.width = window.GetWidth();
-    devConfig.height = window.GetHeight();
-    devConfig.enableValidation = false;
-    devConfig.vsync = true;
-    devConfig.backBufferCount = 3;
-
-    if (!device->Initialize(devConfig)) {
-        std::cerr << "IRenderDevice::Initialize failed: " << device->GetLastError() << "\n";
-        window.Destroy();
-        return 1;
-    }
-    std::cout << "Vulkan RDI initialized.\n";
-
-    kale::pipeline::RenderGraph rg;
-    rg.SetResolution(static_cast<std::uint32_t>(window.GetWidth()),
-                     static_cast<std::uint32_t>(window.GetHeight()));
-    kale::pipeline::SetupForwardOnlyRenderGraph(rg);
-    if (!rg.Compile(device.get())) {
-        std::cerr << "RenderGraph::Compile failed: " << rg.GetLastError() << "\n";
-        device->Shutdown();
-        window.Destroy();
+    rg->SetResolution(800, 600);
+    kale::pipeline::SetupForwardOnlyRenderGraph(*rg);
+    if (!rg->Compile(device)) {
+        std::cerr << "RenderGraph::Compile failed: " << rg->GetLastError() << "\n";
+        engine.Shutdown();
         return 1;
     }
     std::cout << "RenderGraph compiled (Forward Pass only).\n";
 
-    kale_device::InputManager input;
-    input.Initialize(window.GetWindow());
+    HelloKaleApp app;
+    app.engine = &engine;
+    engine.Run(&app);
 
-    int frames = 0;
-    while (!input.QuitRequested()) {
-        input.Update();
-        if (input.IsKeyJustPressed(kale_device::KeyCode::Escape)) {
-            break;
-        }
-        rg.ClearSubmitted();
-        rg.Execute(device.get());
-        device->Present();
-        ++frames;
-        if (frames <= 3 || frames % 60 == 0) {
-            std::cout << "Frame " << frames << "\n";
-        }
-    }
-
-    device->Shutdown();
-    window.Destroy();
-    std::cout << "Exited after " << frames << " frames.\n";
+    engine.Shutdown();
+    std::cout << "Exited after " << app.frames << " frames.\n";
     return 0;
 }

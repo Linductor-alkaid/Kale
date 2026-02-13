@@ -251,8 +251,8 @@
 
 ### 主循环
 
-- [ ] `Run()` 中：`inputManager->Update()` → `PollEvents` → `OnUpdate` → `OnRender` → `Present`
-- [ ] Present 在 Execute 之后由 Run 调用
+- [x] `Run()` 中：`inputManager->Update()` → `PollEvents` → `OnUpdate` → `OnRender` → `Present`
+- [x] Present 在 Execute 之后由 Run 调用
 
 ### 依赖关系
 

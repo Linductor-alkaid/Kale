@@ -13,6 +13,17 @@
 #include <memory>
 #include <string>
 
+// 主循环回调：OnUpdate(deltaTime) / OnRender()，由 Run() 每帧按序调用
+namespace kale {
+struct IApplication {
+    virtual ~IApplication() = default;
+    /** 每帧调用，在 inputManager->Update()、entityManager->Update、sceneManager->Update 之后 */
+    virtual void OnUpdate(float deltaTime) = 0;
+    /** 每帧调用，在 OnUpdate 之后；应用层在此提交绘制并执行 RenderGraph::Execute，Run() 随后调用 Present */
+    virtual void OnRender() = 0;
+};
+}  // namespace kale
+
 // 前向声明，避免引擎层依赖各层具体头文件在头文件中展开
 namespace kale_device {
 class WindowSystem;
@@ -82,6 +93,17 @@ public:
 
     /** 反初始化并释放所有子系统 */
     void Shutdown();
+
+    /**
+     * 主循环：直到 InputManager::QuitRequested() 或 RequestQuit() 被调用。
+     * 每帧顺序：inputManager->Update() → entityManager->Update(deltaTime) → sceneManager->Update(deltaTime)
+     * → app->OnUpdate(deltaTime) → app->OnRender() → renderDevice->Present()。
+     * @param app 非空，OnRender 内应用层应执行 RenderGraph::ClearSubmitted/SubmitRenderable/Execute，Run 在之后调用 Present
+     */
+    void Run(IApplication* app);
+
+    /** 由应用层在 OnUpdate/OnRender 中调用以请求主循环退出（如按 Escape） */
+    void RequestQuit();
 
     kale_device::IRenderDevice* GetRenderDevice();
     kale_device::InputManager* GetInputManager();

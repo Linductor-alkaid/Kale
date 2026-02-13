@@ -2237,7 +2237,7 @@
         "Present 在 Execute 之后由 Run 调用",
         "主循环顺序：inputManager->Update() → entityManager->Update(deltaTime) → sceneManager->Update(deltaTime) → app->OnUpdate(deltaTime) → app->OnRender() → renderDevice->Present()"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase11-11.8"],
       "test_verification": "主循环正确运行",

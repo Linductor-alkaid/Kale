@@ -18,6 +18,7 @@
 #include <kale_pipeline/render_graph.hpp>
 #include <executor/executor.hpp>
 
+#include <chrono>
 #include <mutex>
 
 namespace kale {
@@ -34,6 +35,7 @@ struct RenderEngineImpl {
     std::unique_ptr<kale::scene::EntityManager> entityManager;
     std::unique_ptr<kale::resource::ResourceManager> resourceManager;
     std::unique_ptr<kale::pipeline::RenderGraph> renderGraph;
+    bool runRequestedQuit = false;
 };
 
 }  // namespace
@@ -176,6 +178,37 @@ kale::pipeline::RenderGraph* RenderEngine::GetRenderGraph() {
 kale::executor::RenderTaskScheduler* RenderEngine::GetScheduler() {
     if (!impl_) return nullptr;
     return static_cast<RenderEngineImpl*>(impl_)->scheduler.get();
+}
+
+void RenderEngine::RequestQuit() {
+    if (!impl_) return;
+    static_cast<RenderEngineImpl*>(impl_)->runRequestedQuit = true;
+}
+
+void RenderEngine::Run(IApplication* app) {
+    if (!impl_ || !app) return;
+    RenderEngineImpl& impl = *static_cast<RenderEngineImpl*>(impl_);
+    impl.runRequestedQuit = false;
+    kale_device::InputManager* inputManager = impl.inputManager.get();
+    kale::scene::EntityManager* entityManager = impl.entityManager.get();
+    kale::scene::SceneManager* sceneManager = impl.sceneManager.get();
+    kale_device::IRenderDevice* device = impl.renderDevice.get();
+    if (!inputManager || !device) return;
+
+    using Clock = std::chrono::steady_clock;
+    auto tPrev = Clock::now();
+    while (!inputManager->QuitRequested() && !impl.runRequestedQuit) {
+        auto tNow = Clock::now();
+        float deltaTime = std::chrono::duration<float>(tNow - tPrev).count();
+        tPrev = tNow;
+
+        inputManager->Update();
+        if (entityManager) entityManager->Update(deltaTime);
+        if (sceneManager) sceneManager->Update(deltaTime);
+        app->OnUpdate(deltaTime);
+        app->OnRender();
+        device->Present();
+    }
 }
 
 }  // namespace kale
