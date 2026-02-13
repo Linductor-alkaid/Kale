@@ -1433,7 +1433,7 @@
         "实现 GetPipeline() 返回 PipelineHandle",
         "实现 parameters_ 存储材质参数"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.10"],
       "test_verification": "Material 基类可正确使用",

@@ -90,12 +90,12 @@
 
 ### 2.1 Material 基类
 
-- [ ] 实现 `Material` 基类
-- [ ] 实现 `SetTexture(const std::string& name, Texture* texture)`
-- [ ] 实现 `SetParameter(const std::string& name, const void* data, size_t size)`
-- [ ] 实现 `GetShader()` 返回 Shader*
-- [ ] 实现 `GetPipeline()` 返回 PipelineHandle
-- [ ] 实现 `parameters_` 存储材质参数（`std::unordered_map<std::string, MaterialParameter>`）
+- [x] 实现 `Material` 基类
+- [x] 实现 `SetTexture(const std::string& name, Texture* texture)`
+- [x] 实现 `SetParameter(const std::string& name, const void* data, size_t size)`
+- [x] 实现 `GetShader()` 返回 Shader*
+- [x] 实现 `GetPipeline()` 返回 PipelineHandle
+- [x] 实现 `parameters_` 存储材质参数（`std::unordered_map<std::string, MaterialParameter>`）
 
 ### 2.2 材质级 DescriptorSet
 

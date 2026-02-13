@@ -1,5 +1,6 @@
 // Kale 渲染管线层 - 占位源文件
 
+#include <kale_pipeline/material.hpp>
 #include <kale_pipeline/render_pass_builder.hpp>
 #include <kale_pipeline/render_pass_context.hpp>
 #include <kale_pipeline/render_graph.hpp>
@@ -52,6 +53,14 @@ void placeholder() {
     rg.SubmitRenderable(nullptr, glm::mat4(1.0f), kale::scene::PassFlags::All);
     rg.SubmitRenderable(static_cast<kale::scene::Renderable*>(nullptr), glm::mat4(1.0f));
     (void)rg.GetSubmittedDraws();
+
+    // phase7-7.7: Material 基类占位引用
+    Material mat;
+    mat.SetPipeline(kale_device::PipelineHandle{});
+    (void)mat.GetShader();
+    (void)mat.GetPipeline();
+    mat.SetParameter("foo", "bar", 3);
+    (void)mat.GetParameter("foo", nullptr);
 }
 
 }  // namespace kale::pipeline

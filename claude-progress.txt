@@ -1,3 +1,10 @@
+=== 2026-02-13 (session) ===
+功能：phase7-7.7 Material 基类
+状态：已完成
+- 实现：kale::pipeline::Material 基类（SetTexture/SetParameter、GetShader/GetPipeline、SetShader/SetPipeline、GetTexture/GetParameter）；parameters_ 为 std::unordered_map<std::string, std::vector<std::byte>>，textures_ 为 name→Texture*；resource_types 新增 Shader 结构体（ShaderHandle）。新增 kale_pipeline/include/kale_pipeline/material.hpp，placeholder 引用 Material。
+- 验证：编译通过，ctest 通过（新增 test_material_base：默认状态、Set/Get Pipeline/Shader/Texture/Parameter、参数覆盖）；18/18 通过。rendering_pipeline_layer_todolist 2.1 已勾选。
+- feature_list.json 中 phase7-7.7 的 status 更新为 completed，hold=null。
+
 === 2026-02-13 12:05:16 ===
 功能：phase7-7.6 写回流程示例
 状态：已完成
