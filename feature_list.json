@@ -326,7 +326,7 @@
         "实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal",
         "集成 VMA (Vulkan Memory Allocator)"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.3", "phase2-2.4"],
       "test_verification": "命令录制和同步正常工作，帧流水线无死锁"
