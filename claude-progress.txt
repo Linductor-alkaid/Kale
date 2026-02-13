@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase2-2.6 Vulkan Swapchain 与呈现（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，hello_kale 启动并运行正常（Swapchain 与呈现、OUT_OF_DATE 重建已实现）
+- feature_list.json 中 phase2-2.6 的 status 更新为 completed
+
+=== 2026-02-13 (session) ===
 功能：phase2-2.5 Vulkan Backend 命令与同步（验证）
 状态：已完成
 - 验证：编译通过，ctest 通过，hello_kale 启动并运行正常（命令录制与帧流水线无死锁）

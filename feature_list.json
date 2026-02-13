@@ -345,7 +345,7 @@
         "实现 GetCurrentFrameIndex 帧索引",
         "处理 VK_ERROR_OUT_OF_DATE_KHR（resize 时重建 Swapchain）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.5"],
       "test_verification": "Swapchain 正常工作，支持窗口调整大小"
