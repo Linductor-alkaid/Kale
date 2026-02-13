@@ -653,7 +653,7 @@
       "dependencies": [
         "phase5-5.2"
       ],
-      "status": "verifying",
+      "status": "completed",
       "test_verification": "场景创建和切换正常，无内存泄漏",
       "hold": null
     },
