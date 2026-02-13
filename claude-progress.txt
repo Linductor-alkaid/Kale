@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.8 Shader Manager
+状态：已完成
+- 实现：kale_pipeline 新增 shader_manager.hpp、src/shader_manager.cpp：ShaderManager 类，SetCompiler/SetDevice；LoadShader(path, stage, device) 经 ShaderCompiler::Compile 编译并缓存，缓存键 MakeCacheKey(path, stage) 即 path+"|"+Stage 后缀；GetShader(name) 按 name 查找；ReloadShader(path) 对前缀匹配 path+"|" 的条目 DestroyShader 后 Recompile 更新；shaders_ 为 unordered_map<string, ShaderHandle>。
+- 验证：编译通过，ctest 68/68 通过（新增 test_shader_manager：MakeCacheKey 格式、GetShader 未知名返回无效、LoadShader null device/compiler 返回无效、有效 .spv+compiler+device 返回有效并缓存、GetShader(cacheKey) 同句柄、再次 Load 返回缓存、ReloadShader 调用 Destroy 并更新、无 compiler 时 GetLastError 非空）。phase10-10.8 status=completed，hold=null。rendering_pipeline_layer_todolist 5.1 Shader Manager 六项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.7 Transparent Pass
 状态：已完成
 - 实现：kale_pipeline 新增 transparent_pass.hpp：SetupTransparentPass(rg) 依赖 GetHandleByName("Lighting")，AddPass("TransparentPass") 中 ReadTexture(Lighting)、WriteColor(0, Lighting)；ExecuteTransparentPass 取 GetDrawsForPass(PassFlags::Transparent)，按 worldTransform[3][2] 从远到近排序后依次 Draw。SetupRenderGraph 在 Lighting 与 PostProcess 之间插入 SetupTransparentPass；DAG 为 Shadow→GBuffer→Lighting→Transparent→PostProcess→OutputToSwapchain。

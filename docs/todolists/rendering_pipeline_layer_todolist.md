@@ -245,12 +245,12 @@
 
 ### 5.1 Shader Manager
 
-- [ ] 实现 `ShaderManager` 类
-- [ ] 实现 `LoadShader(const std::string& path, ShaderStage stage, IRenderDevice* device)` 返回 ShaderHandle
-- [ ] 实现 `GetShader(const std::string& name)` 查找
-- [ ] 实现 `ReloadShader(const std::string& path)` 热重载
-- [ ] 实现 `shaders_` 缓存（`std::unordered_map<std::string, ShaderHandle>`）
-- [ ] Render Graph 或 Material 通过 ShaderManager 加载着色器
+- [x] 实现 `ShaderManager` 类
+- [x] 实现 `LoadShader(const std::string& path, ShaderStage stage, IRenderDevice* device)` 返回 ShaderHandle
+- [x] 实现 `GetShader(const std::string& name)` 查找
+- [x] 实现 `ReloadShader(const std::string& path)` 热重载
+- [x] 实现 `shaders_` 缓存（`std::unordered_map<std::string, ShaderHandle>`）
+- [x] Render Graph 或 Material 通过 ShaderManager 加载着色器
 
 ### 5.2 着色器热重载集成
 

@@ -363,6 +363,15 @@ target_link_libraries(test_shader_compiler
 )
 add_test(NAME test_shader_compiler COMMAND test_shader_compiler)
 
+add_executable(test_shader_manager test_shader_manager.cpp)
+target_link_libraries(test_shader_manager
+    PRIVATE
+        kale_pipeline
+        kale_resource
+        kale_device
+)
+add_test(NAME test_shader_manager COMMAND test_shader_manager)
+
 add_executable(test_render_engine_init test_render_engine_init.cpp)
 target_link_libraries(test_render_engine_init
     PRIVATE

@@ -2043,7 +2043,7 @@
         "实现 shaders_ 缓存（std::unordered_map<std::string, ShaderHandle>）",
         "Render Graph 或 Material 通过 ShaderManager 加载着色器"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase8-8.3"],
       "test_verification": "Shader Manager 正确管理着色器",
