@@ -50,6 +50,9 @@ bool VulkanContext::Initialize(const VulkanConfig& config) {
     if (!SelectPhysicalDevice()) return false;
     if (!CreateLogicalDevice()) return false;
     if (!CreateSwapchain(config)) return false;
+    if (!CreateImageViews()) return false;
+    if (!CreateRenderPass()) return false;
+    if (!CreateFramebuffers()) return false;
 
     return true;
 }
@@ -404,11 +407,8 @@ void VulkanContext::DestroyTriangleRendering() {
 }
 
 bool VulkanContext::CreateTriangleRenderingImpl(const char* shaderDir) {
-    if (!CreateImageViews()) return false;
-    if (!CreateRenderPass()) return false;
     if (!CreateGraphicsPipeline(shaderDir)) return false;
     if (!CreateVertexBuffer()) return false;
-    if (!CreateFramebuffers()) return false;
     if (!CreateCommandPoolAndBuffers()) return false;
     if (!CreateSyncObjects()) return false;
     return true;

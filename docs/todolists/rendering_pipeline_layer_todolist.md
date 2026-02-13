@@ -80,9 +80,9 @@
 
 ### 1.8 简单 Forward Pass
 
-- [ ] 实现单 Pass 的 Forward 渲染（WriteSwapchain 直接绘制到 back buffer）
-- [ ] Setup 示例：DeclareTexture + AddPass 单一 Forward Pass
-- [ ] Execute 中 GetDrawsForPass(PassFlags::All) 绘制所有提交对象
+- [x] 实现单 Pass 的 Forward 渲染（WriteSwapchain 直接绘制到 back buffer）
+- [x] Setup 示例：DeclareTexture + AddPass 单一 Forward Pass
+- [x] Execute 中 GetDrawsForPass(PassFlags::All) 绘制所有提交对象
 
 ---
 

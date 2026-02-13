@@ -472,7 +472,7 @@ inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
         device->ResetFence(frameFences_[frameIndex]);
     }
 
-    if (device->AcquireNextImage() == 0) return;  // 例如 OUT_OF_DATE 等，跳过本帧
+    if (device->AcquireNextImage() == kale_device::IRenderDevice::kInvalidSwapchainImageIndex) return;  // 失败则跳过本帧
 
     BuildFrameDrawList();
 

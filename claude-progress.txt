@@ -1,4 +1,14 @@
 === 2026-02-13 ===
+功能：phase6-6.13 简单 Forward Pass
+状态：已完成
+- 实现 ExecuteForwardPass(ctx, cmd)：对 GetDrawsForPass(PassFlags::All) 遍历调用 renderable->Draw(cmd, worldTransform)
+- 实现 SetupForwardOnlyRenderGraph(rg)：AddPass("Forward", WriteSwapchain, execute 调 ExecuteForwardPass)
+- 新增 kale_pipeline/include/kale_pipeline/forward_pass.hpp
+- hello_kale 改为 VulkanRenderDevice + RenderGraph + SetupForwardOnlyRenderGraph，主循环 ClearSubmitted/Execute/Present
+- RDI：AcquireNextImage 失败返回 kInvalidSwapchainImageIndex，Execute 据此跳过本帧；VulkanContext::Initialize 中创建 ImageViews/RenderPass/Framebuffers 供 RDI 使用
+- 编译通过，ctest 通过，hello_kale 运行正常
+
+=== 2026-02-13 ===
 功能：phase6-6.12 Execute 流程单线程
 状态：已完成
 - 实现 RenderGraph::Execute(device)：WaitForFence/ResetFence(frameFences_[currentFrameIndex_])、AcquireNextImage()、BuildFrameDrawList()、RecordPasses(device)、Submit(cmdLists, {}, {}, submitFence)、ReleaseFrameResources()、currentFrameIndex_ 轮转

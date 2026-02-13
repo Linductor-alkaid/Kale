@@ -938,7 +938,7 @@
         "Setup 示例：DeclareTexture + AddPass 单一 Forward Pass",
         "Execute 中 GetDrawsForPass(PassFlags::All) 绘制所有提交对象"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.12"],
       "test_verification": "前向渲染正确显示场景"

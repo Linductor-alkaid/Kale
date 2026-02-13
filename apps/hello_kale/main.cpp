@@ -1,9 +1,11 @@
 // Hello Kale - 最小示例
-// 验证 WindowSystem + Vulkan 基础 + 简单三角形渲染 + 输入系统（phase1-1.4）
+// 验证 WindowSystem + Vulkan(RDI) + RenderGraph 简单 Forward Pass + 输入（phase1-1.4, phase6-6.13）
 
 #include <kale_device/window_system.hpp>
-#include <kale_device/vulkan_context.hpp>
 #include <kale_device/input_manager.hpp>
+#include <kale_device/render_device.hpp>
+#include <kale_pipeline/render_graph.hpp>
+#include <kale_pipeline/forward_pass.hpp>
 #include <iostream>
 
 int main() {
@@ -11,7 +13,7 @@ int main() {
     kale_device::WindowConfig config;
     config.width = 800;
     config.height = 600;
-    config.title = "Hello Kale - Triangle";
+    config.title = "Hello Kale - Forward Pass";
 
     if (!window.Create(config)) {
         std::cerr << "WindowSystem::Create failed\n";
@@ -20,32 +22,38 @@ int main() {
     std::cout << "Window created: " << window.GetWidth() << "x" << window.GetHeight()
               << " title=\"" << config.title << "\"\n";
 
-    kale_device::VulkanContext vulkan;
-    kale_device::VulkanConfig vkConfig;
-    vkConfig.windowHandle = window.GetNativeHandle();
-    vkConfig.width = window.GetWidth();
-    vkConfig.height = window.GetHeight();
-    vkConfig.enableValidation = false;
-    vkConfig.vsync = true;
-    vkConfig.backBufferCount = 3;
-
-    if (!vulkan.Initialize(vkConfig)) {
-        std::cerr << "VulkanContext::Initialize failed: " << vulkan.GetLastError() << "\n";
+    auto device = kale_device::CreateRenderDevice(kale_device::Backend::Vulkan);
+    if (!device) {
+        std::cerr << "CreateRenderDevice failed\n";
         window.Destroy();
         return 1;
     }
-    std::cout << "Vulkan: swapchain images=" << vulkan.GetSwapchainImageCount()
-              << " size=" << vulkan.GetSwapchainWidth() << "x" << vulkan.GetSwapchainHeight() << "\n";
+    kale_device::DeviceConfig devConfig;
+    devConfig.windowHandle = window.GetNativeHandle();
+    devConfig.width = window.GetWidth();
+    devConfig.height = window.GetHeight();
+    devConfig.enableValidation = false;
+    devConfig.vsync = true;
+    devConfig.backBufferCount = 3;
 
-    // 尝试多个着色器路径：从 build/apps/hello_kale 运行用 "shaders"，从 build 运行用 "apps/hello_kale/shaders"
-    if (!vulkan.CreateTriangleRendering("shaders") &&
-        !vulkan.CreateTriangleRendering("apps/hello_kale/shaders")) {
-        std::cerr << "CreateTriangleRendering failed: " << vulkan.GetLastError() << "\n";
-        vulkan.Shutdown();
+    if (!device->Initialize(devConfig)) {
+        std::cerr << "IRenderDevice::Initialize failed: " << device->GetLastError() << "\n";
         window.Destroy();
         return 1;
     }
-    std::cout << "Triangle rendering initialized.\n";
+    std::cout << "Vulkan RDI initialized.\n";
+
+    kale::pipeline::RenderGraph rg;
+    rg.SetResolution(static_cast<std::uint32_t>(window.GetWidth()),
+                     static_cast<std::uint32_t>(window.GetHeight()));
+    kale::pipeline::SetupForwardOnlyRenderGraph(rg);
+    if (!rg.Compile(device.get())) {
+        std::cerr << "RenderGraph::Compile failed: " << rg.GetLastError() << "\n";
+        device->Shutdown();
+        window.Destroy();
+        return 1;
+    }
+    std::cout << "RenderGraph compiled (Forward Pass only).\n";
 
     kale_device::InputManager input;
     input.Initialize(window.GetWindow());
@@ -56,21 +64,16 @@ int main() {
         if (input.IsKeyJustPressed(kale_device::KeyCode::Escape)) {
             break;
         }
-        uint32_t imageIndex = 0;
-        if (!vulkan.AcquireNextImage(imageIndex)) {
-            continue;  // OUT_OF_DATE 等，跳过本帧
-        }
-        vulkan.RecordCommandBuffer(imageIndex);
-        if (!vulkan.SubmitAndPresent(imageIndex)) {
-            continue;
-        }
+        rg.ClearSubmitted();
+        rg.Execute(device.get());
+        device->Present();
         ++frames;
         if (frames <= 3 || frames % 60 == 0) {
             std::cout << "Frame " << frames << "\n";
         }
     }
 
-    vulkan.Shutdown();
+    device->Shutdown();
     window.Destroy();
     std::cout << "Exited after " << frames << " frames.\n";
     return 0;

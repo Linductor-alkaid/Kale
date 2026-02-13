@@ -106,7 +106,9 @@ public:
     virtual SemaphoreHandle CreateSemaphore() = 0;
 
     // --- 交换链 ---
+    /** 获取下一帧 swapchain 图像索引；失败返回 kInvalidSwapchainImageIndex。 */
     virtual std::uint32_t AcquireNextImage() = 0;
+    static constexpr std::uint32_t kInvalidSwapchainImageIndex = 0xFFFFFFFFu;
     virtual void Present() = 0;
     virtual TextureHandle GetBackBuffer() = 0;
     virtual std::uint32_t GetCurrentFrameIndex() const = 0;

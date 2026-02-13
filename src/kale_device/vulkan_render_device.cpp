@@ -1188,7 +1188,7 @@ SemaphoreHandle VulkanRenderDevice::CreateSemaphore() {
 }
 
 std::uint32_t VulkanRenderDevice::AcquireNextImage() {
-    if (!context_.IsInitialized()) return 0;
+    if (!context_.IsInitialized()) return IRenderDevice::kInvalidSwapchainImageIndex;
     VkDevice dev = context_.GetDevice();
     std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
     vkWaitForFences(dev, 1, &frameFences_[frameIndex], VK_TRUE, UINT64_MAX);
@@ -1197,11 +1197,11 @@ std::uint32_t VulkanRenderDevice::AcquireNextImage() {
     VkResult err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,
                                          frameImageAvailableSemaphores_[frameIndex], VK_NULL_HANDLE, &imageIndex);
     if (err == VK_ERROR_OUT_OF_DATE_KHR) {
-        if (!context_.RecreateSwapchain(width_, height_)) return 0;
+        if (!context_.RecreateSwapchain(width_, height_)) return IRenderDevice::kInvalidSwapchainImageIndex;
         err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,
                                     frameImageAvailableSemaphores_[frameIndex], VK_NULL_HANDLE, &imageIndex);
     }
-    if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) return 0;
+    if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) return IRenderDevice::kInvalidSwapchainImageIndex;
     currentImageIndex_ = imageIndex;
     return imageIndex;
 }
