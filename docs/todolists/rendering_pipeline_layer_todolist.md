@@ -57,13 +57,13 @@
 
 ### 1.6 Compile 流程
 
-- [ ] 实现 `Compile(IRenderDevice* device)` 在分辨率/管线变化时调用
-- [ ] 实现 Pass 依赖分析（ReadTexture/WriteTexture 推导 Pass 顺序）
-- [ ] 实现资源分配：按 DeclareTexture 描述创建 RDI Texture
-- [ ] 实现 RGResourceHandle → 实际 RDI TextureHandle/BufferHandle 的映射
-- [ ] 构建 `topologicalOrder_` Pass 拓扑序
-- [ ] Compile 失败时返回 false 或抛出，GetLastError 获取原因
-- [ ] 资源分配失败时保证已分配资源可释放
+- [x] 实现 `Compile(IRenderDevice* device)` 在分辨率/管线变化时调用
+- [x] 实现 Pass 依赖分析（ReadTexture/WriteTexture 推导 Pass 顺序）
+- [x] 实现资源分配：按 DeclareTexture 描述创建 RDI Texture
+- [x] 实现 RGResourceHandle → 实际 RDI TextureHandle/BufferHandle 的映射
+- [x] 构建 `topologicalOrder_` Pass 拓扑序
+- [x] Compile 失败时返回 false 或抛出，GetLastError 获取原因
+- [x] 资源分配失败时保证已分配资源可释放
 
 ### 1.7 Execute 流程（单线程）
 

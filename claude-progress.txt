@@ -1,4 +1,12 @@
 === 2026-02-13 ===
+功能：phase6-6.11 Compile 流程
+状态：已完成
+- 实现 RenderGraph::Compile(IRenderDevice* device)：运行各 Pass Setup 填充 CompiledPassInfo，BuildTopologicalOrder() 基于 Read/Write 推导 Pass 依赖并 Kahn 拓扑排序，按 DeclareTexture/DeclareBuffer 创建 RDI 资源并建立 RGResourceHandle→RDI 句柄映射
+- 新增 GetLastError()、IsCompiled()、GetTopologicalOrder()、GetCompiledTexture/GetCompiledBuffer、GetCompiledPassInfo()；Compile 失败时释放已分配资源并返回 false
+- 重新 Compile 时先释放上一轮创建的纹理/缓冲，再清空拓扑序与编译状态
+- 编译通过，ctest 通过，hello_kale 运行正常
+
+=== 2026-02-13 ===
 功能：phase6-6.10 应用层显式提交
 状态：已完成
 - 实现 RenderGraph::SubmitRenderable(renderable, worldTransform, passFlags)、ClearSubmitted()、submittedDraws_

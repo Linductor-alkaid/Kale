@@ -18,10 +18,13 @@
 #include <kale_pipeline/render_pass_context.hpp>
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/command_list.hpp>
+#include <kale_device/render_device.hpp>
 #include <kale_scene/scene_types.hpp>
 
 #include <glm/glm.hpp>
 #include <functional>
+#include <queue>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -126,6 +129,46 @@ public:
     /** 只读访问本帧已提交的绘制列表（供 Execute 中 BuildFrameDrawList / RenderPassContext 使用）。 */
     const std::vector<SubmittedDraw>& GetSubmittedDraws() const { return submittedDraws_; }
 
+    /**
+     * 编译 Render Graph：依赖分析、资源分配、构建拓扑序。
+     * 分辨率/管线变化时调用。失败时返回 false，GetLastError() 返回原因；
+     * 资源分配失败时会释放本轮已分配的资源。
+     */
+    bool Compile(kale_device::IRenderDevice* device);
+
+    /** Compile 失败时的错误信息（空表示无错误或未执行过 Compile）。 */
+    const std::string& GetLastError() const { return compileError_; }
+
+    /** 是否已成功 Compile（有拓扑序且资源已分配）。 */
+    bool IsCompiled() const { return !topologicalOrder_.empty(); }
+
+    /** 拓扑序下的 Pass 句柄列表（Execute 时按此顺序录制）。 */
+    const std::vector<RenderPassHandle>& GetTopologicalOrder() const { return topologicalOrder_; }
+
+    /**
+     * 将 RG 纹理句柄解析为 RDI TextureHandle（仅 Compile 成功后有效）。
+     * 若 handle 对应 Buffer 或无效，返回 id=0 的 TextureHandle。
+     */
+    kale_device::TextureHandle GetCompiledTexture(RGResourceHandle handle) const;
+
+    /**
+     * 将 RG 缓冲句柄解析为 RDI BufferHandle（仅 Compile 成功后有效）。
+     * 若 handle 对应 Texture 或无效，返回 id=0 的 BufferHandle。
+     */
+    kale_device::BufferHandle GetCompiledBuffer(RGResourceHandle handle) const;
+
+    /**
+     * 某 Pass 编译后的读写信息（Compile 时由 Setup 填充，Execute 时用于绑定 RT）。
+     * 下标与 GetPasses() 一致。
+     */
+    struct CompiledPassInfo {
+        std::vector<std::pair<std::uint32_t, RGResourceHandle>> colorOutputs;
+        RGResourceHandle depthOutput = kInvalidRGResourceHandle;
+        std::vector<RGResourceHandle> readTextures;
+        bool writesSwapchain = false;
+    };
+    const std::vector<CompiledPassInfo>& GetCompiledPassInfo() const { return compiledPassInfo_; }
+
     // --- 供 Compile/Execute 等后续 phase 使用的访问接口 ---
 
     struct DeclaredResource {
@@ -153,6 +196,9 @@ public:
     const std::vector<PassEntry>& GetPasses() const { return passes_; }
 
 private:
+    /** Pass 依赖分析：根据 compiledPassInfo_ 的读写构建有向边，返回拓扑序；若存在环则返回空。 */
+    std::vector<RenderPassHandle> BuildTopologicalOrder() const;
+
     std::uint32_t resolutionWidth_ = 0;
     std::uint32_t resolutionHeight_ = 0;
     RGResourceHandle nextHandle_ = 1;
@@ -161,6 +207,176 @@ private:
     std::vector<PassEntry> passes_;
     /** 每帧由应用层 SubmitRenderable 填入，ClearSubmitted 清空；Execute 时供 RenderPassContext 使用。 */
     std::vector<SubmittedDraw> submittedDraws_;
+
+    /** Compile 产物：拓扑序、每 Pass 读写信息、RG -> RDI 句柄映射。 */
+    std::vector<RenderPassHandle> topologicalOrder_;
+    std::vector<CompiledPassInfo> compiledPassInfo_;
+    std::vector<kale_device::TextureHandle> compiledTextures_;
+    std::vector<kale_device::BufferHandle> compiledBuffers_;
+    std::string compileError_;
 };
+
+// -----------------------------------------------------------------------------
+// Compile 与句柄解析实现
+// -----------------------------------------------------------------------------
+
+inline bool RenderGraph::Compile(kale_device::IRenderDevice* device) {
+    compileError_.clear();
+    if (!device) {
+        compileError_ = "Compile: device is null";
+        return false;
+    }
+
+    // 释放上一轮 Compile 创建的资源，再清空状态
+    for (size_t i = 0; i < compiledTextures_.size(); ++i) {
+        if (compiledTextures_[i].IsValid()) device->DestroyTexture(compiledTextures_[i]);
+    }
+    for (size_t i = 0; i < compiledBuffers_.size(); ++i) {
+        if (compiledBuffers_[i].IsValid()) device->DestroyBuffer(compiledBuffers_[i]);
+    }
+    topologicalOrder_.clear();
+    compiledPassInfo_.clear();
+    compiledTextures_.clear();
+    compiledBuffers_.clear();
+
+    // 1) 运行每个 Pass 的 Setup，填充 compiledPassInfo_
+    compiledPassInfo_.resize(passes_.size());
+    for (size_t i = 0; i < passes_.size(); ++i) {
+        RenderPassBuilder builder;
+        if (passes_[i].setup) passes_[i].setup(builder);
+        auto& info = compiledPassInfo_[i];
+        info.colorOutputs = builder.GetColorOutputs();
+        info.depthOutput = builder.GetDepthOutput();
+        info.readTextures = builder.GetReadTextures();
+        info.writesSwapchain = builder.WritesSwapchain();
+    }
+
+    // 2) 依赖分析，构建拓扑序
+    topologicalOrder_ = BuildTopologicalOrder();
+    if (topologicalOrder_.empty() && !passes_.empty()) {
+        compileError_ = "Compile: pass dependency cycle detected";
+        return false;
+    }
+
+    // 3) 资源分配：按 resources_ 创建 RDI 资源，建立 RG -> RDI 映射
+    const size_t nRes = resources_.size();
+    compiledTextures_.resize(nRes, kale_device::TextureHandle{});
+    compiledBuffers_.resize(nRes, kale_device::BufferHandle{});
+
+    for (size_t i = 0; i < nRes; ++i) {
+        const auto& r = resources_[i];
+        if (r.isTexture) {
+            auto h = device->CreateTexture(r.texDesc, nullptr);
+            if (!h.IsValid()) {
+                compileError_ = "Compile: CreateTexture failed for resource '" + r.name + "'";
+                for (size_t j = 0; j < i; ++j) {
+                    if (resources_[j].isTexture)
+                        device->DestroyTexture(compiledTextures_[j]);
+                    else
+                        device->DestroyBuffer(compiledBuffers_[j]);
+                }
+                compiledTextures_.clear();
+                compiledBuffers_.clear();
+                topologicalOrder_.clear();
+                compiledPassInfo_.clear();
+                return false;
+            }
+            compiledTextures_[i] = h;
+        } else {
+            auto h = device->CreateBuffer(r.bufDesc, nullptr);
+            if (!h.IsValid()) {
+                compileError_ = "Compile: CreateBuffer failed for resource '" + r.name + "'";
+                for (size_t j = 0; j < i; ++j) {
+                    if (resources_[j].isTexture)
+                        device->DestroyTexture(compiledTextures_[j]);
+                    else
+                        device->DestroyBuffer(compiledBuffers_[j]);
+                }
+                compiledTextures_.clear();
+                compiledBuffers_.clear();
+                topologicalOrder_.clear();
+                compiledPassInfo_.clear();
+                return false;
+            }
+            compiledBuffers_[i] = h;
+        }
+    }
+
+    return true;
+}
+
+inline kale_device::TextureHandle RenderGraph::GetCompiledTexture(RGResourceHandle handle) const {
+    if (handle == kInvalidRGResourceHandle || handle == 0) return kale_device::TextureHandle{};
+    size_t idx = static_cast<size_t>(handle - 1);
+    if (idx >= resources_.size() || !resources_[idx].isTexture) return kale_device::TextureHandle{};
+    return compiledTextures_[idx];
+}
+
+inline kale_device::BufferHandle RenderGraph::GetCompiledBuffer(RGResourceHandle handle) const {
+    if (handle == kInvalidRGResourceHandle || handle == 0) return kale_device::BufferHandle{};
+    size_t idx = static_cast<size_t>(handle - 1);
+    if (idx >= resources_.size() || resources_[idx].isTexture) return kale_device::BufferHandle{};
+    return compiledBuffers_[idx];
+}
+
+inline std::vector<RenderPassHandle> RenderGraph::BuildTopologicalOrder() const {
+    const size_t n = passes_.size();
+    if (n == 0) return {};
+
+    // 收集每个 Pass 写入的资源（含 color/depth），以及读取的资源
+    auto writersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (const auto& p : info.colorOutputs) if (p.second == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+            if (info.depthOutput == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+    auto readersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (RGResourceHandle r : info.readTextures) if (r == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+
+    // 建图：边 writer -> reader 表示 writer 必须在 reader 前（去重）
+    std::set<std::pair<RenderPassHandle, RenderPassHandle>> edges;
+    for (size_t i = 0; i < resources_.size(); ++i) {
+        RGResourceHandle h = static_cast<RGResourceHandle>(i + 1);
+        std::vector<RenderPassHandle> writers = writersOf(h);
+        std::vector<RenderPassHandle> readers = readersOf(h);
+        for (RenderPassHandle w : writers)
+            for (RenderPassHandle r : readers)
+                if (w != r) edges.insert({w, r});
+    }
+
+    std::vector<std::vector<RenderPassHandle>> outEdges(n);
+    std::vector<int> inDegree(n, 0);
+    for (const auto& e : edges) {
+        outEdges[e.first].push_back(e.second);
+        inDegree[e.second]++;
+    }
+
+    std::queue<RenderPassHandle> q;
+    for (size_t i = 0; i < n; ++i)
+        if (inDegree[i] == 0) q.push(static_cast<RenderPassHandle>(i));
+
+    std::vector<RenderPassHandle> order;
+    order.reserve(n);
+    while (!q.empty()) {
+        RenderPassHandle u = q.front();
+        q.pop();
+        order.push_back(u);
+        for (RenderPassHandle v : outEdges[u]) {
+            if (--inDegree[v] == 0) q.push(v);
+        }
+    }
+
+    if (order.size() != n) return {};  // 存在环
+    return order;
+}
 
 }  // namespace kale::pipeline
