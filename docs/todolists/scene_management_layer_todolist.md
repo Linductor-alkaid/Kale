@@ -254,21 +254,21 @@
 
 ### SceneNodeHandle 失效
 
-- [ ] 节点销毁时 handle 从注册表移除，`GetNode(handle)` 返回 nullptr
-- [ ] System 必须校验 `if (!node) continue;`
-- [ ] 场景切换前必须解绑 SceneNodeRef
+- [x] 节点销毁时 handle 从注册表移除，`GetNode(handle)` 返回 nullptr
+- [x] System 必须校验 `if (!node) continue;`
+- [x] 场景切换前必须解绑 SceneNodeRef
 
 ### Renderable 所有权
 
-- [ ] Renderable 由应用层或工厂创建
-- [ ] SceneNode 持有 Renderable 非占有指针
-- [ ] Mesh/Material 由 ResourceManager 加载并缓存，Renderable 持有非占有指针
-- [ ] 多 SceneNode 可共享同一 Renderable（实例化）
+- [x] Renderable 由应用层或工厂创建
+- [x] SceneNode 持有 Renderable 非占有指针
+- [x] Mesh/Material 由 ResourceManager 加载并缓存，Renderable 持有非占有指针
+- [x] 多 SceneNode 可共享同一 Renderable（实例化）
 
 ### 写回竞争
 
-- [ ] 同一 SceneNode 同一帧内仅应有一个 System 作为「主写者」
-- [ ] 多 System 写同一节点时，必须通过 GetDependencies 建立 DAG 保证先后顺序
+- [x] 同一 SceneNode 同一帧内仅应有一个 System 作为「主写者」
+- [x] 多 System 写同一节点时，必须通过 GetDependencies 建立 DAG 保证先后顺序
 - [ ] 开发期可选冲突检测（ENABLE_SCENE_WRITE_VALIDATION）
 
 ---

@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.25 场景管理层错误处理与生命周期
+状态：已完成
+- 实现：SceneManager::GetNode 与 SetActiveScene 注释明确节点销毁后 handle 从注册表移除、调用方须校验 if (!node) continue、场景切换前须解绑 SceneNodeRef。PhysicsSystem/AnimationSystem 已含 if (!node) continue；新增 test_scene_layer_error_lifecycle：GetNode 无效句柄/UnregisterNode 后返回 nullptr、PhysicsSystem 无效 SceneNodeRef 不写回不崩溃、AnimationSystem::GetDependencies 依赖 PhysicsSystem。
+- 验证：编译通过，ctest 86/86 通过。phase13-13.25 status=completed，hold=null。scene_management_layer_todolist 错误处理与生命周期中 SceneNodeHandle 失效、Renderable 所有权、写回竞争共 10 项已勾选（开发期可选冲突检测保留未勾选）。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.24 场景管理层 RenderEngine 集成
 状态：已完成
 - 实现：RenderEngine 已具备 sceneManager → entityManager(scheduler, sceneManager) 初始化顺序与主循环 entityManager->Update → sceneManager->Update → OnUpdate → OnRender → Present；应用层通过 GetEntityManager()->RegisterSystem() 注册系统。新增 test_scene_layer_render_engine_integration：初始化后 GetSceneManager/GetEntityManager 非空且 entityManager->GetSceneManager()==GetSceneManager()、RegisterSystem 后 Run 一帧、System::Update 在本帧被调用且 OnUpdate/OnRender 顺序正确。

@@ -296,6 +296,13 @@ target_link_libraries(test_scene_switch
 )
 add_test(NAME test_scene_switch COMMAND test_scene_switch)
 
+add_executable(test_scene_layer_error_lifecycle test_scene_layer_error_lifecycle.cpp)
+target_link_libraries(test_scene_layer_error_lifecycle
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_scene_layer_error_lifecycle COMMAND test_scene_layer_error_lifecycle)
+
 add_executable(test_material_base test_material_base.cpp)
 target_link_libraries(test_material_base
     PRIVATE

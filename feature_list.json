@@ -2842,7 +2842,7 @@
         "Renderable 由应用层或工厂创建，SceneNode 持有非占有指针",
         "多 System 写同一节点时，必须通过 GetDependencies 建立 DAG 保证先后顺序"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.6"],
       "hold": null

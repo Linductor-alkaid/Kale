@@ -44,6 +44,7 @@ public:
 
     /**
      * 销毁旧场景（递归从 handleRegistry 移除并释放），激活新场景并取得所有权。
+     * 场景切换前必须解绑指向旧场景的 SceneNodeRef（如 SwitchToNewLevel 或 UnbindSceneNodeRefsPointingToSubtree）。
      * @param root 新场景根节点所有权；若为 nullptr 则仅销毁当前活动场景
      * @param em 可选；Debug 模式下非空时，若存在 Entity 的 SceneNodeRef 指向即将销毁的子树则 assert
      */
@@ -85,9 +86,10 @@ public:
     SceneNodeHandle GetHandle(SceneNode* node) const;
 
     /**
-     * 根据句柄解析节点指针。
+     * 根据句柄解析节点指针。节点销毁时 handle 已从注册表移除，返回 nullptr。
      * @param handle 由 RegisterNode 分配的句柄
      * @return 对应节点指针，已销毁或无效句柄则返回 nullptr
+     * @note 调用方（如 ECS System 通过 SceneNodeRef::GetNode）必须校验 if (!node) continue，不得使用 nullptr
      */
     SceneNode* GetNode(SceneNodeHandle handle) const;
 
