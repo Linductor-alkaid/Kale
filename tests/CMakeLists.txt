@@ -214,3 +214,12 @@ target_link_libraries(test_window_resize_swapchain
 )
 add_test(NAME test_window_resize_swapchain COMMAND test_window_resize_swapchain)
 set_tests_properties(test_window_resize_swapchain PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
+add_executable(test_gamepad_support test_gamepad_support.cpp)
+target_link_libraries(test_gamepad_support
+    PRIVATE
+        kale_engine
+        kale_device
+)
+add_test(NAME test_gamepad_support COMMAND test_gamepad_support)
+set_tests_properties(test_gamepad_support PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")

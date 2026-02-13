@@ -2101,7 +2101,7 @@
         "定义 GamepadAxis、GamepadButton 枚举",
         "支持手柄热插拔（SDL3 事件）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase1-1.4"],
       "test_verification": "手柄输入正常响应",

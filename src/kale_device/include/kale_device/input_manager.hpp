@@ -103,11 +103,40 @@ enum class MouseButton : std::uint32_t {
     X2 = 5,
 };
 
-/// 输入管理器：键盘、鼠标状态与 JustPressed/JustReleased 双缓冲
+/// 手柄轴，与 SDL_GamepadAxis 语义一致
+enum class GamepadAxis : int {
+    LeftX = 0,
+    LeftY = 1,
+    RightX = 2,
+    RightY = 3,
+    LeftTrigger = 4,
+    RightTrigger = 5,
+};
+
+/// 手柄按钮，与 SDL_GamepadButton 语义一致（South=Ａ、East=Ｂ、West=Ｘ、North=Ｙ 等）
+enum class GamepadButton : int {
+    South = 0,
+    East = 1,
+    West = 2,
+    North = 3,
+    Back = 4,
+    Guide = 5,
+    Start = 6,
+    LeftStick = 7,
+    RightStick = 8,
+    LeftShoulder = 9,
+    RightShoulder = 10,
+    DpadUp = 11,
+    DpadDown = 12,
+    DpadLeft = 13,
+    DpadRight = 14,
+};
+
+/// 输入管理器：键盘、鼠标状态与 JustPressed/JustReleased 双缓冲，以及手柄支持
 class InputManager {
 public:
     InputManager() = default;
-    ~InputManager() = default;
+    ~InputManager();
 
     InputManager(const InputManager&) = delete;
     InputManager& operator=(const InputManager&) = delete;
@@ -134,6 +163,13 @@ public:
     /// 鼠标：本帧滚轮增量（垂直：正为远离用户）
     float GetMouseWheelDelta() const;
 
+    /// 手柄：index 为当前连接列表中的序号（0=第一个手柄）
+    bool IsGamepadConnected(int index) const;
+    /// 手柄：轴值归一化，摇杆约 [-1,1]，扳机 [0,1]
+    float GetGamepadAxis(int index, GamepadAxis axis) const;
+    /// 手柄：指定按钮是否按下
+    bool IsGamepadButtonPressed(int index, GamepadButton button) const;
+
     /// 本帧是否收到退出或窗口关闭请求（由 Update 轮询时设置）
     bool QuitRequested() const { return quitRequested_; }
 
@@ -152,6 +188,9 @@ private:
     std::uint32_t buttonCurrent_ = 0;
     std::uint32_t buttonPrevious_ = 0;
     float mouseWheelDelta_ = 0.0f;
+
+    /// 手柄：已打开实例缓存（实现内为 map instance_id -> SDL_Gamepad*），热插拔时在 Update 中维护
+    void* gamepadCache_ = nullptr;
 };
 
 }  // namespace kale_device

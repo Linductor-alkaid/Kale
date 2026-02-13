@@ -3,11 +3,44 @@
 #include <kale_device/input_manager.hpp>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_video.h>
+#include <unordered_map>
+#include <cstdlib>
 
 namespace kale_device {
+
+namespace {
+
+struct GamepadCache {
+    std::unordered_map<SDL_JoystickID, SDL_Gamepad*> openGamepads;
+};
+
+GamepadCache* GetCache(void* p) {
+    return static_cast<GamepadCache*>(p);
+}
+
+static int ToSDL(GamepadAxis axis) {
+    return static_cast<int>(axis);
+}
+static int ToSDL(GamepadButton button) {
+    return static_cast<int>(button);
+}
+
+}  // namespace
+
+InputManager::~InputManager() {
+    if (gamepadCache_) {
+        GamepadCache* c = GetCache(gamepadCache_);
+        for (auto& kv : c->openGamepads) {
+            if (kv.second) SDL_CloseGamepad(kv.second);
+        }
+        delete c;
+        gamepadCache_ = nullptr;
+    }
+}
 
 void InputManager::Initialize(SDL_Window* window) {
     window_ = window;
@@ -20,6 +53,15 @@ void InputManager::Initialize(SDL_Window* window) {
     mouseDeltaX_ = mouseDeltaY_ = 0.0f;
     buttonCurrent_ = buttonPrevious_ = 0;
     mouseWheelDelta_ = 0.0f;
+    if (gamepadCache_) {
+        GamepadCache* c = GetCache(gamepadCache_);
+        for (auto& kv : c->openGamepads) {
+            if (kv.second) SDL_CloseGamepad(kv.second);
+        }
+        c->openGamepads.clear();
+    } else {
+        gamepadCache_ = new GamepadCache{};
+    }
 }
 
 void InputManager::Update() {
@@ -45,6 +87,21 @@ void InputManager::Update() {
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 mouseWheelDelta_ += event.wheel.y;
+                break;
+            case SDL_EVENT_GAMEPAD_REMOVED: {
+                if (gamepadCache_) {
+                    SDL_JoystickID id = event.gdevice.which;
+                    GamepadCache* c = GetCache(gamepadCache_);
+                    auto it = c->openGamepads.find(id);
+                    if (it != c->openGamepads.end()) {
+                        if (it->second) SDL_CloseGamepad(it->second);
+                        c->openGamepads.erase(it);
+                    }
+                }
+                break;
+            }
+            case SDL_EVENT_GAMEPAD_ADDED:
+                /* 首次使用时再 Open，此处仅依赖 SDL_GetGamepads 列表即可 */
                 break;
             default:
                 break;
@@ -101,6 +158,74 @@ bool InputManager::IsMouseButtonPressed(MouseButton button) const {
 
 float InputManager::GetMouseWheelDelta() const {
     return mouseWheelDelta_;
+}
+
+bool InputManager::IsGamepadConnected(int index) const {
+    if (index < 0) return false;
+    int count = 0;
+    SDL_JoystickID* ids = SDL_GetGamepads(&count);
+    if (!ids) return false;
+    bool ok = (index < count);
+    SDL_free(ids);
+    return ok;
+}
+
+float InputManager::GetGamepadAxis(int index, GamepadAxis axis) const {
+    if (index < 0 || !gamepadCache_) return 0.0f;
+    int count = 0;
+    SDL_JoystickID* ids = SDL_GetGamepads(&count);
+    if (!ids || index >= count) {
+        if (ids) SDL_free(ids);
+        return 0.0f;
+    }
+    SDL_JoystickID instanceId = ids[index];
+    SDL_free(ids);
+
+    GamepadCache* c = GetCache(gamepadCache_);
+    SDL_Gamepad* gp = nullptr;
+    auto it = c->openGamepads.find(instanceId);
+    if (it != c->openGamepads.end()) {
+        gp = it->second;
+    } else {
+        gp = SDL_OpenGamepad(instanceId);
+        if (gp) c->openGamepads[instanceId] = gp;
+    }
+    if (!gp) return 0.0f;
+
+    SDL_GamepadAxis sdlAxis = static_cast<SDL_GamepadAxis>(ToSDL(axis));
+    if (sdlAxis == SDL_GAMEPAD_AXIS_INVALID || sdlAxis >= SDL_GAMEPAD_AXIS_COUNT) return 0.0f;
+    Sint16 raw = SDL_GetGamepadAxis(gp, sdlAxis);
+    if (axis == GamepadAxis::LeftTrigger || axis == GamepadAxis::RightTrigger) {
+        return raw <= 0 ? 0.0f : static_cast<float>(raw) / 32767.0f;
+    }
+    return raw == 0 ? 0.0f : static_cast<float>(raw) / 32767.0f;
+}
+
+bool InputManager::IsGamepadButtonPressed(int index, GamepadButton button) const {
+    if (index < 0 || !gamepadCache_) return false;
+    int count = 0;
+    SDL_JoystickID* ids = SDL_GetGamepads(&count);
+    if (!ids || index >= count) {
+        if (ids) SDL_free(ids);
+        return false;
+    }
+    SDL_JoystickID instanceId = ids[index];
+    SDL_free(ids);
+
+    GamepadCache* c = GetCache(gamepadCache_);
+    SDL_Gamepad* gp = nullptr;
+    auto it = c->openGamepads.find(instanceId);
+    if (it != c->openGamepads.end()) {
+        gp = it->second;
+    } else {
+        gp = SDL_OpenGamepad(instanceId);
+        if (gp) c->openGamepads[instanceId] = gp;
+    }
+    if (!gp) return false;
+
+    SDL_GamepadButton sdlBtn = static_cast<SDL_GamepadButton>(ToSDL(button));
+    if (sdlBtn == SDL_GAMEPAD_BUTTON_INVALID || sdlBtn >= SDL_GAMEPAD_BUTTON_COUNT) return false;
+    return SDL_GetGamepadButton(gp, sdlBtn);
 }
 
 }  // namespace kale_device

@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.2 手柄支持
+状态：已完成
+- 实现：InputManager 增加 GamepadAxis/GamepadButton 枚举（与 SDL_GamepadAxis/Button 语义一致）；IsGamepadConnected(int index)、GetGamepadAxis(int index, GamepadAxis axis)（摇杆 [-1,1]、扳机 [0,1]）、IsGamepadButtonPressed(int index, GamepadButton button)。index 为当前连接列表序号；内部维护 gamepadCache_（map instance_id -> SDL_Gamepad*），首次查询时 Open 并缓存；Update() 中处理 SDL_EVENT_GAMEPAD_REMOVED 关闭并移除缓存，GAMEPAD_ADDED 首次使用时再 Open。
+- 验证：编译通过，ctest 28/28 通过（新增 test_gamepad_support：负索引/越界不崩溃、无手柄时轴/按钮返回 0/false、多轴多按钮调用不崩溃、Update 多帧不崩溃；无显示时跳过）。device_abstraction_layer_todolist 4.2 已勾选。
+- feature_list.json 中 phase11-11.2 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.1 窗口 Resize 与 Swapchain
 状态：已完成
 - 实现：IRenderDevice 增加 SetExtent(width, height) 虚函数（默认空实现）；VulkanRenderDevice::SetExtent override 更新 width_/height_ 供 RecreateSwapchain 使用。RenderEngine::Run 中每帧从 GetWindowSystem() 取当前 GetWidth/GetHeight，若 w>0&&h>0 且与上次不同则 device->SetExtent(w,h)；若 GetWidth()==0 或 GetHeight()==0 则跳过 OnRender 与 Present（最小化空帧）。Vulkan 侧 AcquireNextImage/Present 遇 OUT_OF_DATE_KHR 时 RecreateSwapchain 已存在。

@@ -173,11 +173,11 @@
 
 ### 4.2 手柄支持
 
-- [ ] 实现 `IsGamepadConnected(int index)`
-- [ ] 实现 `GetGamepadAxis(int index, GamepadAxis axis)`
-- [ ] 实现 `IsGamepadButtonPressed(int index, GamepadButton button)`
-- [ ] 定义 `GamepadAxis`、`GamepadButton` 枚举
-- [ ] 支持手柄热插拔（SDL3 事件）
+- [x] 实现 `IsGamepadConnected(int index)`
+- [x] 实现 `GetGamepadAxis(int index, GamepadAxis axis)`
+- [x] 实现 `IsGamepadButtonPressed(int index, GamepadButton button)`
+- [x] 定义 `GamepadAxis`、`GamepadButton` 枚举
+- [x] 支持手柄热插拔（SDL3 事件）
 
 ### 4.3 Action Mapping
 
