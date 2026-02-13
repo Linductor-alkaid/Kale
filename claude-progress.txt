@@ -1,3 +1,10 @@
+=== 2026-02-13 14:29:03 ===
+功能：phase9-9.3 帧流水线完善
+状态：已完成
+- 实现：RenderGraph::Execute 已实现完整帧流水线（WaitFence → ResetFence → Acquire → Record → Submit(wait, signal, fence) → ReleaseFrameResources），Present 由应用层调用；Vulkan 端 Submit 使用 frameImageAvailable/frameRenderFinished semaphore 与 fence；kMaxFramesInFlight=3 帧并发。
+- 验证：编译通过，ctest 40/40 通过（新增 test_frame_pipeline：多帧 Execute 无死锁、每帧 Wait/Reset/Acquire/Submit 次数一致、Acquire 失败跳过本帧不 Submit、null 或未 Compile 不调用设备）。
+- feature_list.json 中 phase9-9.3 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 5.3 已勾选。
+
 === 2026-02-13 (session) ===
 功能：phase2-2.1 资源句柄与描述符类型（验证）
 状态：已完成

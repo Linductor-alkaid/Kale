@@ -1773,7 +1773,7 @@
         "与 Render Graph Execute 流程对齐",
         "支持 kMaxFramesInFlight（如 3）帧并发"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.6"],
       "test_verification": "帧流水线无死锁",

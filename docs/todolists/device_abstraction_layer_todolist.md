@@ -223,9 +223,9 @@
 
 ### 5.3 帧流水线完善
 
-- [ ] 实现完整帧流水线：WaitFence → ResetFence → Acquire → Record → Submit(wait, signal, fence) → Present
-- [ ] 与 Render Graph `Execute` 流程对齐
-- [ ] 支持 `kMaxFramesInFlight`（如 3）帧并发
+- [x] 实现完整帧流水线：WaitFence → ResetFence → Acquire → Record → Submit(wait, signal, fence) → Present
+- [x] 与 Render Graph `Execute` 流程对齐
+- [x] 支持 `kMaxFramesInFlight`（如 3）帧并发
 
 ### 5.4 设备能力查询
 

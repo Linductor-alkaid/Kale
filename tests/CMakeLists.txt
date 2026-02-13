@@ -309,6 +309,15 @@ target_link_libraries(test_topological_groups
 )
 add_test(NAME test_topological_groups COMMAND test_topological_groups)
 
+add_executable(test_frame_pipeline test_frame_pipeline.cpp)
+target_link_libraries(test_frame_pipeline
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_frame_pipeline COMMAND test_frame_pipeline)
+
 add_executable(test_full_model_loader test_full_model_loader.cpp)
 target_link_libraries(test_full_model_loader
     PRIVATE
