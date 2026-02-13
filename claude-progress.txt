@@ -1,3 +1,9 @@
+=== 2026-02-13 (session) ===
+功能：phase3-3.3 IResourceLoader 接口（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过（新增 test_resource_loader 覆盖 IResourceLoader/ResourceLoadContext）
+- feature_list.json 中 phase3-3.3 的 status 更新为 completed
+
 === 2026-02-13 10:30:06 ===
 功能：phase3-3.2 ResourceCache 基础（验证）
 状态：已完成

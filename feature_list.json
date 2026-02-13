@@ -464,7 +464,7 @@
         "实现 GetResourceType() 返回 type_index",
         "定义 ResourceLoadContext 结构（device, stagingMgr, resourceManager）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.2"

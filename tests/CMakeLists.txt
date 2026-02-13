@@ -17,3 +17,10 @@ target_link_libraries(test_executor_future
 )
 
 add_test(NAME test_executor_future COMMAND test_executor_future)
+
+add_executable(test_resource_loader test_resource_loader.cpp)
+target_link_libraries(test_resource_loader
+    PRIVATE
+        kale_resource
+)
+add_test(NAME test_resource_loader COMMAND test_resource_loader)
