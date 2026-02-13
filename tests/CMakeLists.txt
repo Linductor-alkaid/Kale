@@ -107,6 +107,14 @@ target_link_libraries(test_placeholders
 )
 add_test(NAME test_placeholders COMMAND test_placeholders)
 
+add_executable(test_staging_memory_manager test_staging_memory_manager.cpp)
+target_link_libraries(test_staging_memory_manager
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_staging_memory_manager COMMAND test_staging_memory_manager)
+
 add_executable(test_draw_resource_check test_draw_resource_check.cpp)
 target_link_libraries(test_draw_resource_check
     PRIVATE

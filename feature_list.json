@@ -818,7 +818,7 @@
         "实现 Free(alloc) 回收到池",
         "实现 Staging Buffer 池初始化（默认 64MB poolSize_）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.2"

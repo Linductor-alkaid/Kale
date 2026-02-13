@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase6-6.1 StagingMemoryManager（验证）
+状态：已完成
+- 验证：编译通过，ctest 55/55 通过；StagingMemoryManager 已由前期实现（staging_memory_manager.hpp/cpp），本会话新增 test_staging_memory_manager（null/零 size Allocate 返回无效、有效 device Allocate 返回有效可写、Free 即时回收、Free(alloc,fence) 延迟回收与 ReclaimCompleted、SubmitUpload pending、FlushUploads）覆盖 phase6-6.1。phase6-6.1 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.1 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase5-5.10 Renderable 抽象（验证）
 状态：已完成
 - 验证：编译通过，ctest 54/54 通过；Renderable 基类（GetBounds、GetMesh/GetMaterial 默认 nullptr、Draw、bounds_、ReleaseFrameResources）已由前期实现（renderable.hpp），本会话新增 test_renderable（GetBounds 返回 bounds_、GetMesh/GetMaterial 为 nullptr、Draw/ReleaseFrameResources 调用不崩溃）覆盖 phase5-5.10。phase5-5.10 的 status 从 verifying 更新为 completed，hold=null。scene_management_layer_todolist 2.4 已为已勾选状态。
