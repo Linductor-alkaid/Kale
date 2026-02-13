@@ -3,3 +3,4 @@
 
 add_subdirectory(hello_kale)
 add_subdirectory(gamepad_monitor)
+add_subdirectory(render_demo)

@@ -39,8 +39,9 @@ public:
      * 根据当前节点世界矩阵与 fov/nearPlane/farPlane 更新 viewMatrix 与 projectionMatrix。
      * 由应用层或系统在需要时调用（如每帧或相机/视口变化后）。
      * @param aspectRatio 视口宽高比，默认 16/9
+     * @param flipYForVulkan Vulkan 下需为 true，以修正 NDC Y 轴与 OpenGL 的差异，避免正面被错误剔除
      */
-    void UpdateViewProjection(float aspectRatio = 16.f / 9.f);
+    void UpdateViewProjection(float aspectRatio = 16.f / 9.f, bool flipYForVulkan = false);
 };
 
 }  // namespace kale::scene

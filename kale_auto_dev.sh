@@ -61,10 +61,10 @@ log_msg() {
     [ -f "$LOG_FILE" ] && echo "[$timestamp] [$level] $msg" >> "$LOG_FILE"
 }
 
-# 分隔线
+# 分隔线（使用 j 避免与主循环变量 i 冲突）
 print_separator() {
     local sep=""
-    for ((i=0; i<80; i++)); do sep+="="; done
+    for ((j=0; j<80; j++)); do sep+="="; done
     echo -e "${CYAN}${sep}${NC}"
     [ -f "$LOG_FILE" ] && echo "${sep}" >> "$LOG_FILE"
 }
@@ -637,9 +637,9 @@ run_claude_session() {
         # 清理进程
         cleanup_cursor_processes
         
-        # 倒计时显示
-        for ((i=SESSION_INTERVAL; i>0; i--)); do
-            echo -ne "\r剩余 $i 秒...  "
+        # 倒计时显示（使用 countdown 避免与主循环变量 i 冲突）
+        for ((countdown=SESSION_INTERVAL; countdown>0; countdown--)); do
+            echo -ne "\r剩余 $countdown 秒...  "
             sleep 1
         done
         echo -e "\r\033[K"  # 清除倒计时行

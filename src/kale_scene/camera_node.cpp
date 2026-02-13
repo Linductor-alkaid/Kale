@@ -9,10 +9,12 @@
 
 namespace kale::scene {
 
-void CameraNode::UpdateViewProjection(float aspectRatio) {
+void CameraNode::UpdateViewProjection(float aspectRatio, bool flipYForVulkan) {
     viewMatrix = glm::inverse(GetWorldMatrix());
     projectionMatrix =
         glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
+    if (flipYForVulkan)
+        projectionMatrix[1][1] *= -1.0f;
 }
 
 }  // namespace kale::scene

@@ -133,6 +133,9 @@ void RenderEngine::Shutdown() {
     impl.entityManager.reset();
     impl.sceneManager.reset();
     impl.scheduler.reset();
+    if (impl.executor) {
+        impl.executor->shutdown(true);  // 等待工作线程结束，避免关闭时卡死
+    }
     impl.executor.reset();
     impl.inputManager.reset();
     impl.renderDevice.reset();

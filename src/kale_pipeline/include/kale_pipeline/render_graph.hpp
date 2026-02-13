@@ -144,6 +144,17 @@ public:
     const std::vector<SubmittedDraw>& GetSubmittedDraws() const { return submittedDraws_; }
 
     /**
+     * 设置当前帧的视图与投影矩阵（供 Forward 等 Pass 计算 MVP）。
+     * 应用层每帧在 Execute 前调用，通常从 CameraNode::viewMatrix 与 projectionMatrix 传入。
+     */
+    void SetViewProjection(const glm::mat4& view, const glm::mat4& projection) {
+        viewMatrix_ = view;
+        projectionMatrix_ = projection;
+    }
+    const glm::mat4& GetViewMatrix() const { return viewMatrix_; }
+    const glm::mat4& GetProjectionMatrix() const { return projectionMatrix_; }
+
+    /**
      * 编译 Render Graph：依赖分析、资源分配、构建拓扑序。
      * 分辨率/管线变化时调用。失败时返回 false，GetLastError() 返回原因；
      * 资源分配失败时会释放本轮已分配的资源。
@@ -278,6 +289,10 @@ private:
 
     /** 覆盖的输出目标；有效时 WriteSwapchain 写入此纹理而非 GetBackBuffer()（phase12-12.6）。 */
     kale_device::TextureHandle outputTarget_;
+
+    /** 当前帧视图/投影矩阵，供 Pass 计算 MVP；由 SetViewProjection 设置。 */
+    glm::mat4 viewMatrix_{1.f};
+    glm::mat4 projectionMatrix_{1.f};
 };
 
 // -----------------------------------------------------------------------------
@@ -567,6 +582,12 @@ inline kale_device::CommandList* RenderGraph::RecordOnePass(kale_device::IRender
     const bool hasRenderTarget = !colorAttachments.empty() || depthAttachment.IsValid();
     if (hasRenderTarget) {
         cmd->BeginRenderPass(colorAttachments, depthAttachment);
+        std::uint32_t vpW = resolutionWidth_;
+        std::uint32_t vpH = resolutionHeight_;
+        if (vpW > 0 && vpH > 0) {
+            cmd->SetViewport(0.f, 0.f, static_cast<float>(vpW), static_cast<float>(vpH));
+            cmd->SetScissor(0, 0, vpW, vpH);
+        }
         if (pass.execute) pass.execute(ctx, *cmd);
         cmd->EndRenderPass();
     } else if (pass.execute) {
@@ -670,6 +691,14 @@ inline kale_device::TextureHandle RenderPassContext::GetCompiledTexture(RGResour
 
 inline kale_device::TextureHandle RenderPassContext::GetOutputTarget() const {
     return graph_ ? graph_->GetOutputTarget() : kale_device::TextureHandle{};
+}
+
+inline glm::mat4 RenderPassContext::GetViewMatrix() const {
+    return graph_ ? graph_->GetViewMatrix() : glm::mat4(1.f);
+}
+
+inline glm::mat4 RenderPassContext::GetProjectionMatrix() const {
+    return graph_ ? graph_->GetProjectionMatrix() : glm::mat4(1.f);
 }
 
 inline void RenderGraph::Execute(kale_device::IRenderDevice* device, kale_device::TextureHandle outputTarget) {

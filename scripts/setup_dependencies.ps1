@@ -12,7 +12,8 @@ param(
     [switch]$SkipAssimp = $false,
     [switch]$SkipMeshOptimizer = $false,
     [switch]$SkipBullet3 = $false,
-    [switch]$SkipImGui = $false
+    [switch]$SkipImGui = $false,
+    [switch]$SkipVMA = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -607,6 +608,37 @@ if (-not $SkipImGui) {
     }
 } else {
     Write-Host "Skipping ImGui (using -SkipImGui)" -ForegroundColor Gray
+}
+
+# 12. Clone VulkanMemoryAllocator (VMA)
+if (-not $SkipVMA) {
+    $VMADir = "VulkanMemoryAllocator"
+    $needsClone = $false
+
+    if (Test-Path $VMADir) {
+        $vmaItems = Get-ChildItem -Path $VMADir -ErrorAction SilentlyContinue
+        if ($null -eq $vmaItems -or $vmaItems.Count -eq 0) {
+            Write-Host "VulkanMemoryAllocator directory exists but is empty, removing and re-cloning..." -ForegroundColor Yellow
+            Remove-Item -Path $VMADir -Recurse -Force
+            $needsClone = $true
+        } else {
+            Write-Host "VulkanMemoryAllocator (VMA) already exists and is complete, skipping clone" -ForegroundColor Green
+        }
+    } else {
+        $needsClone = $true
+    }
+
+    if ($needsClone) {
+        Write-Host "Cloning VulkanMemoryAllocator (VMA) (v3.0.1)..." -ForegroundColor Yellow
+        git clone --depth 1 --branch v3.0.1 https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Error: VulkanMemoryAllocator clone failed" -ForegroundColor Red
+            Pop-Location
+            exit 1
+        }
+    }
+} else {
+    Write-Host "Skipping VulkanMemoryAllocator (using -SkipVMA)" -ForegroundColor Gray
 }
 
 Pop-Location

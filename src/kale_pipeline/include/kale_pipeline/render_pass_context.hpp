@@ -72,6 +72,11 @@ public:
      */
     kale_device::TextureHandle GetOutputTarget() const;
 
+    /** 返回当前帧视图矩阵（由 RenderGraph::SetViewProjection 设置）；无 graph 时返回单位矩阵。 */
+    glm::mat4 GetViewMatrix() const;
+    /** 返回当前帧投影矩阵；无 graph 时返回单位矩阵。 */
+    glm::mat4 GetProjectionMatrix() const;
+
 private:
     const std::vector<SubmittedDraw>* draws_ = nullptr;
     kale_device::IRenderDevice* device_ = nullptr;

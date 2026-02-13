@@ -16,6 +16,7 @@ SKIP_ASSIMP=false
 SKIP_MESH_OPTIMIZER=false
 SKIP_BULLET3=false
 SKIP_IMGUI=false
+SKIP_VMA=false
 
 for arg in "$@"; do
     case $arg in
@@ -30,6 +31,7 @@ for arg in "$@"; do
         --SkipMeshOptimizer) SKIP_MESH_OPTIMIZER=true ;;
         --SkipBullet3) SKIP_BULLET3=true ;;
         --SkipImGui) SKIP_IMGUI=true ;;
+        --SkipVMA) SKIP_VMA=true ;;
     esac
 done
 
@@ -282,6 +284,13 @@ if [[ "$SKIP_IMGUI" != "true" ]]; then
     fi
 else
     echo -e "${GRAY}Skipping ImGui (using --SkipImGui)${NC}"
+fi
+
+# 12. Clone VulkanMemoryAllocator (VMA)
+if [[ "$SKIP_VMA" != "true" ]]; then
+    clone_if_needed "VulkanMemoryAllocator" "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git" "v3.0.1" "VulkanMemoryAllocator (VMA)"
+else
+    echo -e "${GRAY}Skipping VulkanMemoryAllocator (using --SkipVMA)${NC}"
 fi
 
 cd - > /dev/null
