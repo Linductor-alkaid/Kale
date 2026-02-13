@@ -1358,6 +1358,10 @@ void VulkanRenderDevice::DestroyDefaultSampler() {
 }
 
 bool VulkanRenderDevice::CreateCommandPoolsAndBuffers() {
+    // Vulkan 多线程录制约束 (phase9-9.6):
+    // 1) 每线程使用独立 CommandPool，避免多线程同时分配/重置同一 Pool。
+    // 2) 每 (threadIndex, frameIndex) 对应一个 VkCommandBuffer，保证每 buffer 仅单线程录制。
+    // 3) RDI BeginCommandList(threadIndex) 仅允许 threadIndex < maxRecordingThreads，与上层对齐。
     VkDevice dev = context_.GetDevice();
     std::uint32_t queueFamily = context_.GetGraphicsQueueFamilyIndex();
     const std::uint32_t maxThreads = (maxRecordingThreads_ > 0u) ? maxRecordingThreads_ : 1u;
@@ -1415,6 +1419,7 @@ void VulkanRenderDevice::DestroyUploadCommandPoolAndBuffer() {
 // =============================================================================
 
 CommandList* VulkanRenderDevice::BeginCommandList(std::uint32_t threadIndex) {
+    // 约束：同一 VkCommandBuffer 仅由单线程录制；threadIndex 对应独立 CommandPool 与 buffer。
     if (!context_.IsInitialized()) return nullptr;
     if (threadIndex >= commandListPool_.size()) return nullptr;
     std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;

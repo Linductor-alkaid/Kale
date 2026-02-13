@@ -1833,7 +1833,7 @@
         "RDI 的 BeginCommandList(threadIndex) 支持多线程",
         "与 device_abstraction_layer 的 CommandPool 管理对齐"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase9-9.5"],
       "test_verification": "多线程录制约束满足",

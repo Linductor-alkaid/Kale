@@ -219,10 +219,10 @@
 
 ### 4.3 Vulkan 多线程录制约束
 
-- [ ] 每 VkCommandBuffer 单线程录制
-- [ ] 每线程使用独立 CommandPool
-- [ ] RDI 的 `BeginCommandList(threadIndex)` 支持多线程
-- [ ] 与 device_abstraction_layer 的 CommandPool 管理对齐
+- [x] 每 VkCommandBuffer 单线程录制
+- [x] 每线程使用独立 CommandPool
+- [x] RDI 的 `BeginCommandList(threadIndex)` 支持多线程
+- [x] 与 device_abstraction_layer 的 CommandPool 管理对齐
 
 ### 4.4 GPU Instancing 支持
 

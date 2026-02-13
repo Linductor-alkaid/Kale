@@ -246,6 +246,14 @@ target_link_libraries(test_vulkan_multithread_command_pool
 add_test(NAME test_vulkan_multithread_command_pool COMMAND test_vulkan_multithread_command_pool)
 set_tests_properties(test_vulkan_multithread_command_pool PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_vulkan_multithread_constraints test_vulkan_multithread_constraints.cpp)
+target_link_libraries(test_vulkan_multithread_constraints
+    PRIVATE
+        kale_device
+)
+add_test(NAME test_vulkan_multithread_constraints COMMAND test_vulkan_multithread_constraints)
+set_tests_properties(test_vulkan_multithread_constraints PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_shadow_pass test_shadow_pass.cpp)
 target_link_libraries(test_shadow_pass
     PRIVATE
