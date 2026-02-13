@@ -1196,7 +1196,7 @@
         "实现 WaitAll() 等待所有任务",
         "实现 ParallelRecordCommands(passes) 按 Pass DAG 拓扑序分组，无依赖 Pass 并行录制"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.8", "phase2-2.9"],
       "test_verification": "RenderTaskScheduler 正确调度任务",

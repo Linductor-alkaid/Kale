@@ -123,12 +123,12 @@
 
 ### 5.1 RenderTaskScheduler 扩展
 
-- [ ] 实现 `RenderTaskScheduler` Facade（基于 executor）
-- [ ] 实现 `SubmitRenderTask(Func&& task, dependencies)` → executor.submit
-- [ ] 实现 `SubmitSystemUpdate(System* system, deps)` → 构建 System 依赖图后 submit
-- [ ] 实现 `LoadResourceAsync<Resource>(path)` → executor.submit 返回 Future
-- [ ] 实现 `WaitAll()` 等待所有任务
-- [ ] 实现 `ParallelRecordCommands(passes)` 按 Pass DAG 拓扑序分组，无依赖 Pass 并行录制
+- [x] 实现 `RenderTaskScheduler` Facade（基于 executor）
+- [x] 实现 `SubmitRenderTask(Func&& task, dependencies)` → executor.submit
+- [x] 实现 `SubmitSystemUpdate(System* system, deps)` → 构建 System 依赖图后 submit
+- [x] 实现 `LoadResourceAsync<Resource>(path)` → executor.submit 返回 Future
+- [x] 实现 `WaitAll()` 等待所有任务
+- [x] 实现 `ParallelRecordCommands(passes)` 按 Pass DAG 拓扑序分组，无依赖 Pass 并行录制
 
 ### 5.2 新增扩展接口
 

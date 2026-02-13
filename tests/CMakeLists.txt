@@ -46,6 +46,13 @@ target_link_libraries(test_frame_data_swap_buffer
 )
 add_test(NAME test_frame_data_swap_buffer COMMAND test_frame_data_swap_buffer)
 
+add_executable(test_render_task_scheduler test_render_task_scheduler.cpp)
+target_link_libraries(test_render_task_scheduler
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_render_task_scheduler COMMAND test_render_task_scheduler)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE
