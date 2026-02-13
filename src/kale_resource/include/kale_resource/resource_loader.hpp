@@ -25,11 +25,13 @@ class ResourceManager;
  * device：创建 GPU 资源（Buffer、Texture 等）
  * stagingMgr：暂存缓冲与上传（phase6 实现后可非空）
  * resourceManager：加载依赖资源（如 Material 依赖 Texture）
+ * shaderManager：可选，kale::pipeline::ShaderManager*，供 MaterialLoader 热重载时创建 Pipeline（phase13-13.15）
  */
 struct ResourceLoadContext {
     kale_device::IRenderDevice* device = nullptr;
     StagingMemoryManager* stagingMgr = nullptr;
     ResourceManager* resourceManager = nullptr;
+    void* shaderManager = nullptr;  // kale::pipeline::ShaderManager* when used by MaterialLoader
 };
 
 /**

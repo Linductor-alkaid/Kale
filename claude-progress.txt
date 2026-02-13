@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.15 材质/着色器热重载集成
+状态：已完成
+- 实现：MaterialPipelineReloadRegistry（RegisterMaterial/UnregisterMaterial/OnShaderReloaded）：着色器 path 重载时从 ShaderManager 取新 ShaderHandle、CreatePipeline、Destroy 旧 Pipeline、SetPipeline；ResourceLoadContext 增加 shaderManager（void*）；ResourceManager::SetShaderManager/GetShaderManager，Load 与 ProcessHotReload 时 ctx.shaderManager 传入；MaterialLoader 在 JSON 含 shader_vert/shaders_frag 且 ctx.shaderManager 时 LoadShader 并 CreatePipeline、SetPipeline。ShaderCompiler::Recompile 已由 ShaderManager::ReloadShader 集成。
+- 验证：编译通过，ctest 91/91 通过。新增 test_material_pipeline_reload：Registry 注册/注销、OnShaderReloaded 后材质获新 Pipeline 且旧 Pipeline 被 Destroy、ResourceManager SetShaderManager。resource_management_layer_todolist 5.2 材质/着色器热重载两项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.9 设备抽象层性能测试与调优
 状态：已完成
 - 实现：新增 test_device_performance_validation：Mock 设备统计 WaitIdle 调用；验证帧循环（多帧 Execute）中无 WaitIdle、多 DrawCall（100 次 SubmitRenderable + 5 帧 Execute）无 WaitIdle、多线程录制（SetScheduler + 8 帧 Execute）无 WaitIdle；确认仅使用 Fence 同步、多 DrawCall 与多线程录制不崩溃。

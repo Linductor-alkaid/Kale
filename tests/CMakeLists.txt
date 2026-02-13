@@ -422,6 +422,15 @@ target_link_libraries(test_shader_hot_reload
 )
 add_test(NAME test_shader_hot_reload COMMAND test_shader_hot_reload)
 
+add_executable(test_material_pipeline_reload test_material_pipeline_reload.cpp)
+target_link_libraries(test_material_pipeline_reload
+    PRIVATE
+        kale_pipeline
+        kale_resource
+        kale_device
+)
+add_test(NAME test_material_pipeline_reload COMMAND test_material_pipeline_reload)
+
 add_executable(test_render_engine_init test_render_engine_init.cpp)
 target_link_libraries(test_render_engine_init
     PRIVATE

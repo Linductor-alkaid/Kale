@@ -5,6 +5,7 @@
 add_library(kale_pipeline STATIC
     placeholder.cpp
     material_loader.cpp
+    material_pipeline_reload_registry.cpp
     instanced_draw.cpp
     src/shader_manager.cpp
     # 待实现：render_graph.cpp, material.cpp, passes/*

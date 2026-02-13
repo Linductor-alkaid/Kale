@@ -258,6 +258,7 @@ void ResourceManager::ProcessHotReload() {
         IResourceLoader* loader = FindLoader(resolved, typeId);
         if (!loader) continue;
         ResourceLoadContext ctx{device_, stagingMgr_, this};
+        ctx.shaderManager = shaderManager_;
         std::any newResource = loader->Load(resolved, ctx);
         if (!newResource.has_value()) {
             lastError_ = "HotReload Load failed: " + resolved;

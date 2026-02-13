@@ -220,8 +220,8 @@
 - [x] 检测到文件变化时重新 Load
 - [x] 替换 Cache 中的资源（SetResource）
 - [x] 若正在使用则等待下一帧或同步
-- [ ] 材质/着色器热重载：替换后重新创建 Pipeline
-- [ ] ShaderCompiler::Recompile 集成
+- [x] 材质/着色器热重载：替换后重新创建 Pipeline
+- [x] ShaderCompiler::Recompile 集成
 
 ### 5.3 引用计数与延迟释放
 

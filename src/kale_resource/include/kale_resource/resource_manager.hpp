@@ -209,6 +209,12 @@ public:
     void RegisterHotReloadCallback(HotReloadCallback cb);
 
     /**
+     * @brief 设置 ShaderManager（可选，void* 为 kale::pipeline::ShaderManager*）；供 MaterialLoader 热重载时创建 Pipeline（phase13-13.15）
+     */
+    void SetShaderManager(void* shaderManager) { shaderManager_ = shaderManager; }
+    void* GetShaderManager() const { return shaderManager_; }
+
+    /**
      * @brief 获取占位符 Mesh（未就绪时 Draw 使用）；CreatePlaceholders 未调用或失败时返回 nullptr
      */
     Mesh* GetPlaceholderMesh();
@@ -247,6 +253,7 @@ private:
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
     kale_device::IRenderDevice* device_ = nullptr;
     StagingMemoryManager* stagingMgr_ = nullptr;
+    void* shaderManager_ = nullptr;  // kale::pipeline::ShaderManager* when set
     std::string assetPath_;
     std::unordered_map<std::string, std::string> pathAliases_;
     mutable std::string lastError_;
@@ -288,6 +295,7 @@ ResourceHandle<T> ResourceManager::Load(const std::string& path) {
 
     // 调用 Loader 同步加载
     ResourceLoadContext ctx{device_, stagingMgr_, this};
+    ctx.shaderManager = shaderManager_;
     std::any result = loader->Load(resolved, ctx);
 
     if (!result.has_value()) {
@@ -355,6 +363,7 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
             throw std::runtime_error(err);
         }
         ResourceLoadContext ctx{device_, stagingMgr_, this};
+        ctx.shaderManager = shaderManager_;
         std::any result = loader->Load(resolved, ctx);
         if (!result.has_value()) {
             std::string err(GetLastError().empty() ? "Load failed: " + resolved : GetLastError());

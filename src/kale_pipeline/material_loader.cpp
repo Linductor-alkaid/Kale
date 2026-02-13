@@ -7,6 +7,9 @@
 
 #include <kale_pipeline/material_loader.hpp>
 #include <kale_pipeline/pbr_material.hpp>
+#include <kale_pipeline/shader_manager.hpp>
+
+#include <kale_device/rdi_types.hpp>
 
 #include <fstream>
 #include <memory>
@@ -146,6 +149,38 @@ kale::resource::Material* MaterialLoader::LoadJSON(const std::string& path,
     };
     setFloat("metallic", &PBRMaterial::SetMetallic);
     setFloat("roughness", &PBRMaterial::SetRoughness);
+
+    // phase13-13.15：可选 shader_vert/shaders_frag + ctx.shaderManager 时创建 Pipeline，供材质热重载后使用新着色器
+    auto itVert = j.find("shader_vert");
+    auto itFrag = j.find("shader_frag");
+    if (ctx.device && ctx.shaderManager && itVert != j.end() && itVert->is_string()
+        && itFrag != j.end() && itFrag->is_string()) {
+        auto* shaderMgr = static_cast<kale::pipeline::ShaderManager*>(ctx.shaderManager);
+        std::string vertPath = ctx.resourceManager->ResolvePath(itVert->get<std::string>());
+        std::string fragPath = ctx.resourceManager->ResolvePath(itFrag->get<std::string>());
+        kale_device::ShaderHandle vh = shaderMgr->LoadShader(vertPath, kale_device::ShaderStage::Vertex, ctx.device);
+        kale_device::ShaderHandle fh = shaderMgr->LoadShader(fragPath, kale_device::ShaderStage::Fragment, ctx.device);
+        if (vh.IsValid() && fh.IsValid()) {
+            kale_device::PipelineDesc desc;
+            desc.shaders = {vh, fh};
+            desc.vertexBindings = {{0, 32, false}};  // VertexPNT 8 floats
+            desc.vertexAttributes = {
+                {0, 0, kale_device::Format::RGB32F, 0},
+                {1, 0, kale_device::Format::RGB32F, 12},
+                {2, 0, kale_device::Format::RG32F, 24},
+            };
+            desc.topology = kale_device::PrimitiveTopology::TriangleList;
+            desc.rasterization.cullEnable = true;
+            desc.rasterization.frontFaceCCW = true;
+            desc.depthStencil.depthTestEnable = true;
+            desc.depthStencil.depthWriteEnable = true;
+            desc.colorAttachmentFormats = {kale_device::Format::RGBA8_SRGB};
+            desc.depthAttachmentFormat = kale_device::Format::D24S8;
+            kale_device::PipelineHandle ph = ctx.device->CreatePipeline(desc);
+            if (ph.IsValid())
+                mat->SetPipeline(ph);
+        }
+    }
 
     return mat.release();
 }

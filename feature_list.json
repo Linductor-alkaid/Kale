@@ -2658,7 +2658,7 @@
         "材质/着色器热重载：替换后重新创建 Pipeline",
         "ShaderCompiler::Recompile 集成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase5-5.2", "phase9-9.2"],
       "hold": null
