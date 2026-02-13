@@ -67,6 +67,14 @@ public:
     std::vector<SceneNode*> CullScene(CameraNode* camera);
 
     /**
+     * 多相机场景剔除：对每个相机分别做视锥剔除，返回按相机分组的可见节点列表。
+     * visibleByCamera[i] 对应 cameras[i]。
+     * @param cameras 相机节点列表；空列表时返回空 vector
+     * @return 与 cameras 等长的 vector，每元素为该相机的可见节点列表
+     */
+    std::vector<std::vector<SceneNode*>> CullScene(const std::vector<CameraNode*>& cameras);
+
+    /**
      * 根据节点指针查找其句柄。
      * @param node 非空且已注册的节点
      * @return 对应句柄，未注册则返回 kInvalidSceneNodeHandle

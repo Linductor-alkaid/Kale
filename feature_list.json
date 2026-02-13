@@ -1927,7 +1927,7 @@
         "每个相机对应一组可见节点",
         "visibleByCamera[0] 对应 cameras[0]，依此类推"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase10-10.1", "phase5-5.9"],
       "test_verification": "多相机剔除正确",

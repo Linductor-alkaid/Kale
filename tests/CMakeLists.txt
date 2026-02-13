@@ -106,6 +106,13 @@ target_link_libraries(test_camera_node
 )
 add_test(NAME test_camera_node COMMAND test_camera_node)
 
+add_executable(test_cull_scene_multi_camera test_cull_scene_multi_camera.cpp)
+target_link_libraries(test_cull_scene_multi_camera
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_cull_scene_multi_camera COMMAND test_cull_scene_multi_camera)
+
 add_executable(test_entity_component_storage test_entity_component_storage.cpp)
 target_link_libraries(test_entity_component_storage
     PRIVATE

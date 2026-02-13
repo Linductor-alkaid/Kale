@@ -165,9 +165,9 @@
 
 ### 4.2 CullScene 多相机
 
-- [ ] 实现 `CullScene(const std::vector<CameraNode*>& cameras)` 返回 `std::vector<std::vector<SceneNode*>>`
-- [ ] 每个相机对应一组可见节点
-- [ ] `visibleByCamera[0]` 对应 `cameras[0]`，依此类推
+- [x] 实现 `CullScene(const std::vector<CameraNode*>& cameras)` 返回 `std::vector<std::vector<SceneNode*>>`
+- [x] 每个相机对应一组可见节点
+- [x] `visibleByCamera[0]` 对应 `cameras[0]`，依此类推
 
 ### 4.3 多视口支持
 

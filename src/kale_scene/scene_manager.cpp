@@ -42,6 +42,14 @@ std::vector<SceneNode*> SceneManager::CullScene(CameraNode* camera) {
     return visibleNodes;
 }
 
+std::vector<std::vector<SceneNode*>> SceneManager::CullScene(const std::vector<CameraNode*>& cameras) {
+    std::vector<std::vector<SceneNode*>> visibleByCamera;
+    visibleByCamera.reserve(cameras.size());
+    for (CameraNode* cam : cameras)
+        visibleByCamera.push_back(CullScene(cam));
+    return visibleByCamera;
+}
+
 void SceneManager::Update(float deltaTime) {
     (void)deltaTime;
     if (!activeRoot_) return;
