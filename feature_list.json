@@ -2732,10 +2732,10 @@
         "Submit 时 signal renderCompleteSemaphore，供 Present 使用（若需要）",
         "RDI 的 Submit 接口支持 (cmdLists, waitSemaphores, signalSemaphores, fence)"
       ],
-      "status": "pending",
+      "status": "completed",
+      "hold": null,
       "priority": "high",
-      "dependencies": ["phase6-6.7"],
-      "hold": null
+      "dependencies": ["phase6-6.7"]
     },
     {
       "id": "phase13-13.20",

@@ -289,10 +289,7 @@ private:
     std::vector<kale_device::BufferHandle> compiledBuffers_;
     std::string compileError_;
 
-    /** 帧流水线：Fence 在 Compile 时创建，Execute 中 Wait/Reset，Submit 时传入以 signal。 */
-    static constexpr std::uint32_t kMaxFramesInFlight = 3;
-    std::vector<kale_device::FenceHandle> frameFences_;
-    std::uint32_t currentFrameIndex_ = 0;
+    /** 帧流水线：同步由设备负责。Execute 仅调用 AcquireNextImage（设备内 Wait 上一帧 Fence、Reset、Acquire、signal imageAvailable）再 Submit(cmdLists, {}, {}, FenceHandle{})，设备使用帧 Fence 与 imageAvailable/renderFinished 信号。 */
 
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
 
@@ -390,19 +387,6 @@ inline bool RenderGraph::Compile(kale_device::IRenderDevice* device) {
                 return false;
             }
             compiledBuffers_[i] = h;
-        }
-    }
-
-    // 4) 帧流水线 Fence：首次 Compile 时创建，供 Execute 使用
-    if (frameFences_.size() != kMaxFramesInFlight) {
-        frameFences_.clear();
-        for (std::uint32_t i = 0; i < kMaxFramesInFlight; ++i) {
-            auto f = device->CreateFence(true);  // signaled 避免首帧 Wait 阻塞
-            if (!f.IsValid()) {
-                frameFences_.clear();
-                return true;  // 不因 Fence 创建失败而整体失败，Execute 时可不传 fence
-            }
-            frameFences_.push_back(f);
         }
     }
 
@@ -684,31 +668,18 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
 inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
     if (!device || !IsCompiled()) return;
 
-    const std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
-
-    if (frameIndex < frameFences_.size() && frameFences_[frameIndex].IsValid()) {
-        while (!device->IsFenceSignaled(frameFences_[frameIndex])) {
-            if (quitCallback_ && quitCallback_()) return;
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        device->ResetFence(frameFences_[frameIndex]);
-    }
-
-    if (device->AcquireNextImage() == kale_device::IRenderDevice::kInvalidSwapchainImageIndex) return;  // 失败则跳过本帧
+    // 设备负责帧同步：AcquireNextImage 内 Wait 上一帧 Fence、Reset、Acquire（signal imageAvailable）
+    if (device->AcquireNextImage() == kale_device::IRenderDevice::kInvalidSwapchainImageIndex) return;
 
     BuildFrameDrawList();
 
     std::vector<kale_device::CommandList*> cmdLists = RecordPasses(device);
 
-    kale_device::FenceHandle submitFence;
-    if (frameIndex < frameFences_.size()) submitFence = frameFences_[frameIndex];
+    // 空 wait/signal/fence：设备使用帧 imageAvailable 作 wait、renderFinished 作 signal、帧 Fence 作 fence，供 Present 使用
     if (!cmdLists.empty())
-        device->Submit(cmdLists, {}, {}, submitFence);
+        device->Submit(cmdLists, {}, {}, kale_device::FenceHandle{});
 
     ReleaseFrameResources();
-
-    if (!cmdLists.empty())
-        currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
 }
 
 inline kale_device::TextureHandle RenderPassContext::GetCompiledTexture(RGResourceHandle handle) const {

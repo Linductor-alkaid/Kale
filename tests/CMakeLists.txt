@@ -638,6 +638,15 @@ target_link_libraries(test_frame_pipeline
 )
 add_test(NAME test_frame_pipeline COMMAND test_frame_pipeline)
 
+add_executable(test_frame_sync_completion test_frame_sync_completion.cpp)
+target_link_libraries(test_frame_sync_completion
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_frame_sync_completion COMMAND test_frame_sync_completion)
+
 add_executable(test_multithread_record_passes test_multithread_record_passes.cpp)
 target_link_libraries(test_multithread_record_passes
     PRIVATE

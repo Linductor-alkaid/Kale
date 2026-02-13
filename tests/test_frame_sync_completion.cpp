@@ -1,10 +1,10 @@
 /**
- * @file test_frame_pipeline.cpp
- * @brief phase9-9.3 / phase13-13.19 帧流水线单元测试
+ * @file test_frame_sync_completion.cpp
+ * @brief phase13-13.19 帧流水线同步完善单元测试
  *
- * 验证 RenderGraph::Execute 流程：AcquireNextImage（设备内 Wait/Reset/Acquire）→
- * Record → Submit(cmdLists, {}, {}, FenceHandle{}) → ReleaseFrameResources；Present 由应用层调用。
- * 帧同步由设备负责（空 wait/signal/fence 时设备使用帧 imageAvailable/renderFinished/Fence）。
+ * 验证：Execute 调用 AcquireNextImage 后 Submit(cmdLists, {}, {}, FenceHandle{})；
+ * 空 wait/signal/fence 时由设备使用帧 imageAvailable/renderFinished/Fence；
+ * RDI Submit 接口支持 (cmdLists, waitSemaphores, signalSemaphores, fence)。
  */
 
 #include <kale_pipeline/setup_render_graph.hpp>
@@ -55,11 +55,15 @@ public:
     void SetScissor(std::int32_t, std::int32_t, std::uint32_t, std::uint32_t) override {}
 };
 
-/** Mock 设备：统计 AcquireNextImage / Submit 调用次数，验证帧流水线顺序（帧同步由设备负责，RG 不调用 Wait/Reset） */
-class FramePipelineMockDevice : public kale_device::IRenderDevice {
+/** Mock：记录 Submit 的 wait/signal/fence 是否为空或无效，以及 Acquire 是否在 Submit 前调用 */
+class FrameSyncMockDevice : public kale_device::IRenderDevice {
 public:
-    std::uint32_t acquireCount = 0;
-    std::uint32_t submitCount = 0;
+    bool submitCalledWithEmptyWait = false;
+    bool submitCalledWithEmptySignal = false;
+    bool submitCalledWithInvalidFence = false;
+    bool acquireBeforeSubmit = false;
+    int acquireCallOrder = 0;
+    int submitCallOrder = 0;
 
     bool Initialize(const kale_device::DeviceConfig&) override { return true; }
     void Shutdown() override {}
@@ -67,9 +71,8 @@ public:
 
     kale_device::BufferHandle CreateBuffer(const kale_device::BufferDesc&, const void*) override { return {}; }
     kale_device::TextureHandle CreateTexture(const kale_device::TextureDesc&, const void*) override {
-        nextTexId_++;
         kale_device::TextureHandle h;
-        h.id = nextTexId_;
+        h.id = ++nextTexId_;
         return h;
     }
     kale_device::ShaderHandle CreateShader(const kale_device::ShaderDesc&) override { return {}; }
@@ -92,26 +95,25 @@ public:
     kale_device::CommandList* BeginCommandList(std::uint32_t) override { return &mockCmd_; }
     void EndCommandList(kale_device::CommandList*) override {}
     void Submit(const std::vector<kale_device::CommandList*>&,
-                const std::vector<kale_device::SemaphoreHandle>&,
-                const std::vector<kale_device::SemaphoreHandle>&,
-                kale_device::FenceHandle) override {
-        submitCount++;
+                const std::vector<kale_device::SemaphoreHandle>& waitSemaphores,
+                const std::vector<kale_device::SemaphoreHandle>& signalSemaphores,
+                kale_device::FenceHandle fence) override {
+        submitCallOrder = ++callOrder_;
+        submitCalledWithEmptyWait = waitSemaphores.empty();
+        submitCalledWithEmptySignal = signalSemaphores.empty();
+        submitCalledWithInvalidFence = !fence.IsValid();
+        acquireBeforeSubmit = (acquireCallOrder > 0 && acquireCallOrder < submitCallOrder);
     }
 
     void WaitIdle() override {}
-    kale_device::FenceHandle CreateFence(bool) override {
-        nextFenceId_++;
-        kale_device::FenceHandle h;
-        h.id = nextFenceId_;
-        return h;
-    }
+    kale_device::FenceHandle CreateFence(bool) override { return {}; }
     void WaitForFence(kale_device::FenceHandle, std::uint64_t) override {}
     void ResetFence(kale_device::FenceHandle) override {}
     bool IsFenceSignaled(kale_device::FenceHandle) const override { return true; }
     kale_device::SemaphoreHandle CreateSemaphore() override { return {}; }
 
     std::uint32_t AcquireNextImage() override {
-        acquireCount++;
+        acquireCallOrder = ++callOrder_;
         return 0;
     }
     void Present() override {}
@@ -128,79 +130,41 @@ private:
     std::string err_;
     kale_device::DeviceCapabilities caps_;
     std::uint64_t nextTexId_ = 0;
-    std::uint64_t nextFenceId_ = 0;
+    int callOrder_ = 0;
     MockCommandList mockCmd_;
 };
 
-/** 多帧连续 Execute 无死锁，每帧 AcquireNextImage → Record → Submit（帧同步由设备负责） */
-static void test_frame_pipeline_multiple_frames_no_deadlock() {
+/** Execute 调用 Submit 时传入空 wait、空 signal、无效 fence，由设备使用帧信号 */
+static void test_submit_with_empty_sync() {
     kale::pipeline::RenderGraph rg;
     kale::pipeline::SetupRenderGraph(rg, 256, 256);
-
-    FramePipelineMockDevice dev;
+    FrameSyncMockDevice dev;
     TEST_CHECK(dev.Initialize({}));
     TEST_CHECK(rg.Compile(&dev));
-
-    const std::uint32_t kFrames = 8;
-    for (std::uint32_t i = 0; i < kFrames; ++i) {
-        rg.Execute(&dev);
-    }
-
-    TEST_CHECK(dev.acquireCount == kFrames);
-    TEST_CHECK(dev.submitCount == kFrames);
-}
-
-/** AcquireNextImage 失败时本帧跳过，不 Submit，不增加 submitCount */
-static void test_frame_pipeline_acquire_fail_skips_frame() {
-    kale::pipeline::RenderGraph rg;
-    kale::pipeline::SetupRenderGraph(rg, 256, 256);
-
-    class AcquireFailMock : public FramePipelineMockDevice {
-    public:
-        std::uint32_t acquireCalls = 0;
-        std::uint32_t AcquireNextImage() override {
-            acquireCalls++;
-            acquireCount++;  // 每次 Execute 都会调用一次，无论成败
-            if (acquireCalls >= 2) return kale_device::IRenderDevice::kInvalidSwapchainImageIndex;
-            return 0;
-        }
-    };
-    AcquireFailMock dev;
-    TEST_CHECK(dev.Initialize({}));
-    TEST_CHECK(rg.Compile(&dev));
-
-    rg.Execute(&dev);  // 第一帧正常
-    rg.Execute(&dev);  // 第二帧 Acquire 返回无效，跳过
-    rg.Execute(&dev);  // 第三帧再次返回无效，跳过
-
-    TEST_CHECK(dev.submitCount == 1);
-    TEST_CHECK(dev.acquireCount == 3);  // 三次 Execute 各调用一次 Acquire
-}
-
-/** 未 Compile 或 device 为 nullptr 时 Execute 直接返回 */
-static void test_frame_pipeline_null_or_uncompiled_no_op() {
-    kale::pipeline::RenderGraph rg;
-    kale::pipeline::SetupRenderGraph(rg, 256, 256);
-    FramePipelineMockDevice dev;
-    dev.Initialize({});
-
-    rg.Execute(nullptr);
-    TEST_CHECK(dev.acquireCount == 0);
-
-    rg.Execute(&dev);  // 未 Compile，应不调用设备
-    TEST_CHECK(dev.acquireCount == 0);
-
-    rg.Compile(&dev);
     rg.Execute(&dev);
-    TEST_CHECK(dev.acquireCount == 1 && dev.submitCount == 1);
+
+    TEST_CHECK(dev.submitCalledWithEmptyWait);
+    TEST_CHECK(dev.submitCalledWithEmptySignal);
+    TEST_CHECK(dev.submitCalledWithInvalidFence);
+}
+
+/** AcquireNextImage 在 Submit 之前被调用 */
+static void test_acquire_before_submit() {
+    kale::pipeline::RenderGraph rg;
+    kale::pipeline::SetupRenderGraph(rg, 256, 256);
+    FrameSyncMockDevice dev;
+    TEST_CHECK(dev.Initialize({}));
+    TEST_CHECK(rg.Compile(&dev));
+    rg.Execute(&dev);
+
+    TEST_CHECK(dev.acquireBeforeSubmit);
 }
 
 }  // namespace
 
 int main() {
-    test_frame_pipeline_null_or_uncompiled_no_op();
-    test_frame_pipeline_acquire_fail_skips_frame();
-    test_frame_pipeline_multiple_frames_no_deadlock();
-    std::cout << "test_frame_pipeline: all passed" << std::endl;
+    test_submit_with_empty_sync();
+    test_acquire_before_submit();
+    std::cout << "test_frame_sync_completion: all passed" << std::endl;
     return 0;
 }

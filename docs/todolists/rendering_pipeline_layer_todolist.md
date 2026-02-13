@@ -234,10 +234,10 @@
 
 ### 4.5 帧流水线同步完善
 
-- [ ] 每帧对应 Fence，Wait 上一帧 Fence 后再 Acquire
-- [ ] Acquire 返回的 semaphore 用于 Submit 时 wait
-- [ ] Submit 时 signal renderCompleteSemaphore，供 Present 使用（若需要）
-- [ ] RDI 的 Submit 接口支持 `(cmdLists, waitSemaphores, signalSemaphores, fence)`
+- [x] 每帧对应 Fence，Wait 上一帧 Fence 后再 Acquire
+- [x] Acquire 返回的 semaphore 用于 Submit 时 wait
+- [x] Submit 时 signal renderCompleteSemaphore，供 Present 使用（若需要）
+- [x] RDI 的 Submit 接口支持 `(cmdLists, waitSemaphores, signalSemaphores, fence)`
 
 ---
 
@@ -346,9 +346,9 @@
 
 ### 帧流水线同步
 
-- [ ] 每帧对应 Fence，Wait 上一帧 Fence 后再 Acquire
-- [ ] Acquire 返回的 semaphore 用于 Submit 时 wait
-- [ ] Submit 时 signal renderCompleteSemaphore，供 Present 使用（若 Present 需要）
+- [x] 每帧对应 Fence，Wait 上一帧 Fence 后再 Acquire
+- [x] Acquire 返回的 semaphore 用于 Submit 时 wait
+- [x] Submit 时 signal renderCompleteSemaphore，供 Present 使用（若 Present 需要）
 
 ### Renderable 与 Material 生命周期
 
