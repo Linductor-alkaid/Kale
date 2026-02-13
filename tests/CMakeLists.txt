@@ -262,6 +262,15 @@ target_link_libraries(test_action_mapping
 add_test(NAME test_action_mapping COMMAND test_action_mapping)
 set_tests_properties(test_action_mapping PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_input_event_callback test_input_event_callback.cpp)
+target_link_libraries(test_input_event_callback
+    PRIVATE
+        kale_engine
+        kale_device
+)
+add_test(NAME test_input_event_callback COMMAND test_input_event_callback)
+set_tests_properties(test_input_event_callback PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_vulkan_multithread_command_pool test_vulkan_multithread_command_pool.cpp)
 target_link_libraries(test_vulkan_multithread_command_pool
     PRIVATE

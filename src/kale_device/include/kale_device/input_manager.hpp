@@ -4,7 +4,9 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <glm/vec2.hpp>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -158,6 +160,35 @@ inline InputBinding GamepadAxisBinding(int idx, GamepadAxis axisValue) {
     return GamepadBinding{idx, axisValue};
 }
 
+/// 输入事件类型（与 Update 中派发时机对应）
+enum class InputEventType {
+    KeyDown,
+    KeyUp,
+    MouseButtonDown,
+    MouseButtonUp,
+    MouseMotion,
+    MouseWheel,
+    Quit,
+    WindowCloseRequested,
+    GamepadAdded,
+    GamepadRemoved,
+};
+
+/// 输入事件：type 决定有效载荷字段
+struct InputEvent {
+    InputEventType type = InputEventType::KeyDown;
+    KeyCode key = KeyCode::Unknown;
+    MouseButton mouseButton = MouseButton::Left;
+    glm::vec2 mousePosition{0.0f};
+    glm::vec2 mouseDelta{0.0f};
+    float wheelDelta = 0.0f;
+    int windowId = 0;
+    int gamepadInstanceId = 0;
+};
+
+/// 输入事件回调类型
+using InputEventCallback = std::function<void(const InputEvent&)>;
+
 /// 输入管理器：键盘、鼠标状态与 JustPressed/JustReleased 双缓冲，以及手柄支持
 class InputManager {
 public:
@@ -208,6 +239,13 @@ public:
     /// 本帧是否收到退出或窗口关闭请求（由 Update 轮询时设置）
     bool QuitRequested() const { return quitRequested_; }
 
+    /// 注册指定类型输入事件的回调；在 Update() 中按事件顺序派发
+    void RegisterCallback(InputEventType type, InputEventCallback callback);
+    /// 移除指定类型的所有回调（可选接口，若未实现可留空）
+    void ClearCallbacks(InputEventType type);
+    /// 移除所有类型的回调
+    void ClearAllCallbacks();
+
 private:
     bool IsMouseButtonJustPressed(MouseButton button) const;
 
@@ -232,6 +270,9 @@ private:
 
     /// action 名称 -> 绑定列表（同一 action 多绑定）
     std::unordered_map<std::string, std::vector<InputBinding>> actionBindings_;
+
+    /// 事件类型 -> 回调列表（同一类型可多回调）
+    std::map<InputEventType, std::vector<InputEventCallback>> eventCallbacks_;
 };
 
 }  // namespace kale_device

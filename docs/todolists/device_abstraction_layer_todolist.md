@@ -192,10 +192,10 @@
 
 ### 4.4 输入事件回调
 
-- [ ] 定义 `InputEventType` 枚举
-- [ ] 定义 `InputEvent` 结构
-- [ ] 实现 `RegisterCallback(InputEventType type, std::function<void(const InputEvent&)> callback)`
-- [ ] 在 `Update()` 中派发事件
+- [x] 定义 `InputEventType` 枚举
+- [x] 定义 `InputEvent` 结构
+- [x] 实现 `RegisterCallback(InputEventType type, std::function<void(const InputEvent&)> callback)`
+- [x] 在 `Update()` 中派发事件
 
 ### 4.5 输入状态双缓冲
 

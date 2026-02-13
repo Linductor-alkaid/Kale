@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.4 输入事件回调
+状态：已完成
+- 实现：InputEventType 枚举（KeyDown/KeyUp、MouseButtonDown/MouseButtonUp、MouseMotion、MouseWheel、Quit、WindowCloseRequested、GamepadAdded/GamepadRemoved）；InputEvent 结构（type、key、mouseButton、mousePosition、mouseDelta、wheelDelta、windowId、gamepadInstanceId）；RegisterCallback(type, callback)、ClearCallbacks(type)、ClearAllCallbacks()；Update() 中在 SDL_PollEvent 循环内按事件类型构建 InputEvent 并派发对应回调。
+- 验证：编译通过，ctest 46/46 通过（新增 test_input_event_callback：KeyDown/Quit 派发、多回调、ClearCallbacks/ClearAllCallbacks 后不再派发、SDL_PushEvent 注入 KeyDown/Quit）。
+- feature_list.json 中 phase11-11.4 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 4.4 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.2 ResourceCache 基础（验证）
 状态：已完成
 - 验证：编译通过，ctest 45/45 通过；ResourceCache 基础（CacheEntry、Register/RegisterPlaceholder、Get/IsReady/SetResource/SetReady、FindByPath、AddRef/Release、线程安全）已由前期实现，本会话将 phase3-3.2 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.2 已为已勾选状态。

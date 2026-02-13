@@ -2143,7 +2143,7 @@
         "实现 RegisterCallback(InputEventType type, std::function<void(const InputEvent&)> callback)",
         "在 Update() 中派发事件"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase1-1.4"],
       "test_verification": "输入事件回调正确派发",

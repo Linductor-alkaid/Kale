@@ -75,21 +75,70 @@ void InputManager::Update() {
 
     SDL_PumpEvents();
 
+    auto dispatch = [this](InputEventType t, const InputEvent& e) {
+        auto it = eventCallbacks_.find(t);
+        if (it == eventCallbacks_.end()) return;
+        for (const InputEventCallback& cb : it->second) {
+            if (cb) cb(e);
+        }
+    };
+
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+        InputEvent ev;
         switch (event.type) {
             case SDL_EVENT_QUIT:
                 quitRequested_ = true;
+                ev.type = InputEventType::Quit;
+                dispatch(InputEventType::Quit, ev);
                 break;
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                ev.windowId = static_cast<int>(event.window.windowID);
                 if (window_ && event.window.windowID == SDL_GetWindowID(window_)) {
                     quitRequested_ = true;
                 }
+                ev.type = InputEventType::WindowCloseRequested;
+                dispatch(InputEventType::WindowCloseRequested, ev);
+                break;
+            case SDL_EVENT_KEY_DOWN:
+                ev.type = InputEventType::KeyDown;
+                ev.key = static_cast<KeyCode>(event.key.scancode);
+                dispatch(InputEventType::KeyDown, ev);
+                break;
+            case SDL_EVENT_KEY_UP:
+                ev.type = InputEventType::KeyUp;
+                ev.key = static_cast<KeyCode>(event.key.scancode);
+                dispatch(InputEventType::KeyUp, ev);
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                ev.type = InputEventType::MouseButtonDown;
+                ev.mouseButton = static_cast<MouseButton>(event.button.button);
+                ev.mousePosition = glm::vec2(event.button.x, event.button.y);
+                dispatch(InputEventType::MouseButtonDown, ev);
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                ev.type = InputEventType::MouseButtonUp;
+                ev.mouseButton = static_cast<MouseButton>(event.button.button);
+                ev.mousePosition = glm::vec2(event.button.x, event.button.y);
+                dispatch(InputEventType::MouseButtonUp, ev);
+                break;
+            case SDL_EVENT_MOUSE_MOTION:
+                ev.type = InputEventType::MouseMotion;
+                ev.mousePosition = glm::vec2(event.motion.x, event.motion.y);
+                ev.mouseDelta = glm::vec2(event.motion.xrel, event.motion.yrel);
+                dispatch(InputEventType::MouseMotion, ev);
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
                 mouseWheelDelta_ += event.wheel.y;
+                ev.type = InputEventType::MouseWheel;
+                ev.wheelDelta = static_cast<float>(event.wheel.y);
+                ev.mousePosition = glm::vec2(event.wheel.mouse_x, event.wheel.mouse_y);
+                dispatch(InputEventType::MouseWheel, ev);
                 break;
             case SDL_EVENT_GAMEPAD_REMOVED: {
+                ev.type = InputEventType::GamepadRemoved;
+                ev.gamepadInstanceId = static_cast<int>(event.gdevice.which);
+                dispatch(InputEventType::GamepadRemoved, ev);
                 if (gamepadCache_) {
                     SDL_JoystickID id = event.gdevice.which;
                     GamepadCache* c = GetCache(gamepadCache_);
@@ -102,7 +151,9 @@ void InputManager::Update() {
                 break;
             }
             case SDL_EVENT_GAMEPAD_ADDED:
-                /* 首次使用时再 Open，此处仅依赖 SDL_GetGamepads 列表即可 */
+                ev.type = InputEventType::GamepadAdded;
+                ev.gamepadInstanceId = static_cast<int>(event.gdevice.which);
+                dispatch(InputEventType::GamepadAdded, ev);
                 break;
             default:
                 break;
@@ -281,6 +332,18 @@ float InputManager::GetActionValue(const std::string& action) const {
         }
     }
     return value;
+}
+
+void InputManager::RegisterCallback(InputEventType type, InputEventCallback callback) {
+    if (callback) eventCallbacks_[type].push_back(std::move(callback));
+}
+
+void InputManager::ClearCallbacks(InputEventType type) {
+    eventCallbacks_.erase(type);
+}
+
+void InputManager::ClearAllCallbacks() {
+    eventCallbacks_.clear();
 }
 
 }  // namespace kale_device
