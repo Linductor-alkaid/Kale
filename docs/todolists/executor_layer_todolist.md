@@ -132,9 +132,9 @@
 
 ### 5.2 新增扩展接口
 
-- [ ] 实现 `GetResourceLoadedChannel()` 返回 `TaskChannel<ResourceLoadedEvent>*`
-- [ ] 实现 `SubmitTaskGraph(TaskGraph& graph)`
-- [ ] 实现 `GetVisibleObjectsFrameData()` 返回 `FrameData<VisibleObjectList>*`
+- [x] 实现 `GetResourceLoadedChannel()` 返回 `TaskChannel<ResourceLoadedEvent>*`
+- [x] 实现 `SubmitTaskGraph(TaskGraph& graph)`
+- [x] 实现 `GetVisibleObjectsFrameData()` 返回 `FrameData<VisibleObjectList>*`
 
 ### 5.3 资源管理集成
 

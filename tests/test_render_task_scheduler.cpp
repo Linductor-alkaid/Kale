@@ -159,6 +159,46 @@ static void test_get_executor() {
     ex.shutdown(true);
 }
 
+static void test_get_resource_loaded_channel() {
+    ::executor::Executor ex;
+    ex.initialize(::executor::ExecutorConfig{});
+    kale::executor::RenderTaskScheduler sched(&ex);
+
+    kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
+        sched.GetResourceLoadedChannel();
+    TEST_CHECK(ch != nullptr);
+    TEST_CHECK(sched.GetResourceLoadedChannel() == ch);
+
+    kale::executor::ResourceLoadedEvent ev;
+    ev.path = "textures/foo.png";
+    ev.resource_handle_id = 42;
+    TEST_CHECK(ch->try_send(ev));
+
+    kale::executor::ResourceLoadedEvent recv;
+    TEST_CHECK(ch->try_recv(recv));
+    TEST_CHECK(recv.path == "textures/foo.png" && recv.resource_handle_id == 42);
+    ex.shutdown(true);
+}
+
+static void test_get_visible_objects_frame_data() {
+    ::executor::Executor ex;
+    ex.initialize(::executor::ExecutorConfig{});
+    kale::executor::RenderTaskScheduler sched(&ex);
+
+    kale::executor::FrameData<kale::executor::VisibleObjectList>* fd =
+        sched.GetVisibleObjectsFrameData();
+    TEST_CHECK(fd != nullptr);
+    TEST_CHECK(sched.GetVisibleObjectsFrameData() == fd);
+
+    fd->write_buffer().nodes.push_back(reinterpret_cast<void*>(1));
+    fd->write_buffer().nodes.push_back(reinterpret_cast<void*>(2));
+    fd->end_frame();
+    TEST_CHECK(fd->read_buffer().nodes.size() == 2u);
+    TEST_CHECK(fd->read_buffer().nodes[0] == reinterpret_cast<void*>(1));
+    TEST_CHECK(fd->read_buffer().nodes[1] == reinterpret_cast<void*>(2));
+    ex.shutdown(true);
+}
+
 int main() {
     test_get_executor();
     test_submit_render_task_no_deps();
@@ -170,6 +210,8 @@ int main() {
     test_parallel_record_commands_no_deps();
     test_parallel_record_commands_with_deps();
     test_submit_task_graph();
+    test_get_resource_loaded_channel();
+    test_get_visible_objects_frame_data();
     std::cout << "All RenderTaskScheduler tests passed." << std::endl;
     return 0;
 }

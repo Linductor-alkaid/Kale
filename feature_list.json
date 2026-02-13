@@ -1214,7 +1214,7 @@
         "实现 SubmitTaskGraph(TaskGraph& graph)",
         "实现 GetVisibleObjectsFrameData() 返回 FrameData<VisibleObjectList>*"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase4-4.1"],
       "test_verification": "扩展接口正常工作",

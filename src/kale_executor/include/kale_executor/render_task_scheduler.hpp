@@ -1,20 +1,35 @@
 // Kale 执行器层 - RenderTaskScheduler
-// 基于 executor 的 Facade：SubmitRenderTask、SubmitSystemUpdate、LoadResourceAsync、WaitAll、ParallelRecordCommands
+// 基于 executor 的 Facade：SubmitRenderTask、SubmitSystemUpdate、LoadResourceAsync、WaitAll、ParallelRecordCommands、扩展接口
 
 #pragma once
 
 #include <kale_executor/executor_future.hpp>
+#include <kale_executor/frame_data.hpp>
+#include <kale_executor/task_channel.hpp>
 #include <kale_executor/task_graph.hpp>
 
 #include <executor/executor.hpp>
 
 #include <functional>
 #include <future>
+#include <memory>
 #include <mutex>
+#include <string>
 #include <typeindex>
 #include <vector>
 
 namespace kale::executor {
+
+/// 资源加载完成事件：供 ResourceLoader 发送、ResourceManager 主线程 try_recv 消费
+struct ResourceLoadedEvent {
+    std::string path;
+    uint64_t resource_handle_id = 0;
+};
+
+/// 可见物体列表：由 CullScene 等写入 write_buffer()，渲染管线从 read_buffer() 读取
+struct VisibleObjectList {
+    std::vector<void*> nodes;
+};
 
 /// 系统基类：供 SubmitSystemUpdate 与 ECS 层使用，依赖由 GetDependencies() 声明
 struct System {
@@ -59,10 +74,18 @@ public:
     /// 提交任务图到底层 executor（等价于 submit_task_graph(*ex_, graph)）
     void SubmitTaskGraph(TaskGraph& graph);
 
+    /// 获取资源加载完成通道：加载线程 try_send(ResourceLoadedEvent)，主线程每帧 try_recv
+    TaskChannel<ResourceLoadedEvent, 32>* GetResourceLoadedChannel();
+
+    /// 获取可见物体列表帧数据：写者写入 write_buffer()，读者读 read_buffer()，帧末 end_frame()
+    FrameData<VisibleObjectList>* GetVisibleObjectsFrameData();
+
 private:
     ::executor::Executor* ex_ = nullptr;
     std::vector<std::shared_future<void>> pending_;
     std::mutex pending_mutex_;
+    std::unique_ptr<TaskChannel<ResourceLoadedEvent, 32>> resource_loaded_channel_;
+    std::unique_ptr<FrameData<VisibleObjectList>> visible_objects_frame_data_;
 };
 
 // -----------------------------------------------------------------------------
@@ -174,6 +197,18 @@ inline void RenderTaskScheduler::ParallelRecordCommands(
 
 inline void RenderTaskScheduler::SubmitTaskGraph(TaskGraph& graph) {
     if (ex_) submit_task_graph(*ex_, graph);
+}
+
+inline TaskChannel<ResourceLoadedEvent, 32>* RenderTaskScheduler::GetResourceLoadedChannel() {
+    if (!resource_loaded_channel_)
+        resource_loaded_channel_ = std::make_unique<TaskChannel<ResourceLoadedEvent, 32>>();
+    return resource_loaded_channel_.get();
+}
+
+inline FrameData<VisibleObjectList>* RenderTaskScheduler::GetVisibleObjectsFrameData() {
+    if (!visible_objects_frame_data_)
+        visible_objects_frame_data_ = std::make_unique<FrameData<VisibleObjectList>>();
+    return visible_objects_frame_data_.get();
 }
 
 }  // namespace kale::executor

@@ -1,3 +1,10 @@
+=== 2026-02-13 12:00:00 ===
+功能：phase4-4.2 新扩展接口
+状态：已完成
+- 实现：ResourceLoadedEvent（path, resource_handle_id）、VisibleObjectList（nodes）；RenderTaskScheduler::GetResourceLoadedChannel() 返回 TaskChannel<ResourceLoadedEvent,32>*（懒创建）、GetVisibleObjectsFrameData() 返回 FrameData<VisibleObjectList>*（懒创建）；SubmitTaskGraph 已有
+- 验证：编译通过，test_render_task_scheduler 通过（新增 test_get_resource_loaded_channel、test_get_visible_objects_frame_data）
+- feature_list.json 中 phase4-4.2 的 status 更新为 completed，hold=null；executor_layer_todolist 5.2 已勾选
+
 === 2026-02-13 (session) ===
 功能：phase4-4.1 RenderTaskScheduler 扩展
 状态：已完成
