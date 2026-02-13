@@ -186,14 +186,14 @@
 
 ### executor 库集成
 
-- [ ] 通过 `find_package(executor)` 或 `add_subdirectory` 集成
-- [ ] 扩展作为独立头文件/库，通过额外 target 提供
-- [ ] `TaskGraph::submit` 内部调用 `Executor::submit`
+- [x] 通过 `find_package(executor)` 或 `add_subdirectory` 集成
+- [x] 扩展作为独立头文件/库，通过额外 target 提供
+- [x] `TaskGraph::submit` 内部调用 `Executor::submit`
 
 ### 引擎初始化顺序
 
-- [ ] scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph
-- [ ] EntityManager 持有 SceneManager 指针，供 SceneNodeRef 解析
+- [x] scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph
+- [x] EntityManager 持有 SceneManager 指针，供 SceneNodeRef 解析
 
 ---
 

@@ -2478,7 +2478,7 @@
         "scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph",
         "EntityManager 持有 SceneManager 指针，供 SceneNodeRef 解析"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase0-0.1"],
       "hold": null

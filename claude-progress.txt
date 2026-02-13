@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.4 Executor 库集成与引擎初始化
+状态：已完成
+- 实现：确认 executor 通过 find_package/add_subdirectory 集成、kale_executor 扩展为独立库；TaskGraph::submit 内部调用 Executor::submit 已存在；RenderEngine 初始化顺序 scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph、EntityManager 持有 SceneManager 指针已存在。新增 test_executor_engine_integration：useExecutor=true 时 GetScheduler/GetExecutor 非空、GetEntityManager()->GetSceneManager()==GetSceneManager()、TaskGraph 经 SubmitTaskGraph 执行、useExecutor=false 时 GetScheduler 为空且 EntityManager 仍持 SceneManager。
+- 验证：编译通过，ctest 84/84 通过。phase13-13.4 status=completed，hold=null。executor_layer_todolist 依赖与集成、引擎初始化顺序五项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.21 渲染管线层错误处理与生命周期
 状态：已完成
 - 实现：RenderGraph::GetCompiledTexture/GetCompiledBuffer 在未编译或句柄无效时返回空句柄（IsCompiled 与 compiledTextures_.size()==resources_.size() 校验，避免 Compile 失败后越界）；Compile 失败时 GetLastError 非空、资源分配失败时已分配资源循环 Destroy 已存在；ReleaseFrameResources 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()（链至 Material::ReleaseAllInstanceDescriptorSets）。新增 test_render_pipeline_error_lifecycle：Compile(nullptr) 返回 false 且 GetLastError 非空、两纹理第二份 CreateTexture 失败时第一份被 Destroy、未编译/无效 handle 时 GetCompiledTexture/GetCompiledBuffer 返回空、编译成功后有效句柄返回有效、ReleaseFrameResources 空 submittedDraws 不崩溃。
