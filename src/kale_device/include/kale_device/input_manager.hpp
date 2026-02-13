@@ -217,6 +217,10 @@ public:
     glm::vec2 GetMouseDelta() const;
     /// 鼠标：是否按下指定按钮
     bool IsMouseButtonPressed(MouseButton button) const;
+    /// 鼠标：本帧刚按下（上一帧未按）
+    bool IsMouseButtonJustPressed(MouseButton button) const;
+    /// 鼠标：本帧刚释放（上一帧按下）
+    bool IsMouseButtonJustReleased(MouseButton button) const;
     /// 鼠标：本帧滚轮增量（垂直：正为远离用户）
     float GetMouseWheelDelta() const;
 
@@ -245,9 +249,6 @@ public:
     void ClearCallbacks(InputEventType type);
     /// 移除所有类型的回调
     void ClearAllCallbacks();
-
-private:
-    bool IsMouseButtonJustPressed(MouseButton button) const;
 
 private:
     SDL_Window* window_ = nullptr;

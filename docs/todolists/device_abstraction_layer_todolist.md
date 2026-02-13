@@ -199,8 +199,8 @@
 
 ### 4.5 输入状态双缓冲
 
-- [ ] 维护当前帧与上一帧状态
-- [ ] 正确实现 `JustPressed` / `JustReleased` 判断
+- [x] 维护当前帧与上一帧状态
+- [x] 正确实现 `JustPressed` / `JustReleased` 判断
 
 ---
 

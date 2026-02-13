@@ -293,6 +293,15 @@ target_link_libraries(test_input_event_callback
 add_test(NAME test_input_event_callback COMMAND test_input_event_callback)
 set_tests_properties(test_input_event_callback PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_input_double_buffering test_input_double_buffering.cpp)
+target_link_libraries(test_input_double_buffering
+    PRIVATE
+        kale_engine
+        kale_device
+)
+add_test(NAME test_input_double_buffering COMMAND test_input_double_buffering)
+set_tests_properties(test_input_double_buffering PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_vulkan_multithread_command_pool test_vulkan_multithread_command_pool.cpp)
 target_link_libraries(test_vulkan_multithread_command_pool
     PRIVATE

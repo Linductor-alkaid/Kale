@@ -285,6 +285,11 @@ bool InputManager::IsMouseButtonJustPressed(MouseButton button) const {
     return (buttonCurrent_ & mask) != 0 && (buttonPrevious_ & mask) == 0;
 }
 
+bool InputManager::IsMouseButtonJustReleased(MouseButton button) const {
+    std::uint32_t mask = 1u << (static_cast<std::uint32_t>(button) - 1);
+    return (buttonCurrent_ & mask) == 0 && (buttonPrevious_ & mask) != 0;
+}
+
 void InputManager::AddActionBinding(const std::string& action, const InputBinding& binding) {
     actionBindings_[action].push_back(binding);
 }

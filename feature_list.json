@@ -2160,7 +2160,7 @@
         "维护当前帧与上一帧状态",
         "正确实现 JustPressed / JustReleased 判断"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase1-1.4"],
       "test_verification": "JustPressed/JustReleased 正确",

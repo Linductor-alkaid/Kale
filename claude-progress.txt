@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.5 输入状态双缓冲
+状态：已完成
+- 实现：InputManager 已维护 keyCurrent_/keyPrevious_、buttonCurrent_/buttonPrevious_ 双缓冲；Update() 开头将 current 复制到 previous 再轮询 SDL 并更新 current。键盘 IsKeyJustPressed/IsKeyJustReleased 已正确；鼠标补充公开 IsMouseButtonJustPressed 与新增 IsMouseButtonJustReleased（本帧刚释放）。
+- 验证：编译通过，ctest 50/50 通过（新增 test_input_double_buffering：键盘 A 键 Down→Update 后 JustPressed 为 true、再 Update 后 JustPressed 为 false、Up→Update 后 JustReleased 为 true、再 Update 后 JustReleased 为 false；鼠标左键同理）。
+- feature_list.json 中 phase11-11.5 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 4.5 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.4 工厂函数
 状态：已完成
 - 实现：CreateStaticMeshNode(Mesh* mesh, Material* material) 返回 unique_ptr<SceneNode>，节点通过 SetOwnedRenderable 持有 StaticMesh；CreateCameraNode() 返回 unique_ptr<CameraNode>。StaticMesh 增加 (Mesh* mesh, Material* material) 构造函数（直接指针模式）；SceneNode 增加 SetOwnedRenderable(std::unique_ptr<Renderable>) 与 ownedRenderable_。新增 scene_node_factories.hpp。
