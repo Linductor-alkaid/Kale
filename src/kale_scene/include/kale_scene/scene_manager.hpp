@@ -115,6 +115,22 @@ public:
     LODManager* GetLODManager() const { return lodManager_; }
 
     /**
+     * 遮挡剔除开关。CullScene 中视锥剔除后若启用则可选调用 OcclusionCull（依赖 Hi-Z 或软件近似）。
+     * @param enable true 表示启用遮挡剔除
+     */
+    void SetEnableOcclusionCulling(bool enable) { enableOcclusionCulling_ = enable; }
+    /** 是否启用遮挡剔除 */
+    bool IsOcclusionCullingEnabled() const { return enableOcclusionCulling_; }
+
+    /**
+     * 设置可选的 Hi-Z Buffer 供遮挡剔除使用。为 nullptr 时使用软件近似（视空间 AABB 深度）。
+     * @param buffer 由渲染管线提供的 Hi-Z 缓冲句柄或 nullptr
+     */
+    void SetOcclusionHiZBuffer(void* buffer) { occlusionHiZBuffer_ = buffer; }
+    /** 当前设置的 Hi-Z Buffer，未设置时返回 nullptr */
+    void* GetOcclusionHiZBuffer() const { return occlusionHiZBuffer_; }
+
+    /**
      * 判断 node 是否为 parent 自身或其子树中的节点（即从 node 沿父指针能到达 parent）。
      * @param parent 子树根节点
      * @param node 待判断节点
@@ -129,6 +145,12 @@ private:
     /** 递归将子树所有节点从注册表移除（先子后父） */
     void UnregisterSubtree(SceneNode* node);
 
+    /**
+     * 遮挡剔除：根据 Hi-Z 或相机做软件近似，从可见列表中移除被遮挡的节点。
+     * 当 occlusionHiZBuffer_ 非空时预留 Hi-Z 路径（当前为 no-op）；否则用相机做视空间 AABB 深度剔除。
+     */
+    void OcclusionCull(std::vector<SceneNode*>& inOutVisibleNodes, CameraNode* camera) const;
+
     /** handle -> node，用于 GetNode */
     std::unordered_map<SceneNodeHandle, SceneNode*> handleRegistry_;
     /** node -> handle，用于 GetHandle（节点创建时注册，销毁时移除） */
@@ -141,6 +163,10 @@ private:
     SceneNode* activeRoot_ = nullptr;
     /** 可选 LOD 管理器；CullScene 内对可见节点调用 SelectLOD */
     LODManager* lodManager_ = nullptr;
+    /** 是否在 CullScene 中视锥剔除后调用遮挡剔除 */
+    bool enableOcclusionCulling_ = false;
+    /** 可选的 Hi-Z Buffer；为 nullptr 时 OcclusionCull 使用软件近似（视空间 AABB 深度） */
+    void* occlusionHiZBuffer_ = nullptr;
 };
 
 }  // namespace kale::scene

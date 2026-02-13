@@ -193,9 +193,9 @@
 
 ### 5.2 遮挡剔除（可选，Phase 6）
 
-- [ ] 实现 `enableOcclusionCulling_` 开关
-- [ ] 实现 `OcclusionCull(visibleNodes, hiZBuffer_)` 依赖 Hi-Z Buffer
-- [ ] CullScene 中视锥剔除后可选调用遮挡剔除
+- [x] 实现 `enableOcclusionCulling_` 开关
+- [x] 实现 `OcclusionCull(visibleNodes, hiZBuffer_)` 依赖 Hi-Z Buffer
+- [x] CullScene 中视锥剔除后可选调用遮挡剔除
 
 ### 5.3 场景切换与悬空引用
 

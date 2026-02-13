@@ -2391,7 +2391,7 @@
         "实现 OcclusionCull(visibleNodes, hiZBuffer_) 依赖 Hi-Z Buffer",
         "CullScene 中视锥剔除后可选调用遮挡剔除"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase5-5.9"],
       "test_verification": "遮挡剔除正确识别被遮挡对象",

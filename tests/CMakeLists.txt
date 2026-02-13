@@ -208,6 +208,16 @@ if(TARGET executor::executor)
 endif()
 add_test(NAME test_lod_manager COMMAND test_lod_manager)
 
+add_executable(test_occlusion_culling test_occlusion_culling.cpp)
+target_link_libraries(test_occlusion_culling
+  PRIVATE
+    kale_scene
+    kale_resource
+    kale_device
+    glm::glm
+)
+add_test(NAME test_occlusion_culling COMMAND test_occlusion_culling)
+
 add_executable(test_scene_node_factories test_scene_node_factories.cpp)
 target_link_libraries(test_scene_node_factories
     PRIVATE

@@ -15,6 +15,7 @@
 
 #include <cassert>
 #include <functional>
+#include <algorithm>
 
 namespace kale::scene {
 
@@ -44,6 +45,10 @@ std::vector<SceneNode*> SceneManager::CullScene(CameraNode* camera) {
     };
 
     cullRecursive(activeRoot_);
+
+    if (enableOcclusionCulling_ && !visibleNodes.empty())
+        OcclusionCull(visibleNodes, camera);
+
     return visibleNodes;
 }
 
@@ -141,6 +146,65 @@ void SceneManager::UnregisterNode(SceneNode* node) {
     SceneNodeHandle h = it->second;
     nodeToHandle_.erase(it);
     handleRegistry_.erase(h);
+}
+
+namespace {
+
+/** 计算节点世界 AABB 在视空间中的深度范围 [minZ, maxZ]（用于遮挡剔除排序与比较） */
+void getViewDepthRange(SceneNode* node, const glm::mat4& viewMatrix, float& outMinZ, float& outMaxZ) {
+    kale::resource::BoundingBox worldBounds =
+        kale::resource::TransformBounds(node->GetRenderable()->GetBounds(), node->GetWorldMatrix());
+    const glm::vec3 corners[8] = {
+        { worldBounds.min.x, worldBounds.min.y, worldBounds.min.z },
+        { worldBounds.max.x, worldBounds.min.y, worldBounds.min.z },
+        { worldBounds.min.x, worldBounds.max.y, worldBounds.min.z },
+        { worldBounds.max.x, worldBounds.max.y, worldBounds.min.z },
+        { worldBounds.min.x, worldBounds.min.y, worldBounds.max.z },
+        { worldBounds.max.x, worldBounds.min.y, worldBounds.max.z },
+        { worldBounds.min.x, worldBounds.max.y, worldBounds.max.z },
+        { worldBounds.max.x, worldBounds.max.y, worldBounds.max.z },
+    };
+    outMinZ = outMaxZ = glm::vec3(viewMatrix * glm::vec4(corners[0], 1.f)).z;
+    for (int i = 1; i < 8; ++i) {
+        float z = glm::vec3(viewMatrix * glm::vec4(corners[i], 1.f)).z;
+        if (z < outMinZ) outMinZ = z;
+        if (z > outMaxZ) outMaxZ = z;
+    }
+}
+
+}  // namespace
+
+void SceneManager::OcclusionCull(std::vector<SceneNode*>& inOutVisibleNodes, CameraNode* camera) const {
+    if (inOutVisibleNodes.empty() || !camera) return;
+    if (occlusionHiZBuffer_ != nullptr) {
+        /* 预留 Hi-Z 路径：由渲染管线传入 Hi-Z Buffer 时在此做 GPU 遮挡查询；当前为 no-op */
+        return;
+    }
+    /* 软件近似：按视空间深度排序，用最前节点的背面对其后的节点做“完全在后”剔除 */
+    std::vector<std::pair<float, float>> depthRanges;
+    depthRanges.reserve(inOutVisibleNodes.size());
+    const glm::mat4 viewMatrix = camera->viewMatrix;
+    for (SceneNode* n : inOutVisibleNodes) {
+        float minZ, maxZ;
+        getViewDepthRange(n, viewMatrix, minZ, maxZ);
+        depthRanges.push_back({ minZ, maxZ });
+    }
+    /* 按视空间最近深度排序（前到后） */
+    std::vector<size_t> order(inOutVisibleNodes.size());
+    for (size_t i = 0; i < order.size(); ++i) order[i] = i;
+    std::sort(order.begin(), order.end(), [&depthRanges](size_t a, size_t b) {
+        return depthRanges[a].first < depthRanges[b].first;
+    });
+    const float occluderMaxZ = depthRanges[order[0]].second;
+    auto it = std::remove_if(order.begin() + 1, order.end(), [&depthRanges, occluderMaxZ](size_t i) {
+        return depthRanges[i].first >= occluderMaxZ;  /* 完全在 occluder 背后则剔除 */
+    });
+    order.erase(it, order.end());
+    std::vector<SceneNode*> kept;
+    kept.reserve(order.size());
+    for (size_t i : order)
+        kept.push_back(inOutVisibleNodes[i]);
+    inOutVisibleNodes = std::move(kept);
 }
 
 }  // namespace kale::scene

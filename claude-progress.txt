@@ -1,3 +1,9 @@
+=== 2026-02-13 (session) ===
+功能：phase12-12.8 遮挡剔除
+状态：已完成
+- 实现：SceneManager 增加 enableOcclusionCulling_、occlusionHiZBuffer_；SetEnableOcclusionCulling/IsOcclusionCullingEnabled、SetOcclusionHiZBuffer/GetOcclusionHiZBuffer；OcclusionCull(visibleNodes, camera)：Hi-Z 非空时预留 no-op，否则按视空间 AABB 深度排序，用最前节点背面做“完全在后”软件遮挡剔除；CullScene 视锥+LOD 后若启用则调用 OcclusionCull。
+- 验证：编译通过，ctest 73/73 通过（新增 test_occlusion_culling：开关与 Hi-Z 接口、禁用时两节点均可见、启用无 Hi-Z 时后方节点被剔除、设置 Hi-Z 时列表不变、单节点不崩溃）。phase12-12.8 status=completed，hold=null。scene_management_layer_todolist 5.2 三项已勾选。
+
 === 2026-02-13 19:18:06 ===
 功能：phase12-12.7 多光源 Shadow Pass
 状态：已完成
