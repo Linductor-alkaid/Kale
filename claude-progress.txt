@@ -1,3 +1,9 @@
+=== 2026-02-13 10:47:30 ===
+功能：phase1-1.7 ExecutorPromise/ExecutorFuture（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过（test_executor_future 覆盖 Promise/Future、then、async_load）
+- feature_list.json 中 phase1-1.7 的 status 更新为 completed，hold=null
+
 === 2026-02-13 10:45:29 ===
 功能：phase1-1.6 TaskChannel 扩展与测试（验证）
 状态：已完成
