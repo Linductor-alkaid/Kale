@@ -1814,7 +1814,7 @@
         "构造函数 RenderGraph(RenderTaskScheduler* scheduler) 或 SetScheduler(scheduler)",
         "scheduler 为 nullptr 时退化为单线程录制"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase9-9.1", "phase9-9.4"],
       "test_verification": "多线程录制正确执行",

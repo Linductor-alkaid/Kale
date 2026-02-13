@@ -209,13 +209,13 @@
 
 ### 4.2 多线程命令录制
 
-- [ ] 实现 `RenderGraph::RecordPasses` 中调用 `scheduler_->Submit` 并行录制
-- [ ] 每线程独立 CommandList：`device->BeginCommandList(threadIndex)`
-- [ ] 无依赖 Pass 同组内并行：`futures.push_back(scheduler_->Submit([&, i](){ ... }))`
-- [ ] 收集所有 CommandList 后统一 Submit
-- [ ] 集成 RenderTaskScheduler（executor 层）
-- [ ] 构造函数 `RenderGraph(RenderTaskScheduler* scheduler)` 或 `SetScheduler(scheduler)`
-- [ ] scheduler 为 nullptr 时退化为单线程录制
+- [x] 实现 `RenderGraph::RecordPasses` 中调用 `scheduler_->Submit` 并行录制
+- [x] 每线程独立 CommandList：`device->BeginCommandList(threadIndex)`
+- [x] 无依赖 Pass 同组内并行：`futures.push_back(scheduler_->Submit([&, i](){ ... }))`
+- [x] 收集所有 CommandList 后统一 Submit
+- [x] 集成 RenderTaskScheduler（executor 层）
+- [x] 构造函数 `RenderGraph(RenderTaskScheduler* scheduler)` 或 `SetScheduler(scheduler)`
+- [x] scheduler 为 nullptr 时退化为单线程录制
 
 ### 4.3 Vulkan 多线程录制约束
 

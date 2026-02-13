@@ -42,6 +42,8 @@ struct DeviceCapabilities {
     bool supportsTessellation = false;
     bool supportsComputeShader = false;
     bool supportsRayTracing = false;
+    /** 多线程命令录制时可用 CommandPool 数量（BeginCommandList(threadIndex) 的 threadIndex 应 < 此值） */
+    std::uint32_t maxRecordingThreads = 1;
 };
 
 /** 渲染后端枚举 */

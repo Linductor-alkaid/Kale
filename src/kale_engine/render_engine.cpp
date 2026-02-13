@@ -112,8 +112,9 @@ bool RenderEngine::Initialize(const Config& config) {
     impl.resourceManager = std::make_unique<kale::resource::ResourceManager>(
         impl.scheduler.get(), impl.renderDevice.get(), nullptr);
 
-    // 8. renderGraph
+    // 8. renderGraph（注入 scheduler 以支持多线程 RecordPasses）
     impl.renderGraph = std::make_unique<kale::pipeline::RenderGraph>();
+    impl.renderGraph->SetScheduler(impl.scheduler.get());
 
     return true;
 }

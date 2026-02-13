@@ -20,6 +20,7 @@
 #include <kale_device/command_list.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_scene/scene_types.hpp>
+#include <kale_executor/render_task_scheduler.hpp>
 
 #include <glm/glm.hpp>
 #include <functional>
@@ -49,6 +50,10 @@ using RenderPassExecute = std::function<void(const RenderPassContext&, kale_devi
 class RenderGraph {
 public:
     RenderGraph() = default;
+
+    /** 设置调度器；非空时 RecordPasses 按 GetTopologicalGroups 并行录制，nullptr 时退化为单线程。 */
+    void SetScheduler(kale::executor::RenderTaskScheduler* scheduler) { scheduler_ = scheduler; }
+    kale::executor::RenderTaskScheduler* GetScheduler() const { return scheduler_; }
 
     /**
      * 设置分辨率；DeclareTexture 时若 desc 的 width/height 为 0，将使用此处设置的宽高。
@@ -216,6 +221,9 @@ public:
 
     const std::vector<PassEntry>& GetPasses() const { return passes_; }
 
+    /** 按拓扑序录制所有 Pass（有 scheduler 时同组内并行），返回本帧的 CommandList 列表。供 Execute 与测试使用。 */
+    std::vector<kale_device::CommandList*> RecordPasses(kale_device::IRenderDevice* device);
+
 private:
     /** Pass 依赖分析：根据 compiledPassInfo_ 的读写构建有向边，返回拓扑序；若存在环则返回空。 */
     std::vector<RenderPassHandle> BuildTopologicalOrder() const;
@@ -223,8 +231,11 @@ private:
     std::vector<std::vector<RenderPassHandle>> BuildTopologicalGroups() const;
     /** 整理本帧绘制列表（当前为 submittedDraws_ 的引用，预留排序等扩展）。 */
     void BuildFrameDrawList();
-    /** 按拓扑序单线程录制所有 Pass，返回本帧的 CommandList 列表。 */
-    std::vector<kale_device::CommandList*> RecordPasses(kale_device::IRenderDevice* device);
+    /** 录制单个 Pass，返回 CommandList*（由调用方 EndCommandList 后填入列表或 result）。 */
+    kale_device::CommandList* RecordOnePass(kale_device::IRenderDevice* device,
+                                           RenderPassHandle passIdx,
+                                           std::uint32_t threadIndex,
+                                           RenderPassContext& ctx);
 
     std::uint32_t resolutionWidth_ = 0;
     std::uint32_t resolutionHeight_ = 0;
@@ -246,6 +257,8 @@ private:
     static constexpr std::uint32_t kMaxFramesInFlight = 3;
     std::vector<kale_device::FenceHandle> frameFences_;
     std::uint32_t currentFrameIndex_ = 0;
+
+    kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
 };
 
 // -----------------------------------------------------------------------------
@@ -501,55 +514,106 @@ inline void RenderGraph::ReleaseFrameResources() {
     }
 }
 
+inline kale_device::CommandList* RenderGraph::RecordOnePass(kale_device::IRenderDevice* device,
+                                                            RenderPassHandle passIdx,
+                                                            std::uint32_t threadIndex,
+                                                            RenderPassContext& ctx) {
+    if (passIdx >= passes_.size()) return nullptr;
+    const auto& pass = passes_[passIdx];
+    const auto& info = compiledPassInfo_[passIdx];
+
+    kale_device::CommandList* cmd = device->BeginCommandList(threadIndex);
+    if (!cmd) return nullptr;
+
+    if (info.executeWithoutRenderPass) {
+        if (pass.execute) pass.execute(ctx, *cmd);
+        device->EndCommandList(cmd);
+        return cmd;
+    }
+
+    std::vector<kale_device::TextureHandle> colorAttachments;
+    kale_device::TextureHandle depthAttachment;
+    if (info.writesSwapchain) {
+        colorAttachments.push_back(device->GetBackBuffer());
+    } else {
+        for (const auto& p : info.colorOutputs) {
+            auto th = GetCompiledTexture(p.second);
+            if (th.IsValid()) colorAttachments.push_back(th);
+        }
+        if (info.depthOutput != kInvalidRGResourceHandle)
+            depthAttachment = GetCompiledTexture(info.depthOutput);
+    }
+
+    const bool hasRenderTarget = !colorAttachments.empty() || depthAttachment.IsValid();
+    if (hasRenderTarget) {
+        cmd->BeginRenderPass(colorAttachments, depthAttachment);
+        if (pass.execute) pass.execute(ctx, *cmd);
+        cmd->EndRenderPass();
+    } else if (pass.execute) {
+        pass.execute(ctx, *cmd);
+    }
+
+    device->EndCommandList(cmd);
+    return cmd;
+}
+
 inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_device::IRenderDevice* device) {
     std::vector<kale_device::CommandList*> cmdLists;
     if (!device || topologicalOrder_.empty()) return cmdLists;
 
     RenderPassContext ctx(&submittedDraws_, device, this);
 
-    for (RenderPassHandle passIdx : topologicalOrder_) {
-        if (passIdx >= passes_.size()) continue;
-        const auto& pass = passes_[passIdx];
-        const auto& info = compiledPassInfo_[passIdx];
-
-        kale_device::CommandList* cmd = device->BeginCommandList(0);
-        if (!cmd) continue;
-
-        if (info.executeWithoutRenderPass) {
-            if (pass.execute) pass.execute(ctx, *cmd);
-            device->EndCommandList(cmd);
-            cmdLists.push_back(cmd);
-            continue;
+    if (!scheduler_) {
+        for (RenderPassHandle passIdx : topologicalOrder_) {
+            kale_device::CommandList* cmd = RecordOnePass(device, passIdx, 0, ctx);
+            if (cmd) cmdLists.push_back(cmd);
         }
-
-        // 解析 color attachments：WriteSwapchain 则用 back buffer，否则用 GetCompiledTexture
-        std::vector<kale_device::TextureHandle> colorAttachments;
-        kale_device::TextureHandle depthAttachment;
-        if (info.writesSwapchain) {
-            colorAttachments.push_back(device->GetBackBuffer());
-        } else {
-            for (const auto& p : info.colorOutputs) {
-                auto th = GetCompiledTexture(p.second);
-                if (th.IsValid()) colorAttachments.push_back(th);
-            }
-            if (info.depthOutput != kInvalidRGResourceHandle) {
-                depthAttachment = GetCompiledTexture(info.depthOutput);
-            }
-        }
-
-        const bool hasRenderTarget = !colorAttachments.empty() || depthAttachment.IsValid();
-        if (hasRenderTarget) {
-            cmd->BeginRenderPass(colorAttachments, depthAttachment);
-            if (pass.execute) pass.execute(ctx, *cmd);
-            cmd->EndRenderPass();
-        } else if (pass.execute) {
-            pass.execute(ctx, *cmd);
-        }
-
-        device->EndCommandList(cmd);
-        cmdLists.push_back(cmd);
+        return cmdLists;
     }
 
+    std::vector<std::vector<RenderPassHandle>> groups = GetTopologicalGroups();
+    if (groups.empty()) {
+        for (RenderPassHandle passIdx : topologicalOrder_) {
+            kale_device::CommandList* cmd = RecordOnePass(device, passIdx, 0, ctx);
+            if (cmd) cmdLists.push_back(cmd);
+        }
+        return cmdLists;
+    }
+
+    std::unordered_map<RenderPassHandle, size_t> passToTopoIndex;
+    for (size_t i = 0; i < topologicalOrder_.size(); ++i)
+        passToTopoIndex[topologicalOrder_[i]] = i;
+
+    std::vector<kale_device::CommandList*> result(topologicalOrder_.size(), nullptr);
+    const std::uint32_t maxRec = std::max(1u, device->GetCapabilities().maxRecordingThreads);
+    std::vector<std::shared_future<void>> prevLevelFutures;
+
+    for (const auto& group : groups) {
+        std::vector<std::shared_future<void>> groupFutures;
+        for (size_t chunkStart = 0; chunkStart < group.size(); chunkStart += maxRec) {
+            const size_t chunkEnd = std::min(chunkStart + static_cast<size_t>(maxRec), group.size());
+            std::vector<std::shared_future<void>> chunkFutures;
+            for (size_t i = chunkStart; i < chunkEnd; ++i) {
+                const RenderPassHandle passIdx = group[i];
+                const size_t topoPos = passToTopoIndex.at(passIdx);
+                const std::uint32_t threadIndex = static_cast<std::uint32_t>(i - chunkStart);
+                chunkFutures.push_back(scheduler_->SubmitRenderTask(
+                    [this, device, passIdx, topoPos, threadIndex, &result]() {
+                        RenderPassContext taskCtx(&submittedDraws_, device, this);
+                        kale_device::CommandList* cmd = RecordOnePass(device, passIdx, threadIndex, taskCtx);
+                        if (cmd) result[topoPos] = cmd;
+                    },
+                    prevLevelFutures));
+            }
+            for (auto& f : chunkFutures)
+                if (f.valid()) f.wait();
+            for (auto& f : chunkFutures) groupFutures.push_back(std::move(f));
+        }
+        prevLevelFutures = std::move(groupFutures);
+    }
+
+    for (kale_device::CommandList* cmd : result)
+        if (cmd) cmdLists.push_back(cmd);
     return cmdLists;
 }
 

@@ -57,6 +57,7 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
     capabilities_.supportsTessellation = true;
     capabilities_.supportsComputeShader = true;
     capabilities_.supportsRayTracing = false;
+    capabilities_.maxRecordingThreads = maxRecordingThreads_;
 
     return true;
 }

@@ -318,6 +318,15 @@ target_link_libraries(test_frame_pipeline
 )
 add_test(NAME test_frame_pipeline COMMAND test_frame_pipeline)
 
+add_executable(test_multithread_record_passes test_multithread_record_passes.cpp)
+target_link_libraries(test_multithread_record_passes
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_executor
+)
+add_test(NAME test_multithread_record_passes COMMAND test_multithread_record_passes)
+
 add_executable(test_full_model_loader test_full_model_loader.cpp)
 target_link_libraries(test_full_model_loader
     PRIVATE

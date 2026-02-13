@@ -1,3 +1,10 @@
+=== 2026-02-13 (session) ===
+功能：phase9-9.5 多线程命令录制
+状态：已完成
+- 实现：RenderGraph 增加 SetScheduler/GetScheduler(scheduler)；RecordPasses 当 scheduler 非空时按 GetTopologicalGroups 分组，同组内按 chunk(maxRecordingThreads) 并行 SubmitRenderTask 录制，每任务 device->BeginCommandList(threadIndex)、RecordOnePass、写入 result[topoPos]；组间按 prevLevelFutures 依赖串行；DeviceCapabilities 增加 maxRecordingThreads，Vulkan 在 Initialize 中填充；RenderEngine 初始化时 renderGraph->SetScheduler(scheduler.get())；scheduler 为 nullptr 时退化为单线程录制。RecordOnePass 抽取单 Pass 录制逻辑；RecordPasses 改为 public 供测试使用。
+- 验证：编译通过，ctest 41/41 通过（新增 test_multithread_record_passes：无 scheduler 单线程录制 cmd 数量=Pass 数、SetScheduler 后多线程录制 cmd 数量一致、Execute 多帧无死锁、SetScheduler(nullptr) 退化为单线程）。
+- feature_list.json 中 phase9-9.5 的 status 更新为 completed，hold=null。rendering_pipeline_layer_todolist 4.2 已勾选。
+
 === 2026-02-13 14:29:03 ===
 功能：phase9-9.3 帧流水线完善
 状态：已完成
