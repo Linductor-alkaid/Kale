@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase5-5.10 Renderable 抽象（验证）
+状态：已完成
+- 验证：编译通过，ctest 54/54 通过；Renderable 基类（GetBounds、GetMesh/GetMaterial 默认 nullptr、Draw、bounds_、ReleaseFrameResources）已由前期实现（renderable.hpp），本会话新增 test_renderable（GetBounds 返回 bounds_、GetMesh/GetMaterial 为 nullptr、Draw/ReleaseFrameResources 调用不崩溃）覆盖 phase5-5.10。phase5-5.10 的 status 从 verifying 更新为 completed，hold=null。scene_management_layer_todolist 2.4 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase5-5.9 CullScene 单相机（验证）
 状态：已完成
 - 验证：编译通过，ctest 53/53 通过；SceneManager::CullScene(CameraNode*) 已由前期实现（scene_manager.cpp），本会话新增 test_cull_scene_single_camera（null 相机返回空、无活动场景返回空、无 Renderable 节点不加入列表、视锥内节点可见、视锥外节点剔除、层级递归仅带 Renderable 的节点入列表）覆盖 phase5-5.9。phase5-5.9 的 status 从 verifying 更新为 completed，hold=null。scene_management_layer_todolist 2.3 已为已勾选状态。

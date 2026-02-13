@@ -81,6 +81,16 @@ target_link_libraries(test_frustum
 )
 add_test(NAME test_frustum COMMAND test_frustum)
 
+add_executable(test_renderable test_renderable.cpp)
+target_link_libraries(test_renderable
+    PRIVATE
+        kale_scene
+        kale_resource
+        kale_device
+        glm::glm
+)
+add_test(NAME test_renderable COMMAND test_renderable)
+
 add_executable(test_load_async test_load_async.cpp)
 target_link_libraries(test_load_async
     PRIVATE

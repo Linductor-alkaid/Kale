@@ -795,7 +795,7 @@
         "实现 Draw(CommandList& cmd, const glm::mat4& worldTransform) 虚函数",
         "定义 bounds 成员供 CullScene 使用"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase3-3.6",
