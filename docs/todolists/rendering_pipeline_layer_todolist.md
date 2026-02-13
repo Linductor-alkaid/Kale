@@ -51,9 +51,9 @@
 
 ### 1.5 应用层显式提交
 
-- [ ] 实现 `SubmitRenderable(Renderable* renderable, const glm::mat4& worldTransform, PassFlags passFlags = PassFlags::All)`
-- [ ] 实现 `ClearSubmitted()` 清空本帧提交
-- [ ] 实现 `submittedDraws_` 成员存储每帧提交的绘制项
+- [x] 实现 `SubmitRenderable(Renderable* renderable, const glm::mat4& worldTransform, PassFlags passFlags = PassFlags::All)`
+- [x] 实现 `ClearSubmitted()` 清空本帧提交
+- [x] 实现 `submittedDraws_` 成员存储每帧提交的绘制项
 
 ### 1.6 Compile 流程
 

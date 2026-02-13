@@ -876,7 +876,7 @@
         "实现 ClearSubmitted() 清空本帧提交",
         "实现 submittedDraws_ 成员存储每帧提交的绘制项"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.9"],
       "test_verification": "绘制提交和清空正常工作"

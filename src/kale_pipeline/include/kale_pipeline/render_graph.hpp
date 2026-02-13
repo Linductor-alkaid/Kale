@@ -18,7 +18,9 @@
 #include <kale_pipeline/render_pass_context.hpp>
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/command_list.hpp>
+#include <kale_scene/scene_types.hpp>
 
+#include <glm/glm.hpp>
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -105,6 +107,25 @@ public:
         return static_cast<RenderPassHandle>(passes_.size() - 1);
     }
 
+    /**
+     * 应用层显式提交一条绘制项（由 CullScene 后遍历可见节点调用）。
+     * @param renderable 可绘制对象（非占有）
+     * @param worldTransform 世界变换矩阵
+     * @param passFlags 参与哪些 Pass（默认 All）
+     */
+    void SubmitRenderable(kale::scene::Renderable* renderable,
+                         const glm::mat4& worldTransform,
+                         kale::scene::PassFlags passFlags = kale::scene::PassFlags::All) {
+        if (!renderable) return;
+        submittedDraws_.push_back(SubmittedDraw{renderable, worldTransform, passFlags});
+    }
+
+    /** 清空本帧已提交的绘制项，每帧开始时由应用层在 SubmitRenderable 前调用。 */
+    void ClearSubmitted() { submittedDraws_.clear(); }
+
+    /** 只读访问本帧已提交的绘制列表（供 Execute 中 BuildFrameDrawList / RenderPassContext 使用）。 */
+    const std::vector<SubmittedDraw>& GetSubmittedDraws() const { return submittedDraws_; }
+
     // --- 供 Compile/Execute 等后续 phase 使用的访问接口 ---
 
     struct DeclaredResource {
@@ -138,6 +159,8 @@ private:
     std::vector<DeclaredResource> resources_;
     std::unordered_map<std::string, RGResourceHandle> nameToHandle_;
     std::vector<PassEntry> passes_;
+    /** 每帧由应用层 SubmitRenderable 填入，ClearSubmitted 清空；Execute 时供 RenderPassContext 使用。 */
+    std::vector<SubmittedDraw> submittedDraws_;
 };
 
 }  // namespace kale::pipeline

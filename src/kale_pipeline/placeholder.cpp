@@ -4,6 +4,8 @@
 #include <kale_pipeline/render_pass_context.hpp>
 #include <kale_pipeline/render_graph.hpp>
 #include <kale_pipeline/rg_types.hpp>
+#include <kale_scene/renderable.hpp>
+#include <glm/glm.hpp>
 
 namespace kale::pipeline {
 
@@ -44,6 +46,12 @@ void placeholder() {
     (void)rg.GetPasses();
     (void)rg.GetResolutionWidth();
     (void)rg.GetResolutionHeight();
+
+    // phase6-6.10: 应用层显式提交占位引用
+    rg.ClearSubmitted();
+    rg.SubmitRenderable(nullptr, glm::mat4(1.0f), kale::scene::PassFlags::All);
+    rg.SubmitRenderable(static_cast<kale::scene::Renderable*>(nullptr), glm::mat4(1.0f));
+    (void)rg.GetSubmittedDraws();
 }
 
 }  // namespace kale::pipeline
