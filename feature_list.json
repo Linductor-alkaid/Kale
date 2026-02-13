@@ -627,7 +627,7 @@
         "实现 GetHandle() 返回 SceneNodeHandle",
         "实现 handle_ 成员，由 SceneManager 在 CreateScene/AddChild 时设置"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase5-5.1"
