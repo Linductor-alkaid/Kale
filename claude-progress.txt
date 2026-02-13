@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.7 简单 TextureLoader（验证）
+状态：已完成
+- 验证：编译通过，ctest 50/50 通过；TextureLoader（IResourceLoader、.png/.jpg、LoadSTB、RDI CreateTexture）已由前期实现，本会话将 phase3-3.7 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.6 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.6 Mesh / Texture 数据结构（验证）
 状态：已完成
 - 验证：编译通过，ctest 50/50 通过；Mesh/SubMesh/Texture/BoundingBox 数据结构已由前期实现（resource_types.hpp），本会话将 phase3-3.6 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.8 已为已勾选状态。
