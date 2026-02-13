@@ -1,3 +1,10 @@
+=== 2026-02-13 (session) ===
+功能：phase2-2.8 TaskGraph
+状态：已完成
+- 实现：TaskGraph 类（add_task/add_task_with_data、submit、wait、clear）、TaskContext（task_handle、get_input/get_output）、Kahn 拓扑序、按序提交 executor 并依赖 shared_future 等待
+- 验证：编译通过，ctest 通过（新增 test_task_graph 覆盖单任务、顺序依赖、DAG 三节点、TaskContext 句柄、add_task_with_data、clear、五节点链）
+- feature_list.json 中 phase2-2.8 的 status 更新为 completed，hold=null；executor_layer_todolist 3.2 已勾选
+
 === 2026-02-13 10:53:19 ===
 功能：phase2-2.7 DataSlot 与 TaskDataManager
 状态：已完成

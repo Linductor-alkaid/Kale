@@ -79,13 +79,13 @@
 
 ### 3.2 TaskGraph
 
-- [ ] 实现 `TaskGraph` 类
-- [ ] 定义 `TaskFunc = std::function<void(const TaskContext&)>`
-- [ ] 实现 `add_task(TaskFunc func, dependencies)` 添加任务节点
-- [ ] 实现 `add_task_with_data(TaskFunc func, deps, dependents)` 带数据依赖
-- [ ] 实现 `submit(Executor& ex)` 提交到 executor 执行
-- [ ] 实现 `wait()` 等待所有任务完成
-- [ ] 按拓扑序调度，DAG 结构保证无循环依赖
+- [x] 实现 `TaskGraph` 类
+- [x] 定义 `TaskFunc = std::function<void(const TaskContext&)>`
+- [x] 实现 `add_task(TaskFunc func, dependencies)` 添加任务节点
+- [x] 实现 `add_task_with_data(TaskFunc func, deps, dependents)` 带数据依赖
+- [x] 实现 `submit(Executor& ex)` 提交到 executor 执行
+- [x] 实现 `wait()` 等待所有任务完成
+- [x] 按拓扑序调度，DAG 结构保证无循环依赖
 
 ### 3.3 submit_task_graph
 

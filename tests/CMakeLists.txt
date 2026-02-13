@@ -25,6 +25,13 @@ target_link_libraries(test_task_data_manager
 )
 add_test(NAME test_task_data_manager COMMAND test_task_data_manager)
 
+add_executable(test_task_graph test_task_graph.cpp)
+target_link_libraries(test_task_graph
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_task_graph COMMAND test_task_graph)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE

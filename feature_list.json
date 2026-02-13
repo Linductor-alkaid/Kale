@@ -1135,7 +1135,7 @@
         "实现 wait() 等待所有任务完成",
         "按拓扑序调度，DAG 结构保证无循环依赖"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.7"],
       "test_verification": "TaskGraph 正确提交和调度任务",
