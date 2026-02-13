@@ -578,7 +578,7 @@
         "生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）",
         "可选：支持 .obj（使用 assimp 或简易解析）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase3-3.3",

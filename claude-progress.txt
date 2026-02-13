@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.8 简单 ModelLoader（验证）
+状态：已完成
+- 验证：编译通过，ctest 50/50 通过；ModelLoader（IResourceLoader、.gltf/.glb、LoadGLTF、RDI CreateBuffer、Mesh 结构）已由前期实现，test_full_model_loader 覆盖完整 ModelLoader（含材质路径）。本会话将 phase3-3.8 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.7 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.7 简单 TextureLoader（验证）
 状态：已完成
 - 验证：编译通过，ctest 50/50 通过；TextureLoader（IResourceLoader、.png/.jpg、LoadSTB、RDI CreateTexture）已由前期实现，本会话将 phase3-3.7 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.6 已为已勾选状态。
