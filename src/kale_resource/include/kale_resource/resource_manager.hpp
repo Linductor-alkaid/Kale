@@ -23,6 +23,7 @@
 #include <kale_resource/resource_cache.hpp>
 #include <kale_resource/resource_handle.hpp>
 #include <kale_resource/resource_loader.hpp>
+#include <kale_resource/resource_types.hpp>
 
 namespace kale::resource {
 
@@ -122,6 +123,24 @@ public:
     void ProcessLoadedCallbacks();
 
     /**
+     * @brief 创建占位符资源（简单几何体、1x1 默认纹理、默认材质）；需在 SetAssetPath 后、使用 GetPlaceholder* 前调用；无 device 时跳过
+     */
+    void CreatePlaceholders();
+
+    /**
+     * @brief 获取占位符 Mesh（未就绪时 Draw 使用）；CreatePlaceholders 未调用或失败时返回 nullptr
+     */
+    Mesh* GetPlaceholderMesh();
+    /**
+     * @brief 获取占位符 Texture；CreatePlaceholders 未调用或失败时返回 nullptr
+     */
+    Texture* GetPlaceholderTexture();
+    /**
+     * @brief 获取占位符 Material；CreatePlaceholders 未调用或失败时返回 nullptr
+     */
+    Material* GetPlaceholderMaterial();
+
+    /**
      * @brief 访问内部缓存（供 Load/LoadAsync/Get 等使用）
      */
     ResourceCache& GetCache() { return cache_; }
@@ -147,6 +166,10 @@ private:
     std::mutex loadedMutex_;
     std::vector<std::pair<ResourceHandleAny, std::string>> pendingLoaded_;
     std::vector<LoadedCallback> loadedCallbacks_;
+
+    std::unique_ptr<Mesh> placeholderMesh_;
+    std::unique_ptr<Texture> placeholderTexture_;
+    std::unique_ptr<Material> placeholderMaterial_;
 };
 
 // -----------------------------------------------------------------------------

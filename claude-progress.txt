@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase4-4.5 占位符系统
+状态：已完成
+- 实现：ResourceManager::CreatePlaceholders() 创建占位符资源（无 device 时跳过）；GetPlaceholderMesh()/GetPlaceholderTexture()/GetPlaceholderMaterial() 返回占位符指针。占位符 Mesh：单三角形（VertexPNT 格式）、RDI CreateBuffer 顶点/索引；占位符 Texture：1x1 灰色 RGBA8；占位符 Material：默认空材质。
+- 验证：编译通过，ctest 通过（新增 test_placeholders：无 device 时 GetPlaceholder* 返回 nullptr、mock device 时 CreatePlaceholders 创建三者且 GetPlaceholder* 非空）；hello_kale 可启动。
+- feature_list.json 中 phase4-4.5 的 status 更新为 completed，hold=null；resource_management_layer_todolist 2.3 已勾选
+
+=== 2026-02-13 (session) ===
 功能：phase4-4.4 Future 返回与回调
 状态：已完成
 - 实现：确保 LoadAsync 返回的 ExecutorFuture 与 executor 兼容（已有）；实现 RegisterLoadedCallback(LoadedCallback)、ProcessLoadedCallbacks()（主循环每帧调用派发已完成加载）；加载失败时 load_task 内 throw std::runtime_error(err)，无 scheduler 时 catch 后 p.set_exception(std::current_exception())，保证 get() 统一传播异常；成功路径 EnqueueLoaded(ToAny(handle), path) 供 ProcessLoadedCallbacks 派发

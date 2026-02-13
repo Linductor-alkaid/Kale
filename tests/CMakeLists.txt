@@ -67,3 +67,11 @@ target_link_libraries(test_load_async
         kale_executor
 )
 add_test(NAME test_load_async COMMAND test_load_async)
+
+add_executable(test_placeholders test_placeholders.cpp)
+target_link_libraries(test_placeholders
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_placeholders COMMAND test_placeholders)

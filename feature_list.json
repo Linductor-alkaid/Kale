@@ -1273,7 +1273,7 @@
         "实现 GetPlaceholderMaterial() 返回占位符 Material",
         "占位符：简单几何体（如三角形/立方体）、默认纹理（1x1 纯色）、默认材质"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.2"],
       "test_verification": "占位符正确显示",

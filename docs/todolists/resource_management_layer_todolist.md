@@ -104,11 +104,11 @@
 
 ### 2.3 占位符系统
 
-- [ ] 实现 `CreatePlaceholders()` 创建占位符资源
-- [ ] 实现 `GetPlaceholderMesh()` 返回占位符 Mesh
-- [ ] 实现 `GetPlaceholderTexture()` 返回占位符 Texture
-- [ ] 实现 `GetPlaceholderMaterial()` 返回占位符 Material
-- [ ] 占位符：简单几何体（如三角形/立方体）、默认纹理（1x1 纯色）、默认材质
+- [x] 实现 `CreatePlaceholders()` 创建占位符资源
+- [x] 实现 `GetPlaceholderMesh()` 返回占位符 Mesh
+- [x] 实现 `GetPlaceholderTexture()` 返回占位符 Texture
+- [x] 实现 `GetPlaceholderMaterial()` 返回占位符 Material
+- [x] 占位符：简单几何体（如三角形/立方体）、默认纹理（1x1 纯色）、默认材质
 
 ### 2.4 Draw 时资源检查与触发加载
 

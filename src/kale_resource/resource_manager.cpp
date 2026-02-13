@@ -1,12 +1,17 @@
 /**
  * @file resource_manager.cpp
- * @brief ResourceManager 实现：构造、Loader 注册、路径解析
+ * @brief ResourceManager 实现：构造、Loader 注册、路径解析、占位符
  */
 
 #include <kale_resource/resource_manager.hpp>
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
+#include <cstring>
+#include <memory>
+
+#include <kale_device/rdi_types.hpp>
 
 namespace kale::resource {
 
@@ -27,6 +32,13 @@ std::string ensureTrailingSlash(const std::string& path) {
     if (path.empty()) return "";
     return path.back() == '/' ? path : path + "/";
 }
+
+// 占位符 Mesh 顶点格式：与 ModelLoader 一致（位置 3 + 法线 3 + UV 2）
+struct PlaceholderVertex {
+    float px, py, pz;
+    float nx, ny, nz;
+    float u, v;
+};
 
 }  // namespace
 
@@ -121,6 +133,95 @@ void ResourceManager::ProcessLoadedCallbacks() {
 void ResourceManager::EnqueueLoaded(ResourceHandleAny handle, const std::string& path) {
     std::lock_guard<std::mutex> lock(loadedMutex_);
     pendingLoaded_.emplace_back(handle, path);
+}
+
+void ResourceManager::CreatePlaceholders() {
+    if (!device_) return;
+
+    using kale_device::BufferDesc;
+    using kale_device::BufferHandle;
+    using kale_device::BufferUsage;
+    using kale_device::Format;
+    using kale_device::PrimitiveTopology;
+    using kale_device::TextureDesc;
+    using kale_device::TextureUsage;
+
+    // 占位符 Mesh：单三角形（与 ModelLoader 顶点格式一致）
+    {
+        PlaceholderVertex vertices[3] = {
+            { 0.f,  1.f, 0.f,  0.f, 0.f, 1.f,  0.5f, 0.f },
+            { -1.f, -1.f, 0.f,  0.f, 0.f, 1.f,  0.f,  1.f },
+            { 1.f, -1.f, 0.f,  0.f, 0.f, 1.f,  1.f,  1.f },
+        };
+        std::uint32_t indices[3] = {0, 1, 2};
+
+        BufferDesc vbDesc;
+        vbDesc.size = sizeof(vertices);
+        vbDesc.usage = BufferUsage::Vertex;
+        vbDesc.cpuVisible = false;
+        BufferHandle vb = device_->CreateBuffer(vbDesc, vertices);
+        if (!vb.IsValid()) return;
+
+        BufferDesc ibDesc;
+        ibDesc.size = sizeof(indices);
+        ibDesc.usage = BufferUsage::Index;
+        ibDesc.cpuVisible = false;
+        BufferHandle ib = device_->CreateBuffer(ibDesc, indices);
+        if (!ib.IsValid()) {
+            device_->DestroyBuffer(vb);
+            return;
+        }
+
+        auto mesh = std::make_unique<Mesh>();
+        mesh->vertexBuffer = vb;
+        mesh->indexBuffer = ib;
+        mesh->indexCount = 3;
+        mesh->vertexCount = 3;
+        mesh->topology = PrimitiveTopology::TriangleList;
+        mesh->bounds.min = glm::vec3(-1.f, -1.f, 0.f);
+        mesh->bounds.max = glm::vec3(1.f, 1.f, 0.f);
+        mesh->subMeshes.push_back(SubMesh{0, 3, 0});
+        placeholderMesh_ = std::move(mesh);
+    }
+
+    // 占位符 Texture：1x1 灰色 (RGBA8)
+    {
+        std::uint8_t pixel[4] = {128, 128, 128, 255};
+        TextureDesc texDesc;
+        texDesc.width = 1;
+        texDesc.height = 1;
+        texDesc.depth = 1;
+        texDesc.mipLevels = 1;
+        texDesc.arrayLayers = 1;
+        texDesc.format = Format::RGBA8_UNORM;
+        texDesc.usage = TextureUsage::Sampled;
+        texDesc.isCube = false;
+        kale_device::TextureHandle rdiTex = device_->CreateTexture(texDesc, pixel);
+        if (!rdiTex.IsValid()) return;
+
+        auto tex = std::make_unique<Texture>();
+        tex->handle = rdiTex;
+        tex->width = 1;
+        tex->height = 1;
+        tex->format = Format::RGBA8_UNORM;
+        tex->mipLevels = 1;
+        placeholderTexture_ = std::move(tex);
+    }
+
+    // 占位符 Material：默认空材质（后续 phase 补充参数与纹理）
+    placeholderMaterial_ = std::make_unique<Material>();
+}
+
+Mesh* ResourceManager::GetPlaceholderMesh() {
+    return placeholderMesh_.get();
+}
+
+Texture* ResourceManager::GetPlaceholderTexture() {
+    return placeholderTexture_.get();
+}
+
+Material* ResourceManager::GetPlaceholderMaterial() {
+    return placeholderMaterial_.get();
 }
 
 }  // namespace kale::resource
