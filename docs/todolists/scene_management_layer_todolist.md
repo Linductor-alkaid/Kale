@@ -109,11 +109,11 @@
 
 ### 3.2 Entity 与 ComponentStorage
 
-- [ ] 实现 `Entity` 结构（id, generation，IsValid）
-- [ ] 定义 `Entity::Null` 常量
-- [ ] 实现 `ComponentStorage<T>` 模板
-- [ ] 实现 `Add(Entity, T)` / `Remove(Entity)` / `Get(Entity)` / `Has(Entity)`
-- [ ] 实现 `entityToIndex_` 映射
+- [x] 实现 `Entity` 结构（id, generation，IsValid）
+- [x] 定义 `Entity::Null` 常量
+- [x] 实现 `ComponentStorage<T>` 模板
+- [x] 实现 `Add(Entity, T)` / `Remove(Entity)` / `Get(Entity)` / `Has(Entity)`
+- [x] 实现 `entityToIndex_` 映射
 
 ### 3.3 EntityManager
 

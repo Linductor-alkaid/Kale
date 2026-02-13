@@ -1333,7 +1333,7 @@
         "实现 Add(Entity, T) / Remove(Entity) / Get(Entity) / Has(Entity)",
         "实现 entityToIndex_ 映射"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": [],
       "test_verification": "Entity 和 ComponentStorage 正常工作",

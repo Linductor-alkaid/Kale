@@ -91,3 +91,10 @@ target_link_libraries(test_scene_node_ref
         kale_scene
 )
 add_test(NAME test_scene_node_ref COMMAND test_scene_node_ref)
+
+add_executable(test_entity_component_storage test_entity_component_storage.cpp)
+target_link_libraries(test_entity_component_storage
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_entity_component_storage COMMAND test_entity_component_storage)

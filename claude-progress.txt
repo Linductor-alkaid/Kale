@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.2 Entity 与 ComponentStorage
+状态：已完成
+- 实现：Entity 结构（id, generation、IsValid、operator==/!=）、Entity::Null() 与 kNullEntity；ComponentStorage<T>（Add/Remove/Get/Has、entityToIndex_ + indexToEntity_ 稠密存储、Remove 交换末尾保持稠密）；新增 kale_scene/include/kale_scene/entity.hpp、component_storage.hpp。
+- 验证：编译通过，ctest 通过（新增 test_entity_component_storage：Entity Null/IsValid、ComponentStorage Add/Remove/Get/Has、覆盖与无效实体、非平凡类型、稠密 Remove）；scene_management_layer_todolist 3.2 已勾选。
+- feature_list.json 中 phase7-7.2 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.1 SceneNodeRef 桥接
 状态：已完成
 - 实现：SceneNodeRef 结构（handle、IsValid()、GetNode(SceneManager*)、FromNode(SceneNode*)）；新增 kale_scene/include/kale_scene/scene_node_ref.hpp。
