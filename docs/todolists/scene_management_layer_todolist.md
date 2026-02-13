@@ -135,10 +135,10 @@
 
 ### 3.5 与 executor 集成
 
-- [ ] 根据 `System::GetDependencies()` 构建 System 依赖 DAG
-- [ ] EntityManager::Update 通过 RenderTaskScheduler 提交并行 System 任务
-- [ ] 保证依赖的 System 先执行（拓扑序）
-- [ ] 与 executor_layer_todolist 中 RenderTaskScheduler 的 SubmitSystemUpdate 对齐
+- [x] 根据 `System::GetDependencies()` 构建 System 依赖 DAG
+- [x] EntityManager::Update 通过 RenderTaskScheduler 提交并行 System 任务
+- [x] 保证依赖的 System 先执行（拓扑序）
+- [x] 与 executor_layer_todolist 中 RenderTaskScheduler 的 SubmitSystemUpdate 对齐
 
 ### 3.6 写回流程示例
 

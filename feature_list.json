@@ -1394,7 +1394,7 @@
         "保证依赖的 System 先执行（拓扑序）",
         "与 executor_layer 中 RenderTaskScheduler 的 SubmitSystemUpdate 对齐"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.4", "phase4-4.1"],
       "test_verification": "ECS 系统正确并行执行",

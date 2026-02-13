@@ -112,3 +112,11 @@ target_link_libraries(test_system_base
         kale_scene
 )
 add_test(NAME test_system_base COMMAND test_system_base)
+
+add_executable(test_ecs_executor_integration test_ecs_executor_integration.cpp)
+target_link_libraries(test_ecs_executor_integration
+    PRIVATE
+        kale_scene
+        kale_executor
+)
+add_test(NAME test_ecs_executor_integration COMMAND test_ecs_executor_integration)

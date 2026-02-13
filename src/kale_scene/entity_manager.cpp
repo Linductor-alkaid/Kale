@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include <queue>
+#include <typeindex>
+#include <unordered_map>
 
 namespace kale::scene {
 
@@ -123,11 +125,44 @@ std::vector<size_t> EntityManager::BuildSystemOrder() const {
 
 void EntityManager::Update(float deltaTime) {
     std::vector<size_t> order = BuildSystemOrder();
+    if (order.empty()) return;
+
+    if (!scheduler_) {
+        for (size_t idx : order) {
+            System* s = systems_[idx].get();
+            if (s)
+                s->Update(deltaTime, *this);
+        }
+        return;
+    }
+
+    const size_t n = systems_.size();
+    std::unordered_map<std::type_index, size_t> typeToIndex;
+    for (size_t i = 0; i < n; ++i)
+        typeToIndex[std::type_index(typeid(*systems_[i].get()))] = i;
+
+    std::unordered_map<size_t, std::shared_future<void>> futureByIndex;
     for (size_t idx : order) {
         System* s = systems_[idx].get();
-        if (s)
-            s->Update(deltaTime, *this);
+        if (!s) continue;
+
+        std::vector<std::shared_future<void>> deps;
+        for (const auto& depType : s->GetDependencies()) {
+            auto it = typeToIndex.find(depType);
+            if (it != typeToIndex.end()) {
+                auto fit = futureByIndex.find(it->second);
+                if (fit != futureByIndex.end() && fit->second.valid())
+                    deps.push_back(fit->second);
+            }
+        }
+
+        std::shared_future<void> f = scheduler_->SubmitRenderTask(
+            [this, s, deltaTime]() { s->Update(deltaTime, *this); },
+            std::move(deps));
+        futureByIndex[idx] = std::move(f);
     }
+
+    scheduler_->WaitAll();
 }
 
 }  // namespace kale::scene

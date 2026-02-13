@@ -48,10 +48,11 @@ public:
     ::executor::Executor* GetExecutor() const { return ex_; }
 
     /// 提交渲染任务；dependencies 为空则立即可运行，否则先等待再执行 task
-    /// 任务会被加入待等待列表，WaitAll() 可等待本批任务
+    /// 任务会被加入待等待列表，WaitAll() 可等待本批任务；返回本任务的 shared_future 供依赖链使用
     template <typename Func>
-    void SubmitRenderTask(Func&& task,
-                          std::vector<std::shared_future<void>> dependencies = {});
+    std::shared_future<void> SubmitRenderTask(
+        Func&& task,
+        std::vector<std::shared_future<void>> dependencies = {});
 
     /// 提交系统更新：等待 deps 后调用 system->Update(deltaTime)
     void SubmitSystemUpdate(System* system,
@@ -93,10 +94,10 @@ private:
 // -----------------------------------------------------------------------------
 
 template <typename Func>
-void RenderTaskScheduler::SubmitRenderTask(
+std::shared_future<void> RenderTaskScheduler::SubmitRenderTask(
     Func&& task,
     std::vector<std::shared_future<void>> dependencies) {
-    if (!ex_) return;
+    if (!ex_) return std::shared_future<void>();
 
     auto run = [task = std::forward<Func>(task),
                 deps = std::move(dependencies)]() {
@@ -106,8 +107,10 @@ void RenderTaskScheduler::SubmitRenderTask(
     };
 
     std::future<void> f = ex_->submit(std::move(run));
+    std::shared_future<void> sf = f.share();
     std::lock_guard<std::mutex> lock(pending_mutex_);
-    pending_.push_back(f.share());
+    pending_.push_back(sf);
+    return sf;
 }
 
 inline void RenderTaskScheduler::SubmitSystemUpdate(

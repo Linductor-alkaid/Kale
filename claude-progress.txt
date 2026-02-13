@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.5 与 executor 集成
+状态：已完成
+- 实现：EntityManager::Update 在 scheduler_ 非空时根据 System::GetDependencies() 构建 typeToIndex，按 BuildSystemOrder() 拓扑序提交任务：每系统 SubmitRenderTask([this,s,deltaTime]{ s->Update(deltaTime,*this); }, deps)，deps 为依赖系统的 shared_future，最后 WaitAll()。RenderTaskScheduler::SubmitRenderTask 改为返回 std::shared_future<void> 供依赖链使用。
+- 验证：编译通过，ctest 通过（新增 test_ecs_executor_integration：ProducerSystem/ConsumerSystem 依赖顺序，scheduler 路径 DAG 正确；test_entity_manager、test_render_task_scheduler 通过）；scene_management_layer_todolist 3.5 已勾选。
+- feature_list.json 中 phase7-7.5 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.4 System 基类
 状态：已完成
 - 实现：System 基类已在 phase7-7.3 中于 entity_manager.hpp 实现（纯虚 Update(deltaTime, EntityManager&)、GetDependencies() 默认空、OnEntityCreated/OnEntityDestroyed 可选）。本会话确认为 phase7-7.4 完成并补充专属单元测试。
