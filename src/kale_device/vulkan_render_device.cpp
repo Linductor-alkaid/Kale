@@ -130,7 +130,8 @@ bool VulkanRenderDevice::CreateVmaOrAllocBuffer(const BufferDesc& desc, const vo
     if (size == 0) return false;
 
     VkBufferUsageFlags usage = ToVkBufferUsage(desc.usage);
-    if (data && !desc.cpuVisible)
+    /* 非 cpuVisible 时允许 Staging 上传（data 为空则由 ModelLoader 等通过 Staging 上传） */
+    if (!desc.cpuVisible)
         usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     VkBufferCreateInfo bufInfo = {};

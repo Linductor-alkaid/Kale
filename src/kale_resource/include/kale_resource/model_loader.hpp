@@ -4,6 +4,7 @@
  *
  * 与 resource_management_layer_design.md 5.5 对齐。
  * phase3-3.8：简单 ModelLoader，支持 .gltf/.glb，生成 Mesh（vertexBuffer、indexBuffer、bounds、subMeshes）。
+ * phase6-6.5：当 ctx.stagingMgr 非空时通过 Staging 上传顶点/索引；否则回退为 CreateBuffer(desc, data）。
  */
 
 #pragma once

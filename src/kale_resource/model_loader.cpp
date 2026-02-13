@@ -18,6 +18,7 @@
 #include <kale_device/rdi_types.hpp>
 #include <kale_resource/resource_manager.hpp>
 #include <kale_resource/resource_types.hpp>
+#include <kale_resource/staging_memory_manager.hpp>
 #include <kale_resource/model_loader.hpp>
 
 namespace kale::resource {
@@ -240,14 +241,54 @@ std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoa
     ibDesc.usage = kale_device::BufferUsage::Index;
     ibDesc.cpuVisible = false;
 
-    kale_device::BufferHandle vh = ctx.device->CreateBuffer(vbDesc, allVertices.data());
-    kale_device::BufferHandle ih = ctx.device->CreateBuffer(ibDesc, allIndices.data());
-    if (!vh.IsValid() || !ih.IsValid()) {
-        if (vh.IsValid()) ctx.device->DestroyBuffer(vh);
-        if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
-        if (ctx.resourceManager)
-            ctx.resourceManager->SetLastError("CreateBuffer failed for: " + path);
-        return nullptr;
+    kale_device::BufferHandle vh;
+    kale_device::BufferHandle ih;
+
+    if (ctx.stagingMgr && ctx.device) {
+        /* Staging 路径：CreateBuffer(desc, nullptr) + Allocate + memcpy + SubmitUpload + FlushUploads + WaitForFence + Free */
+        vh = ctx.device->CreateBuffer(vbDesc, nullptr);
+        ih = ctx.device->CreateBuffer(ibDesc, nullptr);
+        if (!vh.IsValid() || !ih.IsValid()) {
+            if (vh.IsValid()) ctx.device->DestroyBuffer(vh);
+            if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("CreateBuffer failed for: " + path);
+            return nullptr;
+        }
+        const std::size_t vbBytes = allVertices.size() * sizeof(VertexPNT);
+        const std::size_t ibBytes = allIndices.size() * sizeof(std::uint32_t);
+        StagingAllocation stagingV = ctx.stagingMgr->Allocate(vbBytes);
+        StagingAllocation stagingI = ctx.stagingMgr->Allocate(ibBytes);
+        if (!stagingV.IsValid() || !stagingI.IsValid()) {
+            if (stagingV.IsValid()) ctx.stagingMgr->Free(stagingV);
+            if (stagingI.IsValid()) ctx.stagingMgr->Free(stagingI);
+            ctx.device->DestroyBuffer(vh);
+            ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("Staging Allocate failed for: " + path);
+            return nullptr;
+        }
+        std::memcpy(stagingV.mappedPtr, allVertices.data(), vbBytes);
+        std::memcpy(stagingI.mappedPtr, allIndices.data(), ibBytes);
+        ctx.stagingMgr->SubmitUpload(nullptr, stagingV, vh, 0);
+        ctx.stagingMgr->SubmitUpload(nullptr, stagingI, ih, 0);
+        kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
+        if (fence.IsValid()) {
+            ctx.device->WaitForFence(fence);
+        }
+        ctx.stagingMgr->Free(stagingV);
+        ctx.stagingMgr->Free(stagingI);
+    } else {
+        /* 无 Staging 时回退：直接 CreateBuffer(desc, data) */
+        vh = ctx.device->CreateBuffer(vbDesc, allVertices.data());
+        ih = ctx.device->CreateBuffer(ibDesc, allIndices.data());
+        if (!vh.IsValid() || !ih.IsValid()) {
+            if (vh.IsValid()) ctx.device->DestroyBuffer(vh);
+            if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("CreateBuffer failed for: " + path);
+            return nullptr;
+        }
     }
 
     auto mesh = std::make_unique<Mesh>();

@@ -780,7 +780,7 @@
         "SubmitUpload 到 vertexBuffer、indexBuffer",
         "上传完成后 Free"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.3", "phase3-3.8"],
       "test_verification": "模型数据通过 Staging 正确上传"

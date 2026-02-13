@@ -153,10 +153,10 @@
 
 ### 3.5 ModelLoader 集成 Staging 上传
 
-- [ ] ModelLoader 顶点/索引数据通过 Staging 上传
-- [ ] Allocate 获取 StagingAllocation
-- [ ] SubmitUpload 到 vertexBuffer、indexBuffer
-- [ ] 上传完成后 Free
+- [x] ModelLoader 顶点/索引数据通过 Staging 上传
+- [x] Allocate 获取 StagingAllocation
+- [x] SubmitUpload 到 vertexBuffer、indexBuffer
+- [x] 上传完成后 Free
 
 ---
 
