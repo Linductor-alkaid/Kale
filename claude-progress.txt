@@ -1,9 +1,9 @@
 
 === 2026-02-13 (session) ===
 功能：phase10-10.5 LOD Manager 集成
-状态：verifying
+状态：已完成
 - 实现：LODManager 类（lod_manager.hpp/cpp）SelectLOD(node, camera) 按相机与节点距离选档，SetDistanceThresholds 默认 {20,80,300}；Renderable 增加 GetLODCount()/SetCurrentLOD()；StaticMesh 增加 currentLOD_、meshLODHandles_、SetLODHandles、GetMesh() 按 currentLOD_ 返回；SceneManager 增加 SetLODManager/GetLODManager，CullScene 内视锥通过后调用 lodManager_->SelectLOD(node, camera)。
-- 验证：待本地 cmake 配置与构建成功后运行 ctest（含 test_lod_manager：SetLODManager/GetLODManager、SelectLOD 按距离写 currentLOD、CullScene 内 SelectLOD、StaticMesh GetLODCount/SetCurrentLOD/SetLODHandles）。
+- 验证：编译通过，test_lod_manager 通过（修正测试中 SelectLOD 目标节点索引：GetChildren()[0] 为相机、[1] 为 nodeNear、[2] 为 nodeFar；SetLODManager/GetLODManager、SelectLOD 按距离写 currentLOD、CullScene 内 SelectLOD、StaticMesh GetLODCount/SetCurrentLOD/SetLODHandles）。phase10-10.5 status=completed，hold=null。scene_management_layer_todolist 5.1 LOD 已勾选。根 CMakeLists 增加 include(FetchContent) 修复 third_party/stb 路径下 FetchContent_Declare 未定义。
 
 === 2026-02-13 (session) ===
 功能：phase10-10.3 多视口支持

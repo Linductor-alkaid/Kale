@@ -84,7 +84,8 @@ int main() {
     mgr.Update(0.f);
     camPtr->UpdateViewProjection(16.f/9.f);
 
-    lodMgr.SelectLOD(mgr.GetActiveRoot()->GetChildren()[0].get(), camPtr);
+    // nodeNear 是 root 下第二个子节点（[0] 是相机）
+    lodMgr.SelectLOD(mgr.GetActiveRoot()->GetChildren()[1].get(), camPtr);
     TEST_CHECK(trackRenderable.GetLastSetLOD() == 0u);  // 5 < 20 -> LOD 0
 
     LODTrackRenderable track2;
@@ -94,7 +95,7 @@ int main() {
     nodeFar->SetRenderable(&track2);
     mgr.GetActiveRoot()->AddChild(std::move(nodeFar));
     mgr.Update(0.f);
-    lodMgr.SelectLOD(mgr.GetActiveRoot()->GetChildren()[1].get(), camPtr);
+    lodMgr.SelectLOD(mgr.GetActiveRoot()->GetChildren()[2].get(), camPtr);
     TEST_CHECK(track2.GetLastSetLOD() == 3u);  // 400 >= 300 -> 最高档 LOD 3
 
     // 3. CullScene 内调用 SelectLOD（有 LODManager 时可见节点会被设 LOD）

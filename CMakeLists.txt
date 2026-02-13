@@ -39,15 +39,20 @@ if(KALE_USE_VCPKG)
     find_package(SDL3 CONFIG REQUIRED)
     find_package(Vulkan REQUIRED)
 else()
-    # 查找 glm
-    find_package(glm QUIET)
-    if(NOT glm_FOUND)
-        include(FetchContent)
-        FetchContent_Declare(glm
-            GIT_REPOSITORY https://github.com/g-truc/glm.git
-            GIT_TAG 1.0.1
-        )
-        FetchContent_MakeAvailable(glm)
+    # 查找 glm：优先 third_party/glm，其次 find_package，最后 FetchContent
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/glm/CMakeLists.txt")
+        message(STATUS "Using glm from third_party/glm")
+        add_subdirectory(third_party/glm third_party/glm EXCLUDE_FROM_ALL)
+    else()
+        find_package(glm QUIET)
+        if(NOT glm_FOUND)
+            include(FetchContent)
+            FetchContent_Declare(glm
+                GIT_REPOSITORY https://github.com/g-truc/glm.git
+                GIT_TAG 1.0.1
+            )
+            FetchContent_MakeAvailable(glm)
+        endif()
     endif()
 
     # 查找 SDL3：优先使用 third_party/SDL，其次系统安装
@@ -69,43 +74,68 @@ else()
 endif()
 
 # stb（单头文件库：stb_image 用于 PNG/JPG 加载）
-include(FetchContent)
-FetchContent_Declare(stb
-    GIT_REPOSITORY https://github.com/nothings/stb
-    GIT_TAG        master
-)
-FetchContent_Populate(stb)
+# 优先使用 third_party/stb，否则 FetchContent；可手动拉取：git clone https://github.com/nothings/stb third_party/stb
+set(STB_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/stb")
+if(EXISTS "${STB_SOURCE_DIR}/stb_image.h")
+    message(STATUS "Using stb from third_party/stb")
+else()
+    include(FetchContent)
+    FetchContent_Declare(stb
+        GIT_REPOSITORY https://github.com/nothings/stb
+        GIT_TAG        master
+    )
+    FetchContent_Populate(stb)
+    set(STB_SOURCE_DIR ${stb_SOURCE_DIR})
+endif()
 if(NOT TARGET stb)
     add_library(stb INTERFACE)
-    target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+    target_include_directories(stb INTERFACE ${STB_SOURCE_DIR})
 endif()
 
 # tinygltf（glTF 2.0 解析，ModelLoader 使用）
+# 优先 third_party/tinygltf，否则 FetchContent；scripts 可拉取到 third_party
 set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_GL_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_VALIDATOR_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_BUILDER_EXAMPLE OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(tinygltf
-    GIT_REPOSITORY https://github.com/syoyo/tinygltf
-    GIT_TAG        v2.8.13
-)
-FetchContent_MakeAvailable(tinygltf)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/tinygltf/CMakeLists.txt")
+    message(STATUS "Using tinygltf from third_party/tinygltf")
+    add_subdirectory(third_party/tinygltf third_party/tinygltf EXCLUDE_FROM_ALL)
+else()
+    include(FetchContent)
+    FetchContent_Declare(tinygltf
+        GIT_REPOSITORY https://github.com/syoyo/tinygltf
+        GIT_TAG        v2.8.13
+    )
+    FetchContent_MakeAvailable(tinygltf)
+endif()
 
 # nlohmann/json（头文件库，MaterialLoader JSON 解析）
+# 优先 third_party/json，否则 FetchContent；scripts 可拉取到 third_party
 set(JSON_Install OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(json
-    GIT_REPOSITORY https://github.com/nlohmann/json
-    GIT_TAG        v3.11.3
-)
-FetchContent_MakeAvailable(json)
-
-# executor 库：通过 -DKALE_EXECUTOR_PATH=/path/to/executor 指定
-if(KALE_EXECUTOR_PATH)
-    add_subdirectory(${KALE_EXECUTOR_PATH} ${CMAKE_BINARY_DIR}/executor EXCLUDE_FROM_ALL)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/CMakeLists.txt")
+    message(STATUS "Using nlohmann/json from third_party/json")
+    add_subdirectory(third_party/json third_party/json EXCLUDE_FROM_ALL)
 else()
-    find_package(executor QUIET)
+    include(FetchContent)
+    FetchContent_Declare(json
+        GIT_REPOSITORY https://github.com/nlohmann/json
+        GIT_TAG        v3.11.3
+    )
+    FetchContent_MakeAvailable(json)
+endif()
+
+# executor 库：优先 find_package（deb/系统安装），其次 KALE_EXECUTOR_PATH 源码
+# 参考 docs/executor/PACKAGE_DEB.md：deb 安装后 find_package(executor) 即可
+find_package(executor QUIET)
+if(NOT executor_FOUND AND KALE_EXECUTOR_PATH)
+    message(STATUS "Using executor from source: ${KALE_EXECUTOR_PATH}")
+    add_subdirectory(${KALE_EXECUTOR_PATH} ${CMAKE_BINARY_DIR}/executor EXCLUDE_FROM_ALL)
+endif()
+if(NOT TARGET executor::executor)
+    message(WARNING "executor 未找到。安装 deb 包后可直接 cmake 构建；或设置 -DKALE_EXECUTOR_PATH=path/to/executor")
 endif()
 
 # 子模块：各层独立 CMake，按依赖顺序添加
