@@ -1,3 +1,9 @@
+=== 2026-02-13 (session) agent_1770982211_1091062 ===
+功能：phase13-13.1 FrameData 与引擎主循环集成
+状态：已完成
+- 实现：RenderEngine::Run() 在每帧 Present 后调用 GetVisibleObjectsFrameData()->end_frame()，实现帧边界同步（主线程帧末 swap，worker 使用稳定快照）；与引擎主循环集成示例即主循环内 end_frame 调用。
+- 验证：编译通过，ctest 74/74 通过（新增 test_frame_data_main_loop_integration：OnRender 写入 write_buffer 后 RequestQuit，Run 返回后 read_buffer 含写入数据，证明帧末 end_frame 被调用）。phase13-13.1 status=completed，hold=null。executor_layer_todolist 4.3 两项已勾选。
+
 === 2026-02-13 (session) agent_1770951035_477597 ===
 功能：无（feature_list 已全部完成）
 状态：已确认

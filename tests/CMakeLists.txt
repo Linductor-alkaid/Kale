@@ -407,6 +407,15 @@ target_link_libraries(test_render_engine_run
 add_test(NAME test_render_engine_run COMMAND test_render_engine_run)
 set_tests_properties(test_render_engine_run PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_frame_data_main_loop_integration test_frame_data_main_loop_integration.cpp)
+target_link_libraries(test_frame_data_main_loop_integration
+    PRIVATE
+        kale_engine
+        kale_executor
+)
+add_test(NAME test_frame_data_main_loop_integration COMMAND test_frame_data_main_loop_integration)
+set_tests_properties(test_frame_data_main_loop_integration PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_window_resize_swapchain test_window_resize_swapchain.cpp)
 target_link_libraries(test_window_resize_swapchain
     PRIVATE

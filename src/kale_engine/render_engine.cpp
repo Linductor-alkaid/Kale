@@ -227,6 +227,12 @@ void RenderEngine::Run(IApplication* app) {
         if (!skipRender) {
             app->OnRender();
             device->Present();
+            // 帧边界同步：主线程帧末对 FrameData 调用 end_frame，使本帧写入在下一帧对 read_buffer() 可见
+            kale::executor::RenderTaskScheduler* sched = impl.scheduler.get();
+            if (sched) {
+                kale::executor::FrameData<kale::executor::VisibleObjectList>* fd = sched->GetVisibleObjectsFrameData();
+                if (fd) fd->end_frame();
+            }
         }
     }
 }

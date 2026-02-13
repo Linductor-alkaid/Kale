@@ -2415,6 +2415,437 @@
       "dependencies": ["phase7-7.6"],
       "test_verification": "场景切换无悬空引用",
       "hold": null
+    },
+    {
+      "id": "phase13-13.1",
+      "category": "infrastructure",
+      "layer": "executor_layer",
+      "phase": "13",
+      "title": "FrameData 与引擎主循环集成",
+      "description": "FrameData 与引擎主循环集成，帧边界同步",
+      "steps": [
+        "与引擎主循环集成示例",
+        "帧边界同步：主线程帧末 swap，worker 使用稳定快照"
+      ],
+      "status": "completed",
+      "priority": "high",
+      "dependencies": ["phase2-2.10"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.2",
+      "category": "infrastructure",
+      "layer": "executor_layer",
+      "phase": "13",
+      "title": "Executor 性能与验证",
+      "description": "Executor 层性能测试与无死锁/无数据竞争验证",
+      "steps": [
+        "性能测试与调优",
+        "验证无死锁、无数据竞争"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase5-5.10"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.3",
+      "category": "infrastructure",
+      "layer": "executor_layer",
+      "phase": "13",
+      "title": "Executor 可选编译选项",
+      "description": "通过编译选项控制通道与任务图扩展",
+      "steps": [
+        "EXECUTOR_ENABLE_CHANNELS 控制是否编译通道",
+        "EXECUTOR_ENABLE_TASK_GRAPH 控制任务图扩展"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase0-0.1"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.4",
+      "category": "infrastructure",
+      "layer": "executor_layer",
+      "phase": "13",
+      "title": "Executor 库集成与引擎初始化",
+      "description": "通过 find_package(executor) 或 add_subdirectory 集成，完善引擎初始化顺序",
+      "steps": [
+        "通过 find_package(executor) 或 add_subdirectory 集成",
+        "扩展作为独立头文件/库，通过额外 target 提供",
+        "TaskGraph::submit 内部调用 Executor::submit",
+        "scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph",
+        "EntityManager 持有 SceneManager 指针，供 SceneNodeRef 解析"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase0-0.1"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.5",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "集成 VMA",
+      "description": "集成 Vulkan Memory Allocator 进行 GPU 内存管理",
+      "steps": [
+        "集成 VMA (Vulkan Memory Allocator)"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.6",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "Vulkan 多线程与 RenderTaskScheduler 集成",
+      "description": "Vulkan CommandPool 与 RenderTaskScheduler::ParallelRecordCommands 集成",
+      "steps": [
+        "与 RenderTaskScheduler::ParallelRecordCommands 集成"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase9-9.1"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.7",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "OpenGL 状态缓存",
+      "description": "实现 OpenGL 状态缓存，减少冗余 GL API 调用",
+      "steps": [
+        "实现 OpenGL 状态缓存（减少冗余 glBindTexture、glUseProgram 等）",
+        "仅在状态变化时调用 GL API",
+        "缓存当前 bound pipeline、descriptor sets、vertex/index buffers"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase2-2.9"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.8",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "OpenGL 设备能力查询",
+      "description": "从 GL 扩展查询 DeviceCapabilities",
+      "steps": [
+        "OpenGL：从 GL 扩展查询 DeviceCapabilities"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase2-2.9"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.9",
+      "category": "functional",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "设备抽象层性能测试与调优",
+      "description": "设备抽象层性能基准与调优",
+      "steps": [
+        "性能基准：三角形渲染、多 DrawCall、多线程录制",
+        "验证无每帧 WaitIdle，仅使用 Fence 同步",
+        "调优：减少 GL 状态切换、Vulkan 命令缓冲复用"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase5-5.10"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.10",
+      "category": "infrastructure",
+      "layer": "device_abstraction_layer",
+      "phase": "13",
+      "title": "设备抽象层错误处理与生命周期",
+      "description": "IRenderDevice 初始化失败、资源生命周期、窗口与 Swapchain 重建",
+      "steps": [
+        "IRenderDevice::Initialize() 返回 false 时，GetLastError() 返回详细原因",
+        "句柄无效：Handle::IsValid() 返回 false 时，调用方不得使用",
+        "销毁顺序：先销毁依赖资源的资源，再销毁底层资源",
+        "窗口 resize 时正确处理 VK_ERROR_OUT_OF_DATE_KHR",
+        "最小化时策略（暂停 Present 或空帧）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase2-2.2"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.11",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "ModelLoader 可选格式与 LOD",
+      "description": "支持 .obj/.fbx 及 LOD",
+      "steps": [
+        "可选：支持 .obj（使用 assimp 或简易解析）",
+        "可选：支持 .obj、.fbx（通过 assimp）",
+        "支持 LOD（若有多个 mesh）"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase4-4.1"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.12",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "Mipmap 链上传",
+      "description": "TextureLoader 支持 Mipmap 链逐级 Copy",
+      "steps": [
+        "支持 Mipmap 链上传（逐级 Copy）"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase3-3.7"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.13",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "TextureLoader DDS 支持",
+      "description": "支持 DDS 格式压缩纹理",
+      "steps": [
+        "TextureLoader 支持 .dds（BC、ASTC、ETC2 等）",
+        "实现 LoadDDS(path) 加载 DDS 格式（可选）"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase12-12.5"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.14",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "资源依赖解析",
+      "description": "MaterialLoader 内部解析 JSON 时引用 Texture 路径，处理依赖与循环依赖",
+      "steps": [
+        "MaterialLoader 内部解析 JSON 时引用 Texture 路径",
+        "同步加载依赖：ctx.resourceManager->Load<Texture>(texPath)",
+        "或加入依赖队列，异步加载后再设置",
+        "处理循环依赖（材质 A 依赖材质 B 依赖纹理 C）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase4-4.2"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.15",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "材质/着色器热重载集成",
+      "description": "材质/着色器热重载时替换后重新创建 Pipeline",
+      "steps": [
+        "材质/着色器热重载：替换后重新创建 Pipeline",
+        "ShaderCompiler::Recompile 集成"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase5-5.2", "phase9-9.2"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.16",
+      "category": "functional",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "资源管理层性能测试与调优",
+      "description": "验证 LoadAsync、Staging Buffer 池化、引用计数、热重载性能",
+      "steps": [
+        "验证 LoadAsync 不阻塞主线程",
+        "验证 Staging Buffer 池化无频繁分配",
+        "验证引用计数正确释放",
+        "热重载性能：文件变化到资源更新延迟"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase12-12.4"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.17",
+      "category": "infrastructure",
+      "layer": "resource_management_layer",
+      "phase": "13",
+      "title": "资源管理层 RenderEngine 集成",
+      "description": "StagingMemoryManager、ResourceManager 初始化与主循环集成",
+      "steps": [
+        "StagingMemoryManager 在 ResourceManager 之前创建",
+        "ResourceManager(scheduler, device, stagingMgr) 构造",
+        "resourceManager_->SetAssetPath(config.assetPath)",
+        "注册 Loader：ModelLoader、TextureLoader、MaterialLoader",
+        "CreatePlaceholders() 创建占位符",
+        "Run() 中每帧调用 resourceManager_->ProcessHotReload()",
+        "可选：ProcessLoadedCallbacks() 处理加载完成回调"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase4-4.3"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.18",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "13",
+      "title": "Pass 依赖推导完善",
+      "description": "完善 ReadTexture/WriteTexture 的 Pass 依赖推导",
+      "steps": [
+        "ReadTexture(A) 且 WriteTexture(A) 的 Pass 之间：写者先于读者",
+        "同一纹理多写者：需显式顺序或合并 Pass",
+        "验证 topologicalOrder_ 正确反映依赖关系"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.6"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.19",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "13",
+      "title": "帧流水线同步完善",
+      "description": "完善每帧 Fence、Acquire semaphore、Submit signal 的同步",
+      "steps": [
+        "每帧对应 Fence，Wait 上一帧 Fence 后再 Acquire",
+        "Acquire 返回的 semaphore 用于 Submit 时 wait",
+        "Submit 时 signal renderCompleteSemaphore，供 Present 使用（若需要）",
+        "RDI 的 Submit 接口支持 (cmdLists, waitSemaphores, signalSemaphores, fence)"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.7"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.20",
+      "category": "infrastructure",
+      "layer": "rendering_pipeline_layer",
+      "phase": "13",
+      "title": "渲染管线层应用层集成",
+      "description": "应用层 OnRender 流程、Execute 完整流程、RenderEngine::Run 主循环",
+      "steps": [
+        "应用层 OnRender 中：CullScene(camera) → rg->ClearSubmitted() → 遍历 visibleNodes → SubmitRenderable(r, worldMatrix, passFlags) → Execute(renderDevice)",
+        "Execute 完整流程：WaitForFence → ResetFence → AcquireNextImage → BuildFrameDrawList → RecordPasses → Submit → ReleaseFrameResources → currentFrameIndex 轮转",
+        "主循环中：app->OnRender() 内部调用 rg->Execute()，之后 renderDevice_->Present()",
+        "renderGraph_ = std::make_unique<RenderGraph>(scheduler_.get()) 或 SetScheduler",
+        "renderGraph_->SetResolution(config.width, config.height)",
+        "SetupRenderGraph(*renderGraph_) 应用层或引擎初始化时调用",
+        "renderGraph_->Compile(renderDevice_.get()) 初始化完成时调用"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase10-10.9"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.21",
+      "category": "infrastructure",
+      "layer": "rendering_pipeline_layer",
+      "phase": "13",
+      "title": "渲染管线层错误处理与生命周期",
+      "description": "Compile 失败、实例级 DescriptorSet 回收、帧流水线同步、Renderable 与 Material 生命周期",
+      "steps": [
+        "Compile 失败时返回 false 或抛出，GetLastError 获取原因",
+        "资源分配失败时保证已分配资源可释放",
+        "每帧 Execute 结束时调用 ReleaseFrameResources",
+        "遍历本帧 SubmittedDraws 中的 Material，调用 ReleaseAllInstanceDescriptorSets",
+        "RGResourceHandle → RDI Handle 映射验证"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase6-6.6"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.22",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "13",
+      "title": "写回冲突检测（可选）",
+      "description": "开发期可选：同一节点被多个无依赖关系的 System 写入时检测",
+      "steps": [
+        "#ifdef ENABLE_SCENE_WRITE_VALIDATION 时启用",
+        "实现 NotifySceneNodeWritten(handle, systemTypeId) 登记",
+        "帧末检查：同一节点被多个无依赖关系的 System 写入时断言或日志"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase7-7.6"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.23",
+      "category": "functional",
+      "layer": "scene_management_layer",
+      "phase": "13",
+      "title": "UpdateBounds（可选）",
+      "description": "世界矩阵计算后更新 Renderable 的世界包围体缓存",
+      "steps": [
+        "世界矩阵计算后可调用 UpdateBounds 更新 Renderable 的世界包围体缓存",
+        "UpdateBounds 由 SceneManager::Update 内部完成"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase7-7.4"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.24",
+      "category": "infrastructure",
+      "layer": "scene_management_layer",
+      "phase": "13",
+      "title": "场景管理层 RenderEngine 集成",
+      "description": "统一更新顺序与 RenderEngine 初始化",
+      "steps": [
+        "主循环 Run() 中顺序：inputManager->Update() → entityManager->Update(deltaTime) → sceneManager->Update(deltaTime) → app->OnUpdate(deltaTime) → app->OnRender() → renderDevice->Present()",
+        "sceneManager_ = std::make_unique<SceneManager>()",
+        "entityManager_ = std::make_unique<EntityManager>(scheduler_.get(), sceneManager_.get())",
+        "注册系统：RegisterSystem(PhysicsSystem)、RegisterSystem(AnimationSystem) 等"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase7-7.6"],
+      "hold": null
+    },
+    {
+      "id": "phase13-13.25",
+      "category": "infrastructure",
+      "layer": "scene_management_layer",
+      "phase": "13",
+      "title": "场景管理层错误处理与生命周期",
+      "description": "SceneNodeHandle 失效、Renderable 所有权、写回竞争",
+      "steps": [
+        "节点销毁时 handle 从注册表移除，GetNode(handle) 返回 nullptr",
+        "System 必须校验 if (!node) continue",
+        "场景切换前必须解绑 SceneNodeRef",
+        "Renderable 由应用层或工厂创建，SceneNode 持有非占有指针",
+        "多 System 写同一节点时，必须通过 GetDependencies 建立 DAG 保证先后顺序"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase7-7.6"],
+      "hold": null
     }
   ]
 }
