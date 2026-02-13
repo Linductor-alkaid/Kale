@@ -117,7 +117,7 @@
         "实现鼠标：GetMousePosition() / GetMouseDelta() / IsMouseButtonPressed() / GetMouseWheelDelta()",
         "定义 KeyCode、MouseButton 枚举（与 SDL 映射）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.1"],
       "test_verification": "键盘和鼠标输入正常响应，按键状态和鼠标位置准确"

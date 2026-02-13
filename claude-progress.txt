@@ -1,4 +1,10 @@
 === 2026-02-13 ===
+功能：phase1-1.4 输入系统基础（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，hello_kale 使用 InputManager（Initialize/Update/QuitRequested/IsKeyJustPressed(Escape)）运行正常
+- feature_list.json 中 status 更新为 completed
+
+=== 2026-02-13 ===
 功能：phase6-6.13 简单 Forward Pass
 状态：已完成
 - 实现 ExecuteForwardPass(ctx, cmd)：对 GetDrawsForPass(PassFlags::All) 遍历调用 renderable->Draw(cmd, worldTransform)
