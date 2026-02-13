@@ -185,11 +185,11 @@
 
 ### 5.1 LOD Manager 集成
 
-- [ ] 实现或集成 `LODManager`
-- [ ] CullScene 内调用 `lodManager_->SelectLOD(node, camera)`
-- [ ] LOD 选择后写入 Renderable 的 currentLOD 或 SceneNode 的 LOD 索引
-- [ ] 支持 LOD 的 Renderable（如 StaticMesh）实现 `GetMesh()` 重写以返回选定 LOD 的 mesh
-- [ ] StaticMesh 持有 meshLODs 和 currentLOD
+- [x] 实现或集成 `LODManager`
+- [x] CullScene 内调用 `lodManager_->SelectLOD(node, camera)`
+- [x] LOD 选择后写入 Renderable 的 currentLOD 或 SceneNode 的 LOD 索引
+- [x] 支持 LOD 的 Renderable（如 StaticMesh）实现 `GetMesh()` 重写以返回选定 LOD 的 mesh
+- [x] StaticMesh 持有 meshLODs 和 currentLOD
 
 ### 5.2 遮挡剔除（可选，Phase 6）
 

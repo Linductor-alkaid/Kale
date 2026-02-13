@@ -8,6 +8,7 @@
 #include <kale_scene/camera_node.hpp>
 #include <kale_scene/renderable.hpp>
 #include <kale_scene/frustum.hpp>
+#include <kale_scene/lod_manager.hpp>
 #include <kale_scene/entity_manager.hpp>
 #include <kale_scene/scene_node_ref.hpp>
 #include <kale_resource/resource_types.hpp>
@@ -35,6 +36,7 @@ std::vector<SceneNode*> SceneManager::CullScene(CameraNode* camera) {
             kale::resource::TransformBounds(node->GetRenderable()->GetBounds(), node->GetWorldMatrix());
         if (!IsBoundsInFrustum(worldBounds, frustum)) return;
 
+        if (lodManager_) lodManager_->SelectLOD(node, camera);
         visibleNodes.push_back(node);
 
         for (const auto& child : node->GetChildren())

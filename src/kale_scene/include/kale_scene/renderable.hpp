@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 #include <kale_device/command_list.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_resource/resource_types.hpp>
@@ -32,6 +35,11 @@ public:
 
     /** 返回材质资源，无材质时返回 nullptr */
     virtual const kale::resource::Material* GetMaterial() const { return nullptr; }
+
+    /** LOD 档数；默认 1（无 LOD）。支持 LOD 的 Renderable 重写并返回 >1。 */
+    virtual size_t GetLODCount() const { return 1; }
+    /** 由 LODManager::SelectLOD 调用，设置当前使用的 LOD 索引（0-based）。默认空实现。 */
+    virtual void SetCurrentLOD(uint32_t lod) { (void)lod; }
 
     /**
      * 向命令列表录制绘制命令，worldTransform 为节点世界矩阵。

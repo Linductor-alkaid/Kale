@@ -21,6 +21,7 @@ namespace kale::scene {
 
 class CameraNode;
 class EntityManager;
+class LODManager;
 
 /**
  * 场景管理器：管理场景图节点句柄注册表与活动场景生命周期。
@@ -106,6 +107,14 @@ public:
     void UnregisterNode(SceneNode* node);
 
     /**
+     * 设置可选的 LOD 管理器。CullScene 内对可见节点调用 lodManager->SelectLOD(node, camera)。
+     * @param mgr 可为 nullptr 表示禁用 LOD 选择
+     */
+    void SetLODManager(LODManager* mgr) { lodManager_ = mgr; }
+    /** 当前 LOD 管理器，未设置时返回 nullptr */
+    LODManager* GetLODManager() const { return lodManager_; }
+
+    /**
      * 判断 node 是否为 parent 自身或其子树中的节点（即从 node 沿父指针能到达 parent）。
      * @param parent 子树根节点
      * @param node 待判断节点
@@ -130,6 +139,8 @@ private:
     std::unique_ptr<SceneNode> activeRootStorage_;
     /** 当前活动场景根节点指针，与 activeRootStorage_ 一致 */
     SceneNode* activeRoot_ = nullptr;
+    /** 可选 LOD 管理器；CullScene 内对可见节点调用 SelectLOD */
+    LODManager* lodManager_ = nullptr;
 };
 
 }  // namespace kale::scene

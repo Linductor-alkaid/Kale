@@ -193,6 +193,21 @@ target_link_libraries(test_cull_scene_single_camera
 )
 add_test(NAME test_cull_scene_single_camera COMMAND test_cull_scene_single_camera)
 
+add_executable(test_lod_manager test_lod_manager.cpp)
+target_link_libraries(test_lod_manager
+    PRIVATE
+        kale_scene
+        kale_resource
+        kale_device
+        glm::glm
+        kale_executor
+)
+# kale_scene/static_mesh 会引用 ResourceManager::LoadAsync -> executor，需显式链接
+if(TARGET executor::executor)
+    target_link_libraries(test_lod_manager PRIVATE executor::executor)
+endif()
+add_test(NAME test_lod_manager COMMAND test_lod_manager)
+
 add_executable(test_scene_node_factories test_scene_node_factories.cpp)
 target_link_libraries(test_scene_node_factories
     PRIVATE

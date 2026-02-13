@@ -1981,11 +1981,11 @@
         "支持 LOD 的 Renderable（如 StaticMesh）实现 GetMesh() 重写以返回选定 LOD 的 mesh",
         "StaticMesh 持有 meshLODs 和 currentLOD"
       ],
-      "status": "pending",
+      "status": "verifying",
       "priority": "medium",
       "dependencies": ["phase5-5.9", "phase3-3.6"],
       "test_verification": "LOD 正确选择",
-      "hold": null
+      "hold": "agent_1770951035_477597"
     },
     {
       "id": "phase10-10.6",

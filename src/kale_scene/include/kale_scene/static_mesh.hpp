@@ -8,7 +8,10 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
+#include <vector>
 
 #include <kale_scene/renderable.hpp>
 #include <kale_resource/resource_manager.hpp>
@@ -43,9 +46,17 @@ public:
     kale::resource::BoundingBox GetBounds() const override;
     const kale::resource::Mesh* GetMesh() const override;
     const kale::resource::Material* GetMaterial() const override;
+    size_t GetLODCount() const override;
+    void SetCurrentLOD(uint32_t lod) override;
     void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform,
           kale_device::IRenderDevice* device = nullptr) override;
     void ReleaseFrameResources() override;
+
+    /**
+     * 设置多 LOD 网格句柄（LOD 0 为最高细节）。
+     * 非空时 GetLODCount() 返回 handles.size()，GetMesh() 按 currentLOD_ 返回对应 mesh。
+     */
+    void SetLODHandles(std::vector<kale::resource::MeshHandle> handles);
 
 private:
     kale::resource::ResourceManager* resourceManager_ = nullptr;
@@ -58,6 +69,11 @@ private:
     /** 直接指针模式（工厂构造）：非占有，用于 CreateStaticMeshNode */
     kale::resource::Mesh* meshPtr_ = nullptr;
     kale::resource::Material* materialPtr_ = nullptr;
+
+    /** 当前选中的 LOD 索引（由 LODManager::SelectLOD 设置） */
+    uint32_t currentLOD_ = 0;
+    /** 多 LOD 网格句柄；非空时使用，GetMesh() 返回 meshLODHandles_[currentLOD_] 对应 mesh */
+    std::vector<kale::resource::MeshHandle> meshLODHandles_;
 };
 
 }  // namespace kale::scene

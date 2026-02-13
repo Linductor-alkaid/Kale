@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.5 LOD Manager 集成
+状态：verifying
+- 实现：LODManager 类（lod_manager.hpp/cpp）SelectLOD(node, camera) 按相机与节点距离选档，SetDistanceThresholds 默认 {20,80,300}；Renderable 增加 GetLODCount()/SetCurrentLOD()；StaticMesh 增加 currentLOD_、meshLODHandles_、SetLODHandles、GetMesh() 按 currentLOD_ 返回；SceneManager 增加 SetLODManager/GetLODManager，CullScene 内视锥通过后调用 lodManager_->SelectLOD(node, camera)。
+- 验证：待本地 cmake 配置与构建成功后运行 ctest（含 test_lod_manager：SetLODManager/GetLODManager、SelectLOD 按距离写 currentLOD、CullScene 内 SelectLOD、StaticMesh GetLODCount/SetCurrentLOD/SetLODHandles）。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.3 多视口支持
 状态：已完成
 - 实现：kale_pipeline 新增 submit_visible.hpp，提供 SubmitVisibleToRenderGraph(SceneManager*, RenderGraph*, CameraNode*)，内部 CullScene(camera) 后对每个可见且带 Renderable 的节点调用 renderGraph->SubmitRenderable。应用层可对每视口：rg->ClearSubmitted() 后 SubmitVisibleToRenderGraph(sm, rg, camera)，实现分别提交到各自 Pass 链；多视口使用多套 RenderGraph 实例与 phase12-12.6 对齐。
