@@ -11,6 +11,7 @@
 #pragma once
 
 #include <kale_scene/scene_types.hpp>
+#include <kale_scene/renderable.hpp>
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -19,7 +20,6 @@
 namespace kale::scene {
 
 class SceneManager;
-class Renderable;
 
 /**
  * 场景图节点：局部变换、世界矩阵（由 SceneManager::Update 计算）、父子层级。
@@ -71,8 +71,18 @@ public:
 
     /** 挂载可渲染对象（非占有指针，生命周期由调用方管理） */
     void SetRenderable(Renderable* r) { renderable_ = r; }
+    /**
+     * 挂载可渲染对象并取得所有权（节点析构时一并释放）。
+     * 用于工厂创建的 Renderable（如 CreateStaticMeshNode 内创建的 StaticMesh）。
+     */
+    void SetOwnedRenderable(std::unique_ptr<Renderable> r) {
+        ownedRenderable_ = std::move(r);
+        renderable_ = ownedRenderable_ ? ownedRenderable_.get() : nullptr;
+    }
     /** 获取挂载的 Renderable，未挂载时返回 nullptr */
-    Renderable* GetRenderable() const { return renderable_; }
+    Renderable* GetRenderable() const {
+        return ownedRenderable_ ? ownedRenderable_.get() : renderable_;
+    }
 
 private:
     /** 仅供 SceneManager::UpdateRecursive 调用，用于写入世界矩阵 */
@@ -85,6 +95,7 @@ private:
     SceneNode* parent_ = nullptr;
     PassFlags passFlags_ = PassFlags::All;
     Renderable* renderable_ = nullptr;  ///< 非占有指针，供 CullScene / SubmitRenderable 使用
+    std::unique_ptr<Renderable> ownedRenderable_;  ///< 可选所有权，工厂创建的 Renderable
 
     friend class SceneManager;
 };

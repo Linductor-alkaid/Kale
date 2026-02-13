@@ -176,8 +176,8 @@
 
 ### 4.4 工厂函数
 
-- [ ] 实现 `CreateStaticMeshNode(Mesh* mesh, Material* material)` 返回 `unique_ptr<SceneNode>`
-- [ ] 实现 `CreateCameraNode()` 返回 `unique_ptr<CameraNode>`
+- [x] 实现 `CreateStaticMeshNode(Mesh* mesh, Material* material)` 返回 `unique_ptr<SceneNode>`
+- [x] 实现 `CreateCameraNode()` 返回 `unique_ptr<CameraNode>`
 
 ---
 

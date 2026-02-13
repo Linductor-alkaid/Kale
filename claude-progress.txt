@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase10-10.4 工厂函数
+状态：已完成
+- 实现：CreateStaticMeshNode(Mesh* mesh, Material* material) 返回 unique_ptr<SceneNode>，节点通过 SetOwnedRenderable 持有 StaticMesh；CreateCameraNode() 返回 unique_ptr<CameraNode>。StaticMesh 增加 (Mesh* mesh, Material* material) 构造函数（直接指针模式）；SceneNode 增加 SetOwnedRenderable(std::unique_ptr<Renderable>) 与 ownedRenderable_。新增 scene_node_factories.hpp。
+- 验证：编译通过，ctest 49/49 通过（新增 test_scene_node_factories：CreateCameraNode 非空/默认 fov/near/far、AddChild 到根；CreateStaticMeshNode(nullptr,nullptr) 与带 mesh 指针、AddChild 到根）。
+- feature_list.json 中 phase10-10.4 的 status 更新为 completed，hold=null。scene_management_layer_todolist 4.4 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.2 CullScene 多相机
 状态：已完成
 - 实现：SceneManager::CullScene(const std::vector<CameraNode*>& cameras) 返回 std::vector<std::vector<SceneNode*>>，对每个相机调用单相机 CullScene(cam) 并收集结果；visibleByCamera[i] 对应 cameras[i]。

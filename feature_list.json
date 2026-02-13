@@ -1961,7 +1961,7 @@
         "实现 CreateStaticMeshNode(Mesh* mesh, Material* material) 返回 unique_ptr<SceneNode>",
         "实现 CreateCameraNode() 返回 unique_ptr<CameraNode>"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase5-5.10"],
       "test_verification": "工厂函数正确创建节点",

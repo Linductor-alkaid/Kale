@@ -34,6 +34,12 @@ public:
                std::string meshPath,
                std::string materialPath = "");
 
+    /**
+     * 直接使用已加载的 Mesh 与 Material 指针（非占有）。
+     * 用于工厂 CreateStaticMeshNode(mesh, material)；调用方需保证指针在 Renderable 使用期间有效。
+     */
+    StaticMesh(kale::resource::Mesh* mesh, kale::resource::Material* material);
+
     kale::resource::BoundingBox GetBounds() const override;
     const kale::resource::Mesh* GetMesh() const override;
     const kale::resource::Material* GetMaterial() const override;
@@ -48,6 +54,10 @@ private:
 
     kale::resource::MeshHandle meshHandle_{};
     kale::resource::MaterialHandle materialHandle_{};
+
+    /** 直接指针模式（工厂构造）：非占有，用于 CreateStaticMeshNode */
+    kale::resource::Mesh* meshPtr_ = nullptr;
+    kale::resource::Material* materialPtr_ = nullptr;
 };
 
 }  // namespace kale::scene
