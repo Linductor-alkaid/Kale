@@ -225,11 +225,11 @@
 
 ### 5.3 引用计数与延迟释放
 
-- [ ] Register 时 refCount=1
-- [ ] AddRef 增；Release 减
-- [ ] refCount=0 时加入待释放队列
-- [ ] 下一帧统一 Destroy（避免渲染中使用时被释放）
-- [ ] 实现 `Unload(ResourceHandleAny handle)` 释放资源
+- [x] Register 时 refCount=1
+- [x] AddRef 增；Release 减
+- [x] refCount=0 时加入待释放队列
+- [x] 下一帧统一 Destroy（避免渲染中使用时被释放）
+- [x] 实现 `Unload(ResourceHandleAny handle)` 释放资源
 
 ### 5.4 预加载与批量加载
 

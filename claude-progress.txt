@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase12-12.3 引用计数与延迟释放
+状态：已完成
+- 实现：ResourceCache 在 Release 当 refCount=0 时加入 pendingReleases_、移除 pathToId_、不立即删除条目；新增 ProcessPendingReleases(callback) 对每项调用 callback 后擦除条目。CacheEntry 增加 pendingRelease 避免重复入队。ResourceManager 新增 Unload(ResourceHandleAny)、ProcessPendingReleases()，按 typeId 销毁 Mesh/Texture/Material（device 非空时 DestroyBuffer/DestroyTexture）。placeholder 在两次 Release 后调用 ProcessPendingReleases 仅清 any。
+- 验证：编译通过，ctest 58/58 通过（新增 test_refcount_deferred_release：refCount=0 入队、ProcessPendingReleases 回调、重复 Release 幂等、AddRef 阻止入队、Unload+ProcessPendingReleases 后 Get 为 nullptr、Texture/Material 同流程）。phase12-12.3 status=completed，hold=null。resource_management_layer_todolist 5.3 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase6-6.6～6.12 Render Graph 基础（验证）
 状态：已完成
 - 验证：编译通过，ctest 57/57 通过；phase6-6.6 SubmittedDraw 与 RenderPassContext、phase6-6.7 PassFlags 与 RG 资源句柄、phase6-6.8 RenderPassBuilder、phase6-6.9 RenderGraph 声明式接口、phase6-6.10 应用层显式提交、phase6-6.11 Compile 流程、phase6-6.12 Execute 流程单线程 已由前期实现，本会话运行全量测试通过，将上述 7 项 status 从 verifying 更新为 completed，hold 保持 null。rendering_pipeline_layer_todolist 1.1～1.7 已为已勾选状态。

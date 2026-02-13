@@ -10,8 +10,10 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <typeindex>
 
 #include <kale_device/rdi_types.hpp>
+#include <kale_resource/resource_types.hpp>
 
 namespace kale::resource {
 
@@ -153,6 +155,43 @@ void ResourceManager::ProcessLoadedCallbacks() {
 void ResourceManager::EnqueueLoaded(ResourceHandleAny handle, const std::string& path) {
     std::lock_guard<std::mutex> lock(loadedMutex_);
     pendingLoaded_.emplace_back(handle, path);
+}
+
+void ResourceManager::Unload(ResourceHandleAny handle) {
+    if (!handle.IsValid()) return;
+    cache_.Release(handle);
+}
+
+void ResourceManager::ProcessPendingReleases() {
+    cache_.ProcessPendingReleases([this](ResourceHandleAny h, std::any& a) {
+        if (!a.has_value()) return;
+        if (h.typeId == typeid(Mesh)) {
+            Mesh* ptr = std::any_cast<Mesh*>(a);
+            if (ptr) {
+                if (device_) {
+                    device_->DestroyBuffer(ptr->vertexBuffer);
+                    device_->DestroyBuffer(ptr->indexBuffer);
+                }
+                delete ptr;
+            }
+            a = std::any();
+        } else if (h.typeId == typeid(Texture)) {
+            Texture* ptr = std::any_cast<Texture*>(a);
+            if (ptr) {
+                if (device_ && ptr->handle.IsValid()) {
+                    device_->DestroyTexture(ptr->handle);
+                }
+                delete ptr;
+            }
+            a = std::any();
+        } else if (h.typeId == typeid(Material)) {
+            Material* ptr = std::any_cast<Material*>(a);
+            if (ptr) {
+                delete ptr;
+            }
+            a = std::any();
+        }
+    });
 }
 
 void ResourceManager::CreatePlaceholders() {

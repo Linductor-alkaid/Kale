@@ -2297,11 +2297,11 @@
         "下一帧统一 Destroy（避免渲染中使用时被释放）",
         "实现 Unload(ResourceHandleAny handle) 释放资源"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.2"],
-      "test_verification": "引用计数正确，无悬空引用",
-      "hold": null
+      "hold": null,
+      "test_verification": "引用计数正确，无悬空引用"
     },
     {
       "id": "phase12-12.4",

@@ -135,6 +135,13 @@ target_link_libraries(test_draw_resource_check
 )
 add_test(NAME test_draw_resource_check COMMAND test_draw_resource_check)
 
+add_executable(test_refcount_deferred_release test_refcount_deferred_release.cpp)
+target_link_libraries(test_refcount_deferred_release
+    PRIVATE
+        kale_resource
+)
+add_test(NAME test_refcount_deferred_release COMMAND test_refcount_deferred_release)
+
 add_executable(test_scene_node_ref test_scene_node_ref.cpp)
 target_link_libraries(test_scene_node_ref
     PRIVATE

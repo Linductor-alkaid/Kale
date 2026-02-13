@@ -154,6 +154,16 @@ public:
     std::pair<ResourceHandle<T>, bool> GetOrCreatePlaceholder(const std::string& path);
 
     /**
+     * @brief 释放资源：减少引用计数，refCount=0 时加入待释放队列，由 ProcessPendingReleases 下一帧统一销毁
+     */
+    void Unload(ResourceHandleAny handle);
+
+    /**
+     * @brief 处理待释放队列：销毁本帧 refCount=0 的资源（GPU 资源 + 对象），供主循环每帧末尾调用
+     */
+    void ProcessPendingReleases();
+
+    /**
      * @brief 获取占位符 Mesh（未就绪时 Draw 使用）；CreatePlaceholders 未调用或失败时返回 nullptr
      */
     Mesh* GetPlaceholderMesh();

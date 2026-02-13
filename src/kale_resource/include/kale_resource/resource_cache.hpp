@@ -8,11 +8,13 @@
 #pragma once
 
 #include <any>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 
 #include <kale_resource/resource_handle.hpp>
 
@@ -20,6 +22,7 @@ namespace kale::resource {
 
 /**
  * @brief 缓存条目：资源、路径、引用计数、就绪状态、类型
+ * @note pendingRelease 为 true 表示已加入待释放队列，等待 ProcessPendingReleases 统一销毁
  */
 struct CacheEntry {
     std::any resource;
@@ -27,6 +30,7 @@ struct CacheEntry {
     std::uint32_t refCount = 0;
     bool isReady = false;
     std::type_index typeId{typeid(void)};
+    bool pendingRelease = false;
 };
 
 /**
@@ -144,7 +148,7 @@ public:
     }
 
     /**
-     * @brief 减少引用计数；为 0 时移除条目并清理 pathToId_
+     * @brief 减少引用计数；为 0 时加入待释放队列（不立即销毁，由 ProcessPendingReleases 下一帧统一销毁）
      */
     void Release(ResourceHandleAny handle) {
         if (!handle.IsValid()) return;
@@ -154,11 +158,30 @@ public:
         if (it->second.refCount > 0) {
             --it->second.refCount;
         }
-        if (it->second.refCount == 0) {
+        if (it->second.refCount == 0 && !it->second.pendingRelease) {
+            it->second.pendingRelease = true;
             const std::string pathKey = makePathKey(it->second.path, it->second.typeId);
             pathToId_.erase(pathKey);
+            pendingReleases_.push_back(handle);
+        }
+    }
+
+    /** @brief 待释放回调：(ResourceHandleAny handle, std::any& resource)，调用方负责销毁 GPU 资源并删除对象 */
+    using PendingReleaseCallback = std::function<void(ResourceHandleAny, std::any&)>;
+
+    /**
+     * @brief 处理待释放队列：对每项调用 callback(handle, resource)，然后移除条目；供主循环下一帧调用
+     */
+    void ProcessPendingReleases(PendingReleaseCallback callback) {
+        if (!callback) return;
+        std::lock_guard lock(mutex_);
+        for (ResourceHandleAny h : pendingReleases_) {
+            auto it = entries_.find(h.id);
+            if (it == entries_.end() || it->second.typeId != h.typeId) continue;
+            callback(h, it->second.resource);
             entries_.erase(it);
         }
+        pendingReleases_.clear();
     }
 
     std::uint64_t GetId(ResourceHandleAny handle) const { return handle.id; }
@@ -183,6 +206,7 @@ private:
     mutable std::mutex mutex_;
     std::unordered_map<std::uint64_t, CacheEntry> entries_;
     std::unordered_map<std::string, std::uint64_t> pathToId_;
+    std::vector<ResourceHandleAny> pendingReleases_;
     std::uint64_t nextId_ = 1;
 };
 

@@ -28,6 +28,8 @@ void placeholder() {
     cache.AddRef(ToAny(h));
     cache.Release(ToAny(h));
     cache.Release(ToAny(h));
+    // 延迟释放：仅清除 any（mesh 为栈对象，不 delete）；条目从 cache 移除
+    cache.ProcessPendingReleases([](ResourceHandleAny, std::any& a) { a = std::any(); });
 
     // 验证 IResourceLoader 接口与 ResourceLoadContext 可编译
     ResourceLoadContext ctx;
