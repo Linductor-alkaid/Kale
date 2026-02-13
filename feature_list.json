@@ -2508,7 +2508,7 @@
       "steps": [
         "与 RenderTaskScheduler::ParallelRecordCommands 集成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase9-9.1"],
       "hold": null

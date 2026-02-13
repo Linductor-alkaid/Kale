@@ -73,6 +73,13 @@ public:
         std::vector<std::function<void()>> recordFuncs,
         std::vector<std::vector<size_t>> dependencies);
 
+    /// 同上，但每个录制函数接收 threadIndex，供设备层 BeginCommandList(threadIndex) 使用（Vulkan 每线程独立 CommandPool）。
+    /// maxThreads 限制并发 threadIndex 范围，0 表示不限制（传 0,1,2,... 给各任务）。
+    void ParallelRecordCommands(
+        std::vector<std::function<void(std::uint32_t threadIndex)>> recordFuncs,
+        std::vector<std::vector<size_t>> dependencies,
+        std::uint32_t maxThreads);
+
     /// 提交任务图到底层 executor（等价于 submit_task_graph(*ex_, graph)）
     void SubmitTaskGraph(TaskGraph& graph);
 
@@ -196,6 +203,63 @@ inline void RenderTaskScheduler::ParallelRecordCommands(
         }
         for (auto& f : futures)
             if (f.valid()) f.wait();
+    }
+}
+
+inline void RenderTaskScheduler::ParallelRecordCommands(
+    std::vector<std::function<void(std::uint32_t)>> recordFuncs,
+    std::vector<std::vector<size_t>> dependencies,
+    std::uint32_t maxThreads) {
+    if (!ex_ || recordFuncs.empty()) return;
+
+    const size_t n = recordFuncs.size();
+    if (dependencies.size() != n)
+        dependencies.resize(n);
+
+    std::vector<int> in_degree(n, 0);
+    for (size_t i = 0; i < n; ++i)
+        for (size_t j : dependencies[i])
+            if (j < n) in_degree[i]++;
+
+    std::vector<size_t> level;
+    for (size_t i = 0; i < n; ++i)
+        if (in_degree[i] == 0) level.push_back(i);
+
+    std::vector<std::vector<size_t>> levels;
+    while (!level.empty()) {
+        levels.push_back(level);
+        std::vector<size_t> next;
+        for (size_t idx : level) {
+            for (size_t j = 0; j < n; ++j) {
+                for (size_t d : dependencies[j])
+                    if (d == idx) {
+                        in_degree[j]--;
+                        if (in_degree[j] == 0) next.push_back(j);
+                        break;
+                    }
+            }
+        }
+        level = std::move(next);
+    }
+
+    const std::uint32_t cap = (maxThreads > 0u) ? maxThreads : static_cast<std::uint32_t>(n);
+
+    for (const auto& group : levels) {
+        if (cap == 0u) continue;
+        for (size_t chunkStart = 0; chunkStart < group.size(); chunkStart += cap) {
+            const size_t chunkEnd = std::min(chunkStart + static_cast<size_t>(cap), group.size());
+            std::vector<std::shared_future<void>> futures;
+            futures.reserve(chunkEnd - chunkStart);
+            for (size_t k = chunkStart; k < chunkEnd; ++k) {
+                const size_t idx = group[k];
+                const std::uint32_t threadIndex = static_cast<std::uint32_t>(k - chunkStart);
+                std::function<void(std::uint32_t)> fn = recordFuncs[idx];
+                if (fn)
+                    futures.push_back(ex_->submit([fn, threadIndex]() { fn(threadIndex); }).share());
+            }
+            for (auto& f : futures)
+                if (f.valid()) f.wait();
+        }
     }
 }
 

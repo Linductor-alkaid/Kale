@@ -265,6 +265,8 @@ private:
     std::vector<RenderPassHandle> BuildTopologicalOrder() const;
     /** 按依赖分层：同层内无依赖，层间按拓扑序。仅 Compile 后有效。 */
     std::vector<std::vector<RenderPassHandle>> BuildTopologicalGroups() const;
+    /** 按拓扑序构建依赖：dependencies[i] 为拓扑下标 i 所依赖的拓扑下标列表，供 ParallelRecordCommands 使用。 */
+    std::vector<std::vector<size_t>> BuildTopologicalDependencies() const;
     /** 整理本帧绘制列表（当前为 submittedDraws_ 的引用，预留排序等扩展）。 */
     void BuildFrameDrawList();
     /** 录制单个 Pass，返回 CommandList*（由调用方 EndCommandList 后填入列表或 result）。 */
@@ -546,6 +548,50 @@ inline std::vector<std::vector<RenderPassHandle>> RenderGraph::BuildTopologicalG
     return groups;
 }
 
+inline std::vector<std::vector<size_t>> RenderGraph::BuildTopologicalDependencies() const {
+    const size_t n = passes_.size();
+    std::vector<std::vector<size_t>> dependencies(n);
+    if (n == 0 || topologicalOrder_.size() != n) return dependencies;
+
+    auto writersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (const auto& p : info.colorOutputs) if (p.second == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+            if (info.depthOutput == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+    auto readersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (RGResourceHandle r : info.readTextures) if (r == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+    std::set<std::pair<RenderPassHandle, RenderPassHandle>> edges;
+    for (size_t i = 0; i < resources_.size(); ++i) {
+        RGResourceHandle h = static_cast<RGResourceHandle>(i + 1);
+        std::vector<RenderPassHandle> writers = writersOf(h);
+        std::vector<RenderPassHandle> readers = readersOf(h);
+        for (RenderPassHandle w : writers)
+            for (RenderPassHandle r : readers)
+                if (w != r) edges.insert({w, r});
+        if (writers.size() > 1) {
+            std::sort(writers.begin(), writers.end());
+            for (size_t wi = 0; wi + 1 < writers.size(); ++wi)
+                edges.insert({writers[wi], writers[wi + 1]});
+        }
+    }
+    std::vector<size_t> topoIndex(n, 0);
+    for (size_t i = 0; i < topologicalOrder_.size(); ++i)
+        topoIndex[topologicalOrder_[i]] = i;
+    for (const auto& e : edges)
+        dependencies[topoIndex[e.second]].push_back(topoIndex[e.first]);
+    return dependencies;
+}
+
 inline void RenderGraph::BuildFrameDrawList() {
     // 当前 submittedDraws_ 已由应用层每帧填入，此处预留排序/分组等扩展，无需拷贝。
 }
@@ -621,46 +667,24 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
         return cmdLists;
     }
 
-    std::vector<std::vector<RenderPassHandle>> groups = GetTopologicalGroups();
-    if (groups.empty()) {
-        for (RenderPassHandle passIdx : topologicalOrder_) {
-            kale_device::CommandList* cmd = RecordOnePass(device, passIdx, 0, ctx);
-            if (cmd) cmdLists.push_back(cmd);
-        }
-        return cmdLists;
+    const size_t n = topologicalOrder_.size();
+    std::vector<std::vector<size_t>> dependencies = BuildTopologicalDependencies();
+    if (dependencies.size() != n) dependencies.resize(n);
+
+    std::vector<kale_device::CommandList*> result(n, nullptr);
+    std::vector<std::function<void(std::uint32_t)>> recordFuncs;
+    recordFuncs.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+        const RenderPassHandle passIdx = topologicalOrder_[i];
+        recordFuncs.push_back([this, device, passIdx, i, &result](std::uint32_t threadIndex) {
+            RenderPassContext taskCtx(&submittedDraws_, device, this);
+            kale_device::CommandList* cmd = RecordOnePass(device, passIdx, threadIndex, taskCtx);
+            if (cmd) result[i] = cmd;
+        });
     }
 
-    std::unordered_map<RenderPassHandle, size_t> passToTopoIndex;
-    for (size_t i = 0; i < topologicalOrder_.size(); ++i)
-        passToTopoIndex[topologicalOrder_[i]] = i;
-
-    std::vector<kale_device::CommandList*> result(topologicalOrder_.size(), nullptr);
     const std::uint32_t maxRec = std::max(1u, device->GetCapabilities().maxRecordingThreads);
-    std::vector<std::shared_future<void>> prevLevelFutures;
-
-    for (const auto& group : groups) {
-        std::vector<std::shared_future<void>> groupFutures;
-        for (size_t chunkStart = 0; chunkStart < group.size(); chunkStart += maxRec) {
-            const size_t chunkEnd = std::min(chunkStart + static_cast<size_t>(maxRec), group.size());
-            std::vector<std::shared_future<void>> chunkFutures;
-            for (size_t i = chunkStart; i < chunkEnd; ++i) {
-                const RenderPassHandle passIdx = group[i];
-                const size_t topoPos = passToTopoIndex.at(passIdx);
-                const std::uint32_t threadIndex = static_cast<std::uint32_t>(i - chunkStart);
-                chunkFutures.push_back(scheduler_->SubmitRenderTask(
-                    [this, device, passIdx, topoPos, threadIndex, &result]() {
-                        RenderPassContext taskCtx(&submittedDraws_, device, this);
-                        kale_device::CommandList* cmd = RecordOnePass(device, passIdx, threadIndex, taskCtx);
-                        if (cmd) result[topoPos] = cmd;
-                    },
-                    prevLevelFutures));
-            }
-            for (auto& f : chunkFutures)
-                if (f.valid()) f.wait();
-            for (auto& f : chunkFutures) groupFutures.push_back(std::move(f));
-        }
-        prevLevelFutures = std::move(groupFutures);
-    }
+    scheduler_->ParallelRecordCommands(std::move(recordFuncs), std::move(dependencies), maxRec);
 
     for (kale_device::CommandList* cmd : result)
         if (cmd) cmdLists.push_back(cmd);

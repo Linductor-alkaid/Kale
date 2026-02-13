@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.6 Vulkan 多线程与 RenderTaskScheduler 集成
+状态：已完成
+- 实现：RenderTaskScheduler 新增 ParallelRecordCommands(recordFuncs, dependencies, maxThreads) 重载，录制函数签名为 void(uint32_t threadIndex)，供设备层 BeginCommandList(threadIndex) 使用；同层内按 maxThreads 分块分配 threadIndex。RenderGraph 新增 BuildTopologicalDependencies() 按拓扑序构建依赖表；RecordPasses 在 scheduler 非空时构建 recordFuncs 与 dependencies 并调用 ParallelRecordCommands(recordFuncs, dependencies, maxRec)，与 Vulkan 每线程独立 CommandPool 集成。
+- 验证：编译通过，ctest 87/87 通过。新增 test_vulkan_scheduler_integration：ParallelRecordCommands(threadIndex 重载) 向各任务传递 threadIndex 且 < maxThreads、两层依赖与分块录制正确。phase13-13.6 status=completed，hold=null。device_abstraction_layer_todolist 与 ParallelRecordCommands 集成已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.25 场景管理层错误处理与生命周期
 状态：已完成
 - 实现：SceneManager::GetNode 与 SetActiveScene 注释明确节点销毁后 handle 从注册表移除、调用方须校验 if (!node) continue、场景切换前须解绑 SceneNodeRef。PhysicsSystem/AnimationSystem 已含 if (!node) continue；新增 test_scene_layer_error_lifecycle：GetNode 无效句柄/UnregisterNode 后返回 nullptr、PhysicsSystem 无效 SceneNodeRef 不写回不崩溃、AnimationSystem::GetDependencies 依赖 PhysicsSystem。

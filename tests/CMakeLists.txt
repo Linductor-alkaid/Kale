@@ -701,6 +701,14 @@ target_link_libraries(test_multithread_record_passes
 )
 add_test(NAME test_multithread_record_passes COMMAND test_multithread_record_passes)
 
+add_executable(test_vulkan_scheduler_integration test_vulkan_scheduler_integration.cpp)
+target_link_libraries(test_vulkan_scheduler_integration
+    PRIVATE
+        kale_executor
+        kale_device
+)
+add_test(NAME test_vulkan_scheduler_integration COMMAND test_vulkan_scheduler_integration)
+
 add_executable(test_full_model_loader test_full_model_loader.cpp)
 target_link_libraries(test_full_model_loader
     PRIVATE
