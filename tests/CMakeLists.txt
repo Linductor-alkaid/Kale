@@ -456,4 +456,12 @@ target_link_libraries(test_full_model_loader
 )
 add_test(NAME test_full_model_loader COMMAND test_full_model_loader)
 
+add_executable(test_model_loader_staging test_model_loader_staging.cpp)
+target_link_libraries(test_model_loader_staging
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_model_loader_staging COMMAND test_model_loader_staging)
+
 set_tests_properties(test_gamepad_support PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")

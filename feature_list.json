@@ -904,7 +904,7 @@
         "SubmitUpload 到 vertexBuffer、indexBuffer",
         "上传完成后 Free"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.3",
