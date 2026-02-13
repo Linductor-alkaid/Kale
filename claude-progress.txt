@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase12-12.2 热重载流程
+状态：已完成
+- 实现：ProcessHotReload 检测到 mtime 变化后对每个 (path, typeId) 同步重新 Load；ResourceCache::TakeResource(handle) 取出旧 resource 供销毁；DestroySingleResource 按 Mesh/Texture/Material 销毁 GPU 资源并 delete；SetResource + SetReady 替换为新资源；主线程同步执行避免使用中释放。HotReloadCallback 仍在替换后派发供应用层/ShaderCompiler::Recompile 等扩展。
+- 验证：编译通过，ctest 60/60 通过（test_file_change_detection 增加热重载后 Get 非空、IsReady 断言）。phase12-12.2 status=completed，hold=null。resource_management_layer_todolist 5.2 前三项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase12-12.1 文件变化侦测
 状态：已完成
 - 实现：ResourceCache::ForEachLoadedEntry(f) 枚举已加载且未待释放条目；ResourceManager::EnableHotReload(bool)、IsHotReloadEnabled()、ProcessHotReload()、RegisterHotReloadCallback(HotReloadCallback)；path→lastModified 用 std::filesystem::file_time_type 轮询；Load/LoadAsync 成功时 RecordPathLastModified；ProcessHotReload 检测 mtime 变化后更新映射并派发 HotReloadCallback。

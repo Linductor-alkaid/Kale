@@ -217,9 +217,9 @@
 
 ### 5.2 热重载流程
 
-- [ ] 检测到文件变化时重新 Load
-- [ ] 替换 Cache 中的资源（SetResource）
-- [ ] 若正在使用则等待下一帧或同步
+- [x] 检测到文件变化时重新 Load
+- [x] 替换 Cache 中的资源（SetResource）
+- [x] 若正在使用则等待下一帧或同步
 - [ ] 材质/着色器热重载：替换后重新创建 Pipeline
 - [ ] ShaderCompiler::Recompile 集成
 

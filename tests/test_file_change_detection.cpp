@@ -141,6 +141,9 @@ static void test_file_mtime_change_triggers_callback() {
     TEST_CHECK(changed.size() == 1u);
     TEST_CHECK(changed[0].first.find("hotreload_test.txt") != std::string::npos);
     TEST_CHECK(changed[0].second == typeid(DummyResource));
+    // phase12-12.2：热重载流程应替换 Cache 中的资源，句柄仍有效且就绪
+    TEST_CHECK(rm.Get(h) != nullptr);
+    TEST_CHECK(rm.IsReady(h));
 
     changed.clear();
     rm.ProcessHotReload();

@@ -193,6 +193,42 @@ void ResourceManager::RegisterHotReloadCallback(HotReloadCallback cb) {
     }
 }
 
+namespace {
+
+/** 销毁单条资源（与 ProcessPendingReleases 中逻辑一致）；不修改 cache 条目 */
+void DestroySingleResource(kale_device::IRenderDevice* device,
+                           ResourceHandleAny h, std::any& a) {
+    if (!a.has_value()) return;
+    if (h.typeId == typeid(Mesh)) {
+        Mesh* ptr = std::any_cast<Mesh*>(a);
+        if (ptr) {
+            if (device) {
+                device->DestroyBuffer(ptr->vertexBuffer);
+                device->DestroyBuffer(ptr->indexBuffer);
+            }
+            delete ptr;
+        }
+        a = std::any();
+    } else if (h.typeId == typeid(Texture)) {
+        Texture* ptr = std::any_cast<Texture*>(a);
+        if (ptr) {
+            if (device && ptr->handle.IsValid()) {
+                device->DestroyTexture(ptr->handle);
+            }
+            delete ptr;
+        }
+        a = std::any();
+    } else if (h.typeId == typeid(Material)) {
+        Material* ptr = std::any_cast<Material*>(a);
+        if (ptr) {
+            delete ptr;
+        }
+        a = std::any();
+    }
+}
+
+}  // namespace
+
 void ResourceManager::ProcessHotReload() {
     if (!hotReloadEnabled_) return;
     std::vector<std::pair<std::string, std::type_index>> toNotify;
@@ -213,6 +249,26 @@ void ResourceManager::ProcessHotReload() {
             toNotify.emplace_back(path, typeId);
         }
     });
+
+    // phase12-12.2：检测到变化时重新 Load 并替换 Cache 中的资源（主线程同步，避免使用中释放）
+    for (const auto& [path, typeId] : toNotify) {
+        const std::string resolved = ResolvePath(path);
+        auto handleOpt = cache_.FindByPath(resolved, typeId);
+        if (!handleOpt) continue;
+        IResourceLoader* loader = FindLoader(resolved, typeId);
+        if (!loader) continue;
+        ResourceLoadContext ctx{device_, stagingMgr_, this};
+        std::any newResource = loader->Load(resolved, ctx);
+        if (!newResource.has_value()) {
+            lastError_ = "HotReload Load failed: " + resolved;
+            continue;
+        }
+        std::any oldAny = cache_.TakeResource(*handleOpt);
+        DestroySingleResource(device_, *handleOpt, oldAny);
+        cache_.SetResource(*handleOpt, std::move(newResource));
+        cache_.SetReady(*handleOpt);
+    }
+
     std::vector<HotReloadCallback> callbacks;
     {
         std::lock_guard<std::mutex> lock(hotReloadMutex_);

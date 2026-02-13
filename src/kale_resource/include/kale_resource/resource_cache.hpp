@@ -124,6 +124,21 @@ public:
     }
 
     /**
+     * @brief 取出条目中的资源（用于热重载替换前销毁旧资源）；条目保留，resource 置空、isReady 置 false
+     * @return 原 resource 的 std::any；无条目或 handle 不匹配时返回空 std::any
+     */
+    std::any TakeResource(ResourceHandleAny handle) {
+        if (!handle.IsValid()) return std::any();
+        std::lock_guard lock(mutex_);
+        auto it = entries_.find(handle.id);
+        if (it == entries_.end() || it->second.typeId != handle.typeId)
+            return std::any();
+        std::any old = std::move(it->second.resource);
+        it->second.isReady = false;
+        return old;
+    }
+
+    /**
      * @brief 标记条目就绪
      */
     void SetReady(ResourceHandleAny handle) {
