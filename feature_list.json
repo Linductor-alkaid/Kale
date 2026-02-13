@@ -296,7 +296,7 @@
         "实现 GetLastError() 错误信息（初始化失败时）",
         "实现 CreateRenderDevice(Backend backend) 工厂函数"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.1"
