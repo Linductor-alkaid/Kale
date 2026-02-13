@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase2-2.5 Vulkan Backend 命令与同步（验证）
+状态：已完成
+- 验证：编译通过，ctest 45/45 通过；Vulkan 命令录制与同步、帧流水线已由前期完成，本会话将 phase2-2.5 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase2-2.4 Vulkan Backend 资源（验证）
 状态：已完成
 - 验证：编译通过，ctest 45/45 通过；Vulkan 资源创建与管理已由前期完成，本会话将 phase2-2.4 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。device_abstraction_layer_todolist 2.4 已为已勾选状态。
