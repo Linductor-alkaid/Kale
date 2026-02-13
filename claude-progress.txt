@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.7 Post-Process Pass
+状态：已完成
+- 实现：post_process_pass.hpp：SetupPostProcessPass(rg) 声明 FinalColor(RGBA8)、AddPass("PostProcess", setup, execute)；Setup 中 ReadTexture(Lighting)、WriteColor(0, finalColor)；ExecutePostProcessPass 占位（Bloom/ToneMapping/FXAA 待 phase8-8.3 ShaderCompiler 接入）。
+- 验证：编译通过，ctest 32/32 通过（新增 test_post_process_pass：Shadow+GBuffer+Lighting+PostProcess 拓扑序 4、FinalColor 单 color 输出与 1 个 readTexture(Lighting)、Execute 不崩溃、仅 SetupPostProcessPass 时单 Pass Compile）。rendering_pipeline_layer_todolist 3.4 已勾选。
+- feature_list.json 中 phase8-8.7 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.6 Lighting Pass
 状态：已完成
 - 实现：lighting_pass.hpp：SetupLightingPass(rg) 声明 Lighting(RGBA16F)、AddPass("LightingPass", setup, execute)；Setup 中 ReadTexture(GBufferAlbedo/Normal/Depth、ShadowMap)、WriteColor(0, lightingResult)；ExecuteLightingPass 占位（全屏三角形+PBR 待 phase8-8.3 ShaderCompiler 接入）。

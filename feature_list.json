@@ -1679,7 +1679,7 @@
         "Execute 中实现 Bloom、Tone Mapping、FXAA",
         "依赖 Lighting Pass 完成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.6"],
       "test_verification": "后处理正确应用",

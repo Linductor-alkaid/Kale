@@ -250,4 +250,13 @@ target_link_libraries(test_lighting_pass
 )
 add_test(NAME test_lighting_pass COMMAND test_lighting_pass)
 
+add_executable(test_post_process_pass test_post_process_pass.cpp)
+target_link_libraries(test_post_process_pass
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_post_process_pass COMMAND test_post_process_pass)
+
 set_tests_properties(test_gamepad_support PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")

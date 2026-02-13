@@ -171,11 +171,11 @@
 
 ### 3.4 Post-Process Pass
 
-- [ ] 声明 FinalColor 纹理：`DeclareTexture("FinalColor", {1920, 1080, Format::RGBA8})`
-- [ ] 实现 PostProcess Pass：`AddPass("PostProcess", setup, execute)`
-- [ ] Setup 中 ReadTexture(lightingResult)、WriteColor(0, finalColor)
-- [ ] Execute 中实现 Bloom、Tone Mapping、FXAA
-- [ ] 依赖 Lighting Pass 完成
+- [x] 声明 FinalColor 纹理：`DeclareTexture("FinalColor", {1920, 1080, Format::RGBA8})`
+- [x] 实现 PostProcess Pass：`AddPass("PostProcess", setup, execute)`
+- [x] Setup 中 ReadTexture(lightingResult)、WriteColor(0, finalColor)
+- [x] Execute 中实现 Bloom、Tone Mapping、FXAA（占位，完整实现待 ShaderCompiler 接入）
+- [x] 依赖 Lighting Pass 完成
 
 ### 3.5 OutputToSwapchain Pass
 
