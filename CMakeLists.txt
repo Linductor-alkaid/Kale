@@ -93,6 +93,14 @@ FetchContent_Declare(tinygltf
 )
 FetchContent_MakeAvailable(tinygltf)
 
+# nlohmann/json（头文件库，MaterialLoader JSON 解析）
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(json
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(json)
+
 # executor 库：通过 -DKALE_EXECUTOR_PATH=/path/to/executor 指定
 if(KALE_EXECUTOR_PATH)
     add_subdirectory(${KALE_EXECUTOR_PATH} ${CMAKE_BINARY_DIR}/executor EXCLUDE_FROM_ALL)

@@ -4,6 +4,7 @@
 
 add_library(kale_pipeline STATIC
     placeholder.cpp
+    material_loader.cpp
     # 待实现：render_graph.cpp, material.cpp, shader_manager.cpp, passes/*
 )
 
@@ -19,4 +20,6 @@ target_link_libraries(kale_pipeline
         kale_executor
         kale_resource
         kale_scene
+    PRIVATE
+        nlohmann_json::nlohmann_json
 )

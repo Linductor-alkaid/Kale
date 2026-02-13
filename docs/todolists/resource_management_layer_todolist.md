@@ -172,12 +172,12 @@
 
 ### 4.2 MaterialLoader
 
-- [ ] 实现 `MaterialLoader : public IResourceLoader`
-- [ ] 实现 `LoadJSON(path)` 解析 JSON 材质定义
-- [ ] 格式：`{ "albedo": "textures/brick.png", "metallic": 0.2, ... }`
-- [ ] 依赖加载：解析 textures 数组，调用 `ctx.resourceManager->Load<Texture>(texPath)`
-- [ ] 创建 Material 并设置纹理句柄与参数
-- [ ] 返回 `std::unique_ptr<Material>`
+- [x] 实现 `MaterialLoader : public IResourceLoader`
+- [x] 实现 `LoadJSON(path)` 解析 JSON 材质定义
+- [x] 格式：`{ "albedo": "textures/brick.png", "metallic": 0.2, ... }`
+- [x] 依赖加载：解析 textures 数组，调用 `ctx.resourceManager->Load<Texture>(texPath)`
+- [x] 创建 Material 并设置纹理句柄与参数
+- [x] 返回 `std::unique_ptr<Material>`
 
 ### 4.3 ShaderCompiler
 

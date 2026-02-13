@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.2 MaterialLoader
+状态：已完成
+- 实现：MaterialLoader : public IResourceLoader（kale_pipeline/material_loader.hpp + material_loader.cpp），Supports(.json)、GetResourceType() 返回 typeid(resource::Material)。LoadJSON 读文件、nlohmann::json 解析，PBR 键 albedo/normal/ao/emissive 通过 ctx.resourceManager->Load<Texture>(texPath) 与 Get 得到 Texture* 后 SetAlbedo 等，metallic/roughness 标量 SetParameter。根 CMake 添加 nlohmann/json FetchContent，kale_pipeline 链接 nlohmann_json::nlohmann_json。Loader 返回 std::any(Material*) 供 ResourceManager 登记。
+- 验证：编译通过，ctest 24/24 通过（新增 test_material_loader：Supports/GetResourceType、Load 标量 JSON 得 PBRMaterial、非法/空/缺失路径失败）。resource_management_layer_todolist 4.2 已勾选。
+- feature_list.json 中 phase8-8.2 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.12 Renderable::Draw 与 Material 绑定
 状态：已完成
 - 实现：resource::Material 增加 BindForDraw(cmd, device, instanceData, size) 虚函数（默认空）；pipeline::Material 重写 BindForDraw 调用 BindPipeline、BindDescriptorSet(0 材质级)、AcquireInstanceDescriptorSet + BindDescriptorSet(1)。RenderPassContext 增加 device 与 GetDevice()；RecordPasses 传入 device；Renderable::Draw 增加可选第三参数 IRenderDevice* device；ExecuteForwardPass 调用 Draw(cmd, worldTransform, ctx.GetDevice())；StaticMesh::Draw 调用 material->BindForDraw(cmd, device, &worldTransform, sizeof(glm::mat4))，并 SetPushConstants、BindVertexBuffer、BindIndexBuffer、DrawIndexed。

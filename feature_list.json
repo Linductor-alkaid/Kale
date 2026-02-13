@@ -1575,7 +1575,7 @@
         "创建 Material 并设置纹理句柄与参数",
         "返回 std::unique_ptr<Material>"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.4", "phase7-7.7"],
       "test_verification": "材质从 JSON 正确加载",
