@@ -182,6 +182,15 @@ target_link_libraries(test_file_change_detection
 )
 add_test(NAME test_file_change_detection COMMAND test_file_change_detection)
 
+add_executable(test_resource_management_performance_validation test_resource_management_performance_validation.cpp)
+target_link_libraries(test_resource_management_performance_validation
+    PRIVATE
+        kale_resource
+        kale_executor
+        kale_device
+)
+add_test(NAME test_resource_management_performance_validation COMMAND test_resource_management_performance_validation)
+
 add_executable(test_scene_node_ref test_scene_node_ref.cpp)
 target_link_libraries(test_scene_node_ref
     PRIVATE

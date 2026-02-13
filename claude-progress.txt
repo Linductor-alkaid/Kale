@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.16 资源管理层性能测试与调优
+状态：已完成
+- 实现：新增 test_resource_management_performance_validation：验证 LoadAsync 不阻塞主线程（有 scheduler 时 LoadAsync 返回后主线程可执行再 get()）；Staging Buffer 池化无频繁分配（Allocate/Free/Allocate 复用同一 buffer id，多轮分配不增加 CreateBuffer 次数）；引用计数正确释放（Release + ProcessPendingReleases 后 Get 返回 nullptr）；热重载性能（文件 mtime 变化后一次 ProcessHotReload 内触发回调）。
+- 验证：编译通过，ctest 92/92 通过。phase13-13.16 status=completed，hold=null。resource_management_layer_todolist 5.5 性能测试与调优四项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.15 材质/着色器热重载集成
 状态：已完成
 - 实现：MaterialPipelineReloadRegistry（RegisterMaterial/UnregisterMaterial/OnShaderReloaded）：着色器 path 重载时从 ShaderManager 取新 ShaderHandle、CreatePipeline、Destroy 旧 Pipeline、SetPipeline；ResourceLoadContext 增加 shaderManager（void*）；ResourceManager::SetShaderManager/GetShaderManager，Load 与 ProcessHotReload 时 ctx.shaderManager 传入；MaterialLoader 在 JSON 含 shader_vert/shaders_frag 且 ctx.shaderManager 时 LoadShader 并 CreatePipeline、SetPipeline。ShaderCompiler::Recompile 已由 ShaderManager::ReloadShader 集成。

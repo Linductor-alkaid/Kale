@@ -2676,7 +2676,7 @@
         "验证引用计数正确释放",
         "热重载性能：文件变化到资源更新延迟"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase12-12.4"],
       "hold": null
