@@ -8,11 +8,15 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 namespace kale_device {
+
+/** 实例级 UBO 最大字节数（与 Vulkan minUniformBufferOffsetAlignment 常见值 256 对齐），供设备层 DescriptorSet 池与 Material 使用 */
+constexpr std::size_t kInstanceDescriptorDataSize = 256;
 
 // =============================================================================
 // 资源句柄

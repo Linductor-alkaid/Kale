@@ -164,6 +164,13 @@ target_link_libraries(test_release_frame_resources
 )
 add_test(NAME test_release_frame_resources COMMAND test_release_frame_resources)
 
+add_executable(test_descriptor_set_pool test_descriptor_set_pool.cpp)
+target_link_libraries(test_descriptor_set_pool
+    PRIVATE
+        kale_device
+)
+add_test(NAME test_descriptor_set_pool COMMAND test_descriptor_set_pool)
+
 add_executable(test_pbr_material test_pbr_material.cpp)
 target_link_libraries(test_pbr_material
     PRIVATE

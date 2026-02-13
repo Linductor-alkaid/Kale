@@ -1755,7 +1755,7 @@
         "帧末 ReleaseAllInstanceDescriptorSets 回收",
         "与 Material 实例级 DescriptorSet 生命周期对齐"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.9"],
       "test_verification": "DescriptorSet 池化正常工作",

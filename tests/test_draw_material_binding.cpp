@@ -93,6 +93,15 @@ public:
     void DestroyShader(kale_device::ShaderHandle) override {}
     void DestroyPipeline(kale_device::PipelineHandle) override {}
     void DestroyDescriptorSet(kale_device::DescriptorSetHandle) override {}
+
+    kale_device::DescriptorSetHandle AcquireInstanceDescriptorSet(const void*, std::size_t size) override {
+        if (size > kale_device::kInstanceDescriptorDataSize) size = kale_device::kInstanceDescriptorDataSize;
+        kale_device::DescriptorSetHandle h;
+        h.id = ++nextId_;
+        return h;
+    }
+    void ReleaseInstanceDescriptorSet(kale_device::DescriptorSetHandle) override {}
+
     void UpdateBuffer(kale_device::BufferHandle, const void*, std::size_t, std::size_t) override {}
     void* MapBuffer(kale_device::BufferHandle, std::size_t, std::size_t) override { return nullptr; }
     void UnmapBuffer(kale_device::BufferHandle) override {}

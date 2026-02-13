@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 struct VkCommandBuffer_T;
@@ -29,6 +30,12 @@ struct VkSemaphore_T;
 typedef struct VkSemaphore_T* VkSemaphore;
 struct VkPipelineLayout_T;
 typedef struct VkPipelineLayout_T* VkPipelineLayout;
+struct VkDescriptorSetLayout_T;
+typedef struct VkDescriptorSetLayout_T* VkDescriptorSetLayout;
+struct VkDescriptorSet_T;
+typedef struct VkDescriptorSet_T* VkDescriptorSet;
+struct VkDescriptorPool_T;
+typedef struct VkDescriptorPool_T* VkDescriptorPool;
 
 namespace kale_device {
 
@@ -116,6 +123,10 @@ public:
     void DestroyPipeline(PipelineHandle handle) override;
     void DestroyDescriptorSet(DescriptorSetHandle handle) override;
 
+    DescriptorSetHandle AcquireInstanceDescriptorSet(const void* instanceData,
+                                                     std::size_t size) override;
+    void ReleaseInstanceDescriptorSet(DescriptorSetHandle handle) override;
+
     void UpdateBuffer(BufferHandle handle, const void* data, std::size_t size,
                      std::size_t offset = 0) override;
     void UpdateTexture(TextureHandle handle, const void* data,
@@ -195,6 +206,23 @@ private:
     std::uint64_t nextShaderId_ = 1;
     std::uint64_t nextPipelineId_ = 1;
     std::uint64_t nextDescriptorSetId_ = 1;
+
+    // Phase 9.2: 实例级 DescriptorSet 池（按 layout 分组，此处为单 layout：单 UBO binding）
+    VkDescriptorSetLayout instanceDescriptorSetLayout_ = VK_NULL_HANDLE;
+    std::vector<VkDescriptorPool> instanceDescriptorPools_;
+    struct InstancePoolFreeEntry {
+        std::uint64_t id = 0;
+        VkDescriptorSet set = VK_NULL_HANDLE;
+        BufferHandle bufferHandle{};
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+    };
+    std::vector<InstancePoolFreeEntry> instancePoolFreeList_;
+    std::uint64_t nextInstanceDescriptorSetId_ = 1;  // 仅用于从池新分配时的 id
+    std::unordered_set<std::uint64_t> instancePoolIds_;   // 属于实例池的 set id，Shutdown 时只 erase 不单独 destroy
+    std::unordered_set<std::uint64_t> instancePoolBufferIds_;  // 实例池创建的 buffer id，Shutdown 时统一销毁
+    std::unordered_map<std::uint64_t, BufferHandle> instanceSetIdToBuffer_;  // 实例 set id -> 对应 UBO buffer，Release 时归还池
+    bool CreateInstancePoolLayoutAndPool();
+    void DestroyInstancePoolResources();
 
     // 上传用（UpdateBuffer/UpdateTexture 的 staging 与 copy 命令）
     VkCommandPool uploadCommandPool_ = nullptr;

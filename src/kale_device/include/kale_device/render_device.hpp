@@ -87,6 +87,21 @@ public:
     virtual void DestroyPipeline(PipelineHandle handle) = 0;
     virtual void DestroyDescriptorSet(DescriptorSetHandle handle) = 0;
 
+    /**
+     * 从设备层实例 DescriptorSet 池取得一个 set，写入 instanceData，供 per-instance UBO 使用。
+     * 帧末由上层调用 ReleaseInstanceDescriptorSet 回收到池。
+     * 默认返回无效句柄（未实现池的后端）。
+     */
+    virtual DescriptorSetHandle AcquireInstanceDescriptorSet(const void* instanceData,
+                                                            std::size_t size) {
+        (void)instanceData;
+        (void)size;
+        return DescriptorSetHandle{};
+    }
+
+    /** 将实例 set 归还设备池，供下一帧复用。默认空实现。 */
+    virtual void ReleaseInstanceDescriptorSet(DescriptorSetHandle handle) { (void)handle; }
+
     // --- 资源更新 ---
     virtual void UpdateBuffer(BufferHandle handle, const void* data, std::size_t size,
                              std::size_t offset = 0) = 0;

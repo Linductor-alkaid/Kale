@@ -216,10 +216,10 @@
 
 ### 5.2 DescriptorSet 池化
 
-- [ ] 实现 DescriptorSet 池（按 layout 分组）
-- [ ] `AcquireInstanceDescriptorSet` 从池分配
-- [ ] 帧末 `ReleaseAllInstanceDescriptorSets` 回收
-- [ ] 与 Material 实例级 DescriptorSet 生命周期对齐
+- [x] 实现 DescriptorSet 池（按 layout 分组）
+- [x] `AcquireInstanceDescriptorSet` 从池分配
+- [x] 帧末 `ReleaseAllInstanceDescriptorSets` 回收
+- [x] 与 Material 实例级 DescriptorSet 生命周期对齐
 
 ### 5.3 帧流水线完善
 

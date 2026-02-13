@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 #define TEST_CHECK(cond)                                               \
     do {                                                               \
@@ -69,6 +70,22 @@ public:
     void DestroyPipeline(kale_device::PipelineHandle) override {}
     void DestroyDescriptorSet(kale_device::DescriptorSetHandle) override {}
 
+    kale_device::DescriptorSetHandle AcquireInstanceDescriptorSet(const void*, std::size_t size) override {
+        if (size > kale_device::kInstanceDescriptorDataSize) size = kale_device::kInstanceDescriptorDataSize;
+        kale_device::DescriptorSetHandle h;
+        if (!instancePoolFree_.empty()) {
+            h.id = instancePoolFree_.back();
+            instancePoolFree_.pop_back();
+        } else {
+            nextSetId_++;
+            h.id = nextSetId_;
+        }
+        return h;
+    }
+    void ReleaseInstanceDescriptorSet(kale_device::DescriptorSetHandle handle) override {
+        if (handle.IsValid()) instancePoolFree_.push_back(handle.id);
+    }
+
     void UpdateBuffer(kale_device::BufferHandle, const void*, std::size_t, std::size_t) override {}
     void* MapBuffer(kale_device::BufferHandle, std::size_t, std::size_t) override { return nullptr; }
     void UnmapBuffer(kale_device::BufferHandle) override {}
@@ -103,6 +120,7 @@ private:
     kale_device::DeviceCapabilities caps_;
     std::uint64_t nextSetId_ = 0;
     std::uint64_t nextBufferId_ = 0;
+    std::vector<std::uint64_t> instancePoolFree_;
 };
 
 /** 测试用 Renderable：持有 pipeline::Material*，ReleaseFrameResources 时调用 material->ReleaseFrameResources()。 */

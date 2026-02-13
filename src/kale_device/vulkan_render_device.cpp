@@ -1,13 +1,14 @@
 /**
  * @file vulkan_render_device.cpp
- * @brief VulkanRenderDevice 实现（Phase 2.4 资源创建/销毁/更新）
+ * @brief VulkanRenderDevice 实现（Phase 2.4 资源创建/销毁/更新；Phase 9.2 实例 DescriptorSet 池）
  */
 
+#include <kale_device/rdi_types.hpp>
 #include <kale_device/vulkan_render_device.hpp>
 #include <vulkan/vulkan.h>
 
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 
 namespace kale_device {
 
@@ -96,6 +97,10 @@ void VulkanRenderDevice::Shutdown() {
         if (res.layout != VK_NULL_HANDLE) vkDestroyPipelineLayout(dev, res.layout, nullptr);
     }
     pipelines_.clear();
+
+    for (std::uint64_t id : instancePoolIds_)
+        descriptorSets_.erase(id);
+    DestroyInstancePoolResources();
 
     for (auto& [id, res] : descriptorSets_) {
         if (res.set != VK_NULL_HANDLE) vkFreeDescriptorSets(dev, res.pool, 1, &res.set);
@@ -862,6 +867,10 @@ void VulkanRenderDevice::DestroyPipeline(PipelineHandle handle) {
 
 void VulkanRenderDevice::DestroyDescriptorSet(DescriptorSetHandle handle) {
     if (!handle.IsValid()) return;
+    if (instancePoolIds_.count(handle.id)) {
+        ReleaseInstanceDescriptorSet(handle);
+        return;
+    }
     auto it = descriptorSets_.find(handle.id);
     if (it == descriptorSets_.end()) return;
     VkDevice dev = context_.GetDevice();
@@ -869,6 +878,171 @@ void VulkanRenderDevice::DestroyDescriptorSet(DescriptorSetHandle handle) {
     if (it->second.pool != VK_NULL_HANDLE) vkDestroyDescriptorPool(dev, it->second.pool, nullptr);
     if (it->second.layout != VK_NULL_HANDLE) vkDestroyDescriptorSetLayout(dev, it->second.layout, nullptr);
     descriptorSets_.erase(it);
+}
+
+// =============================================================================
+// Phase 9.2: 实例级 DescriptorSet 池
+// =============================================================================
+
+bool VulkanRenderDevice::CreateInstancePoolLayoutAndPool() {
+    VkDevice dev = context_.GetDevice();
+    constexpr uint32_t kInstancePoolMaxSets = 64;
+
+    if (instanceDescriptorSetLayout_ == VK_NULL_HANDLE) {
+        VkDescriptorSetLayoutBinding binding = {};
+        binding.binding = 0;
+        binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        binding.descriptorCount = 1;
+        binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = 1;
+        layoutInfo.pBindings = &binding;
+
+        if (vkCreateDescriptorSetLayout(dev, &layoutInfo, nullptr, &instanceDescriptorSetLayout_) != VK_SUCCESS)
+            return false;
+    }
+
+    VkDescriptorPoolSize poolSize = {};
+    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize.descriptorCount = kInstancePoolMaxSets;
+    VkDescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    poolInfo.maxSets = kInstancePoolMaxSets;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    if (vkCreateDescriptorPool(dev, &poolInfo, nullptr, &pool) != VK_SUCCESS)
+        return false;
+    instanceDescriptorPools_.push_back(pool);
+    return true;
+}
+
+void VulkanRenderDevice::DestroyInstancePoolResources() {
+    VkDevice dev = context_.GetDevice();
+    for (std::uint64_t bid : instancePoolBufferIds_) {
+        auto it = buffers_.find(bid);
+        if (it != buffers_.end()) {
+            VulkanBufferRes& res = it->second;
+            if (res.mappedPtr) {
+                vkUnmapMemory(dev, res.memory);
+                res.mappedPtr = nullptr;
+            }
+            DestroyVmaOrAllocBuffer(res.buffer, res.memory);
+            buffers_.erase(it);
+        }
+    }
+    instancePoolBufferIds_.clear();
+    for (auto& entry : instancePoolFreeList_) {
+        (void)entry;
+    }
+    instancePoolFreeList_.clear();
+    for (VkDescriptorPool pool : instanceDescriptorPools_) {
+        if (pool != VK_NULL_HANDLE)
+            vkDestroyDescriptorPool(dev, pool, nullptr);
+    }
+    instanceDescriptorPools_.clear();
+    if (instanceDescriptorSetLayout_ != VK_NULL_HANDLE) {
+        vkDestroyDescriptorSetLayout(dev, instanceDescriptorSetLayout_, nullptr);
+        instanceDescriptorSetLayout_ = VK_NULL_HANDLE;
+    }
+    instancePoolIds_.clear();
+}
+
+DescriptorSetHandle VulkanRenderDevice::AcquireInstanceDescriptorSet(const void* instanceData,
+                                                                      std::size_t size) {
+    if (!context_.IsInitialized()) return DescriptorSetHandle{};
+    if (size > kInstanceDescriptorDataSize) size = kInstanceDescriptorDataSize;
+
+    if (!CreateInstancePoolLayoutAndPool()) return DescriptorSetHandle{};
+
+    VkDevice dev = context_.GetDevice();
+    std::uint64_t id = 0;
+    VkDescriptorSet set = VK_NULL_HANDLE;
+    BufferHandle bufferHandle{};
+    VkDescriptorPool pool = VK_NULL_HANDLE;
+    bool fromFreeList = false;
+
+    if (!instancePoolFreeList_.empty()) {
+        InstancePoolFreeEntry entry = instancePoolFreeList_.back();
+        instancePoolFreeList_.pop_back();
+        id = entry.id;
+        set = entry.set;
+        bufferHandle = entry.bufferHandle;
+        pool = entry.pool;
+        fromFreeList = true;
+    } else {
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &instanceDescriptorSetLayout_;
+
+        for (VkDescriptorPool p : instanceDescriptorPools_) {
+            allocInfo.descriptorPool = p;
+            if (vkAllocateDescriptorSets(dev, &allocInfo, &set) == VK_SUCCESS) {
+                pool = p;
+                break;
+            }
+        }
+        if (set == VK_NULL_HANDLE) {
+            if (!CreateInstancePoolLayoutAndPool()) return DescriptorSetHandle{};
+            pool = instanceDescriptorPools_.back();
+            allocInfo.descriptorPool = pool;
+            if (vkAllocateDescriptorSets(dev, &allocInfo, &set) != VK_SUCCESS)
+                return DescriptorSetHandle{};
+        }
+        id = nextInstanceDescriptorSetId_++;
+        instancePoolIds_.insert(id);
+
+        BufferDesc bufDesc;
+        bufDesc.size = kInstanceDescriptorDataSize;
+        bufDesc.usage = BufferUsage::Uniform;
+        bufDesc.cpuVisible = true;
+        bufferHandle = CreateBuffer(bufDesc, nullptr);
+        if (!bufferHandle.IsValid()) {
+            vkFreeDescriptorSets(dev, pool, 1, &set);
+            return DescriptorSetHandle{};
+        }
+        instancePoolBufferIds_.insert(bufferHandle.id);
+        descriptorSets_[id] = VulkanDescriptorSetRes{ set, instanceDescriptorSetLayout_, pool };
+        WriteDescriptorSetBuffer(DescriptorSetHandle{id}, 0, bufferHandle, 0, kInstanceDescriptorDataSize);
+    }
+
+    instanceSetIdToBuffer_[id] = bufferHandle;
+    if (fromFreeList)
+        descriptorSets_[id] = VulkanDescriptorSetRes{ set, instanceDescriptorSetLayout_, pool };
+
+    if (instanceData && size > 0)
+        UpdateBuffer(bufferHandle, instanceData, size, 0);
+
+    DescriptorSetHandle h;
+    h.id = id;
+    return h;
+}
+
+void VulkanRenderDevice::ReleaseInstanceDescriptorSet(DescriptorSetHandle handle) {
+    if (!handle.IsValid()) return;
+    auto it = descriptorSets_.find(handle.id);
+    if (it == descriptorSets_.end()) return;
+    if (instancePoolIds_.count(handle.id) == 0) return;
+
+    BufferHandle bufferHandle{};
+    auto bufIt = instanceSetIdToBuffer_.find(handle.id);
+    if (bufIt != instanceSetIdToBuffer_.end()) {
+        bufferHandle = bufIt->second;
+        instanceSetIdToBuffer_.erase(bufIt);
+    }
+
+    InstancePoolFreeEntry entry;
+    entry.id = handle.id;
+    entry.set = it->second.set;
+    entry.pool = it->second.pool;
+    entry.bufferHandle = bufferHandle;
+    descriptorSets_.erase(it);
+    instancePoolFreeList_.push_back(entry);
 }
 
 void VulkanRenderDevice::WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,

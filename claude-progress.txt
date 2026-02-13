@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase9-9.2 DescriptorSet 池化
+状态：已完成
+- 实现：IRenderDevice 增加 AcquireInstanceDescriptorSet(instanceData, size)、ReleaseInstanceDescriptorSet(handle) 默认空/无效实现；VulkanRenderDevice 实现实例池：按单 layout（单 UBO binding）分组，CreateInstancePoolLayoutAndPool 创建 layout 与 VkDescriptorPool，Acquire 从 freeList 复用或新分配 set+buffer，Release 归还 freeList；Material 改为调用 device->AcquireInstanceDescriptorSet/ReleaseInstanceDescriptorSet，移除 Material 内 instancePool_，保留 instanceInUse_ 与 deviceForInstancePool_；rdi_types 增加 kInstanceDescriptorDataSize。
+- 验证：编译通过，ctest 36/36 通过（新增 test_descriptor_set_pool：默认设备 Acquire 返回无效、池化设备 Acquire 有效且 Release 后复用；test_instance_descriptor_set、test_release_frame_resources、test_draw_material_binding 的 Mock 实现 Acquire/Release）。
+- feature_list.json 中 phase9-9.2 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 5.2 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.1 完整 ModelLoader
 状态：已完成
 - 实现：Mesh 增加 materialPaths（std::vector<std::string>），SubMesh::materialIndex 索引到 materialPaths；ModelLoader::LoadGLTF 中从 glTF 文件路径取 baseDir，遍历 model.materials 生成 materialPaths（baseDir/materials/name.json 或 material_N.json），无材质时 materialPaths 为单元素 ""。

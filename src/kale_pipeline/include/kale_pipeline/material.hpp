@@ -3,7 +3,7 @@
  * @brief 渲染管线层材质基类：纹理/参数绑定、Shader、Pipeline
  *
  * 与 rendering_pipeline_layer_design.md 5.5、phase7-7.7 对齐。
- * 材质级 DescriptorSet：phase7-7.8；实例级池化：phase7-7.9。
+ * 材质级 DescriptorSet：phase7-7.8；实例级池化：phase7-7.9（Material 侧）；设备层池：phase9-9.2。
  */
 
 #pragma once
@@ -21,8 +21,8 @@
 
 namespace kale::pipeline {
 
-/** 实例数据 UBO 最大字节数（满足 Vulkan minUniformBufferOffsetAlignment 常见值 256） */
-constexpr std::size_t kInstanceDescriptorDataSize = 256;
+/** 实例数据 UBO 最大字节数，与 kale_device::kInstanceDescriptorDataSize 一致 */
+constexpr std::size_t kInstanceDescriptorDataSize = kale_device::kInstanceDescriptorDataSize;
 
 /**
  * 材质基类（继承 resource::Material 以支持 ReleaseFrameResources 多态）。
@@ -113,9 +113,9 @@ public:
     }
 
     /**
-     * 从池中取得一个实例级 DescriptorSet，写入 instanceData（如 worldTransform），返回 set 句柄。
-     * 用于 per-instance UBO；Draw 时调用，帧末由 ReleaseAllInstanceDescriptorSets 回收。
-     * @param device 用于创建 set/buffer（池为空时）
+     * 从设备层实例 DescriptorSet 池取得一个 set，写入 instanceData（如 worldTransform），返回 set 句柄。
+     * 用于 per-instance UBO；Draw 时调用，帧末由 ReleaseAllInstanceDescriptorSets 回收到设备池。
+     * @param device 设备层池由 device 管理（phase9-9.2）
      * @param instanceData 实例数据指针，可为 nullptr（仅分配 set，不写入）
      * @param size 实例数据字节数，不超过 kInstanceDescriptorDataSize
      * @return 有效句柄供 BindDescriptorSet 使用；无效表示 device 为空或分配失败
@@ -125,42 +125,18 @@ public:
         const void* instanceData,
         std::size_t size) {
         if (!device) return kale_device::DescriptorSetHandle{};
-        if (size > kInstanceDescriptorDataSize) size = kInstanceDescriptorDataSize;
-        InstanceSetEntry entry;
-        if (!instancePool_.empty()) {
-            entry = instancePool_.back();
-            instancePool_.pop_back();
-        } else {
-            kale_device::DescriptorSetLayoutDesc layout;
-            layout.bindings.push_back({
-                0u,
-                kale_device::DescriptorType::UniformBuffer,
-                kale_device::ShaderStage::Vertex,
-                1u
-            });
-            entry.set = device->CreateDescriptorSet(layout);
-            if (!entry.set.IsValid()) return kale_device::DescriptorSetHandle{};
-            kale_device::BufferDesc bufDesc;
-            bufDesc.size = kInstanceDescriptorDataSize;
-            bufDesc.usage = kale_device::BufferUsage::Uniform;
-            bufDesc.cpuVisible = true;
-            entry.buffer = device->CreateBuffer(bufDesc, nullptr);
-            if (!entry.buffer.IsValid()) {
-                device->DestroyDescriptorSet(entry.set);
-                return kale_device::DescriptorSetHandle{};
-            }
-            device->WriteDescriptorSetBuffer(entry.set, 0, entry.buffer, 0, kInstanceDescriptorDataSize);
-        }
-        if (instanceData && size > 0)
-            device->UpdateBuffer(entry.buffer, instanceData, size, 0);
-        instanceInUse_.push_back(entry);
-        return entry.set;
+        deviceForInstancePool_ = device;
+        kale_device::DescriptorSetHandle h = device->AcquireInstanceDescriptorSet(instanceData, size);
+        if (h.IsValid())
+            instanceInUse_.push_back(h);
+        return h;
     }
 
-    /** 将本帧通过 AcquireInstanceDescriptorSet 分配的所有 set 回收到池，供下一帧复用。 */
+    /** 将本帧通过 AcquireInstanceDescriptorSet 分配的所有 set 归还设备池，供下一帧复用。 */
     void ReleaseAllInstanceDescriptorSets() {
-        for (auto& e : instanceInUse_)
-            instancePool_.push_back(e);
+        for (kale_device::DescriptorSetHandle h : instanceInUse_)
+            if (h.IsValid() && deviceForInstancePool_)
+                deviceForInstancePool_->ReleaseInstanceDescriptorSet(h);
         instanceInUse_.clear();
     }
 
@@ -191,13 +167,10 @@ protected:
     std::unordered_map<std::string, kale::resource::Texture*> textures_;
     std::unordered_map<std::string, std::vector<std::byte>> parameters_;
 
-    /** 实例级 DescriptorSet 池：每个条目为 (DescriptorSet, UniformBuffer)。 */
-    struct InstanceSetEntry {
-        kale_device::DescriptorSetHandle set{};
-        kale_device::BufferHandle buffer{};
-    };
-    std::vector<InstanceSetEntry> instancePool_;
-    std::vector<InstanceSetEntry> instanceInUse_;
+    /** 本帧通过 AcquireInstanceDescriptorSet 取得的 set 句柄，帧末归还设备池。 */
+    std::vector<kale_device::DescriptorSetHandle> instanceInUse_;
+    /** 用于 ReleaseAllInstanceDescriptorSets 时调用 ReleaseInstanceDescriptorSet。 */
+    kale_device::IRenderDevice* deviceForInstancePool_ = nullptr;
 };
 
 }  // namespace kale::pipeline
