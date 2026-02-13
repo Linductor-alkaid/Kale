@@ -166,10 +166,12 @@ public:
 private:
     friend class VulkanCommandList;
     bool CreateVmaOrAllocBuffer(const BufferDesc& desc, const void* data,
-                                VkBuffer* outBuffer, VkDeviceMemory* outMemory, VkDeviceSize* outSize);
+                                VkBuffer* outBuffer, VkDeviceMemory* outMemory, VkDeviceSize* outSize,
+                                void** outVmaAllocation = nullptr);
     void DestroyVmaOrAllocBuffer(VkBuffer buffer, VkDeviceMemory memory);
     bool CreateTextureInternal(const TextureDesc& desc, const void* data,
-                              VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outView);
+                              VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outView,
+                              void** outVmaAllocation = nullptr);
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags props);
     /** 深度仅 Pass：按 format 缓存 VkRenderPass，供 Shadow Pass 等使用 */
     VkRenderPass GetOrCreateDepthOnlyRenderPass(VkFormat depthFormat);
@@ -224,6 +226,11 @@ private:
     std::unordered_map<std::uint64_t, BufferHandle> instanceSetIdToBuffer_;  // 实例 set id -> 对应 UBO buffer，Release 时归还池
     bool CreateInstancePoolLayoutAndPool();
     void DestroyInstancePoolResources();
+
+    // VMA（phase13-13.5）：不暴露 VMA 头文件，用 void* 存储
+    void* vmaAllocator_ = nullptr;
+    std::unordered_map<std::uint64_t, void*> bufferAllocations_;
+    std::unordered_map<std::uint64_t, void*> textureAllocations_;
 
     // 上传用（UpdateBuffer/UpdateTexture 的 staging 与 copy 命令）
     VkCommandPool uploadCommandPool_ = nullptr;

@@ -1,7 +1,12 @@
 /**
  * @file vulkan_render_device.cpp
- * @brief VulkanRenderDevice 实现（Phase 2.4 资源创建/销毁/更新；Phase 9.2 实例 DescriptorSet 池）
+ * @brief VulkanRenderDevice 实现（Phase 2.4 资源创建/销毁/更新；Phase 9.2 实例 DescriptorSet 池；Phase 13.5 VMA 集成）
  */
+
+#ifdef KALE_USE_VMA
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+#endif
 
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/vulkan_render_device.hpp>
@@ -50,6 +55,22 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
         return false;
     }
 
+#ifdef KALE_USE_VMA
+    {
+        VmaAllocatorCreateInfo vmaInfo = {};
+        vmaInfo.instance = context_.GetInstance();
+        vmaInfo.physicalDevice = context_.GetPhysicalDevice();
+        vmaInfo.device = context_.GetDevice();
+        vmaInfo.vulkanApiVersion = VK_API_VERSION_1_0;
+        VmaAllocator alloc = nullptr;
+        if (vmaCreateAllocator(&vmaInfo, &alloc) != VK_SUCCESS) {
+            Shutdown();
+            return false;
+        }
+        vmaAllocator_ = alloc;
+    }
+#endif
+
     // 从 VkPhysicalDevice 查询设备能力（phase11-11.7）
     {
         VkPhysicalDevice physical = context_.GetPhysicalDevice();
@@ -89,12 +110,7 @@ void VulkanRenderDevice::Shutdown() {
 
     VkDevice dev = context_.GetDevice();
 
-    for (auto& [id, res] : buffers_) {
-        if (res.buffer != VK_NULL_HANDLE) vkDestroyBuffer(dev, res.buffer, nullptr);
-        if (res.memory != VK_NULL_HANDLE) vkFreeMemory(dev, res.memory, nullptr);
-    }
-    buffers_.clear();
-
+    // 先销毁依赖 texture 的 framebuffers 和 render passes
     for (auto& [id, fb] : depthFramebuffers_) {
         if (fb != VK_NULL_HANDLE) vkDestroyFramebuffer(dev, fb, nullptr);
     }
@@ -104,12 +120,53 @@ void VulkanRenderDevice::Shutdown() {
     }
     depthOnlyRenderPasses_.clear();
 
+#ifdef KALE_USE_VMA
+    VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator_);
+    if (alloc) {
+        for (auto& [id, res] : buffers_) {
+            auto it = bufferAllocations_.find(id);
+            if (it != bufferAllocations_.end()) {
+                if (res.mappedPtr) vmaUnmapMemory(alloc, static_cast<VmaAllocation>(it->second));
+                vmaDestroyBuffer(alloc, res.buffer, static_cast<VmaAllocation>(it->second));
+            } else {
+                if (res.mappedPtr) vkUnmapMemory(dev, res.memory);
+                if (res.buffer != VK_NULL_HANDLE) vkDestroyBuffer(dev, res.buffer, nullptr);
+                if (res.memory != VK_NULL_HANDLE) vkFreeMemory(dev, res.memory, nullptr);
+            }
+        }
+        bufferAllocations_.clear();
+        buffers_.clear();
+        for (auto& [id, res] : textures_) {
+            if (res.view != VK_NULL_HANDLE) vkDestroyImageView(dev, res.view, nullptr);
+            auto it = textureAllocations_.find(id);
+            if (it != textureAllocations_.end())
+                vmaDestroyImage(alloc, res.image, static_cast<VmaAllocation>(it->second));
+            else {
+                if (res.image != VK_NULL_HANDLE) vkDestroyImage(dev, res.image, nullptr);
+                if (res.memory != VK_NULL_HANDLE) vkFreeMemory(dev, res.memory, nullptr);
+            }
+        }
+        textureAllocations_.clear();
+        textures_.clear();
+        vmaDestroyAllocator(alloc);
+        vmaAllocator_ = nullptr;
+    } else
+#endif
+    {
+    for (auto& [id, res] : buffers_) {
+        if (res.mappedPtr) vkUnmapMemory(dev, res.memory);
+        if (res.buffer != VK_NULL_HANDLE) vkDestroyBuffer(dev, res.buffer, nullptr);
+        if (res.memory != VK_NULL_HANDLE) vkFreeMemory(dev, res.memory, nullptr);
+    }
+    buffers_.clear();
+
     for (auto& [id, res] : textures_) {
         if (res.view != VK_NULL_HANDLE) vkDestroyImageView(dev, res.view, nullptr);
         if (res.image != VK_NULL_HANDLE) vkDestroyImage(dev, res.image, nullptr);
         if (res.memory != VK_NULL_HANDLE) vkFreeMemory(dev, res.memory, nullptr);
     }
     textures_.clear();
+    }
 
     for (auto& [id, res] : shaders_) {
         if (res.module != VK_NULL_HANDLE) vkDestroyShaderModule(dev, res.module, nullptr);
@@ -246,7 +303,7 @@ VkFramebuffer VulkanRenderDevice::GetOrCreateDepthFramebuffer(TextureHandle dept
 
 bool VulkanRenderDevice::CreateVmaOrAllocBuffer(const BufferDesc& desc, const void* data,
                                                 VkBuffer* outBuffer, VkDeviceMemory* outMemory,
-                                                VkDeviceSize* outSize) {
+                                                VkDeviceSize* outSize, void** outVmaAllocation) {
     VkDevice dev = context_.GetDevice();
     VkDeviceSize size = desc.size;
     if (size == 0) return false;
@@ -261,6 +318,61 @@ bool VulkanRenderDevice::CreateVmaOrAllocBuffer(const BufferDesc& desc, const vo
     bufInfo.size = size;
     bufInfo.usage = usage;
     bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+#ifdef KALE_USE_VMA
+    if (vmaAllocator_ && outVmaAllocation) {
+        VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator_);
+        VmaAllocationCreateInfo allocCreateInfo = {};
+        allocCreateInfo.usage = desc.cpuVisible ? VMA_MEMORY_USAGE_CPU_TO_GPU : VMA_MEMORY_USAGE_GPU_ONLY;
+        if (desc.cpuVisible)
+            allocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        VmaAllocation allocation = nullptr;
+        VkResult err = vmaCreateBuffer(alloc, &bufInfo, &allocCreateInfo, outBuffer, &allocation, nullptr);
+        if (err != VK_SUCCESS) return false;
+        *outVmaAllocation = allocation;
+        *outMemory = VK_NULL_HANDLE;
+        *outSize = size;
+        if (data && desc.cpuVisible) {
+            void* mapped = nullptr;
+            if (vmaMapMemory(alloc, allocation, &mapped) == VK_SUCCESS && mapped)
+                memcpy(mapped, data, size);
+        } else if (data && !desc.cpuVisible) {
+            VmaAllocationCreateInfo stagingInfo = {};
+            stagingInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            stagingInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            VkBuffer stagingBuf = VK_NULL_HANDLE;
+            VmaAllocation stagingAlloc = nullptr;
+            VkBufferCreateInfo stagingBufInfo = bufInfo;
+            stagingBufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            if (vmaCreateBuffer(alloc, &stagingBufInfo, &stagingInfo, &stagingBuf, &stagingAlloc, nullptr) != VK_SUCCESS) {
+                vmaDestroyBuffer(alloc, *outBuffer, allocation);
+                *outBuffer = VK_NULL_HANDLE;
+                *outVmaAllocation = nullptr;
+                return false;
+            }
+            void* mapped = nullptr;
+            vmaMapMemory(alloc, stagingAlloc, &mapped);
+            if (mapped) memcpy(mapped, data, size);
+            vmaUnmapMemory(alloc, stagingAlloc);
+            vkResetCommandBuffer(uploadCommandBuffer_, 0);
+            VkCommandBufferBeginInfo beginInfo = {};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            vkBeginCommandBuffer(uploadCommandBuffer_, &beginInfo);
+            VkBufferCopy copy = {};
+            copy.size = size;
+            vkCmdCopyBuffer(uploadCommandBuffer_, stagingBuf, *outBuffer, 1, &copy);
+            vkEndCommandBuffer(uploadCommandBuffer_);
+            VkSubmitInfo submit = {};
+            submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submit.commandBufferCount = 1;
+            submit.pCommandBuffers = &uploadCommandBuffer_;
+            vkQueueSubmit(context_.GetGraphicsQueue(), 1, &submit, VK_NULL_HANDLE);
+            vkQueueWaitIdle(context_.GetGraphicsQueue());
+            vmaDestroyBuffer(alloc, stagingBuf, stagingAlloc);
+        }
+        return true;
+    }
+#endif
 
     VkResult err = vkCreateBuffer(dev, &bufInfo, nullptr, outBuffer);
     if (err != VK_SUCCESS) return false;
@@ -377,16 +489,24 @@ BufferHandle VulkanRenderDevice::CreateBuffer(const BufferDesc& desc, const void
     if (!context_.IsInitialized()) return BufferHandle{};
     if (desc.size == 0) return BufferHandle{};
 
+    void* vmaAlloc = nullptr;
     VkBuffer buf = VK_NULL_HANDLE;
     VkDeviceMemory mem = VK_NULL_HANDLE;
     VkDeviceSize size = 0;
-    if (!CreateVmaOrAllocBuffer(desc, data, &buf, &mem, &size)) {
+    if (!CreateVmaOrAllocBuffer(desc, data, &buf, &mem, &size, &vmaAlloc)) {
         return BufferHandle{};
     }
 
     std::uint64_t id = nextBufferId_++;
     void* mappedPtr = nullptr;
-    if (desc.cpuVisible) {
+#ifdef KALE_USE_VMA
+    if (vmaAlloc && desc.cpuVisible) {
+        VmaAllocationInfo allocInfo = {};
+        vmaGetAllocationInfo(static_cast<VmaAllocator>(vmaAllocator_), static_cast<VmaAllocation>(vmaAlloc), &allocInfo);
+        mappedPtr = allocInfo.pMappedData;
+    }
+#endif
+    if (!mappedPtr && desc.cpuVisible && mem != VK_NULL_HANDLE) {
         VkDevice dev = context_.GetDevice();
         void* mapped = nullptr;
         if (vkMapMemory(dev, mem, 0, size, 0, &mapped) == VK_SUCCESS) {
@@ -395,6 +515,7 @@ BufferHandle VulkanRenderDevice::CreateBuffer(const BufferDesc& desc, const void
         }
     }
     buffers_[id] = VulkanBufferRes{ buf, mem, size, desc.cpuVisible, mappedPtr };
+    if (vmaAlloc) bufferAllocations_[id] = vmaAlloc;
     BufferHandle h;
     h.id = id;
     return h;
@@ -402,7 +523,7 @@ BufferHandle VulkanRenderDevice::CreateBuffer(const BufferDesc& desc, const void
 
 bool VulkanRenderDevice::CreateTextureInternal(const TextureDesc& desc, const void* data,
                                                VkImage* outImage, VkDeviceMemory* outMemory,
-                                               VkImageView* outView) {
+                                               VkImageView* outView, void** outVmaAllocation) {
     VkDevice dev = context_.GetDevice();
     VkFormat format = ToVkFormat(desc.format);
     if (format == VK_FORMAT_UNDEFINED) return false;
@@ -424,6 +545,110 @@ bool VulkanRenderDevice::CreateTextureInternal(const TextureDesc& desc, const vo
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     if (desc.isCube) imageInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+
+#ifdef KALE_USE_VMA
+    if (vmaAllocator_ && outVmaAllocation) {
+        VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator_);
+        VmaAllocationCreateInfo allocCreateInfo = {};
+        allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        VmaAllocation allocation = nullptr;
+        VkResult err = vmaCreateImage(alloc, &imageInfo, &allocCreateInfo, outImage, &allocation, nullptr);
+        if (err != VK_SUCCESS) return false;
+        *outVmaAllocation = allocation;
+        *outMemory = VK_NULL_HANDLE;
+        VkImageViewCreateInfo viewInfo = {};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image = *outImage;
+        viewInfo.viewType = desc.isCube ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = format;
+        VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        else if (format >= VK_FORMAT_D16_UNORM && format <= VK_FORMAT_D32_SFLOAT)
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        viewInfo.subresourceRange.aspectMask = aspectMask;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = desc.mipLevels;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = desc.arrayLayers;
+        err = vkCreateImageView(dev, &viewInfo, nullptr, outView);
+        if (err != VK_SUCCESS) {
+            vmaDestroyImage(alloc, *outImage, allocation);
+            *outImage = VK_NULL_HANDLE;
+            *outVmaAllocation = nullptr;
+            return false;
+        }
+        if (data && aspectMask == VK_IMAGE_ASPECT_COLOR_BIT) {
+            size_t pixelSize = 4;
+            if (format == VK_FORMAT_R32G32B32A32_SFLOAT) pixelSize = 16;
+            size_t totalSize = static_cast<size_t>(desc.width) * desc.height * desc.arrayLayers * pixelSize;
+            VmaAllocationCreateInfo stagingInfo = {};
+            stagingInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+            stagingInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            VkBufferCreateInfo bufInfo = {};
+            bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bufInfo.size = totalSize;
+            bufInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+            bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            VkBuffer stagingBuf = VK_NULL_HANDLE;
+            VmaAllocation stagingAlloc = nullptr;
+            if (vmaCreateBuffer(alloc, &bufInfo, &stagingInfo, &stagingBuf, &stagingAlloc, nullptr) != VK_SUCCESS) {
+                vkDestroyImageView(dev, *outView, nullptr);
+                vmaDestroyImage(alloc, *outImage, allocation);
+                *outImage = VK_NULL_HANDLE;
+                *outView = VK_NULL_HANDLE;
+                *outVmaAllocation = nullptr;
+                return false;
+            }
+            void* mapped = nullptr;
+            vmaMapMemory(alloc, stagingAlloc, &mapped);
+            if (mapped) memcpy(mapped, data, totalSize);
+            vmaUnmapMemory(alloc, stagingAlloc);
+            vkResetCommandBuffer(uploadCommandBuffer_, 0);
+            VkCommandBufferBeginInfo bi = {};
+            bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            vkBeginCommandBuffer(uploadCommandBuffer_, &bi);
+            VkImageMemoryBarrier barrier = {};
+            barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+            barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.srcAccessMask = 0;
+            barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.image = *outImage;
+            barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            barrier.subresourceRange.baseMipLevel = 0;
+            barrier.subresourceRange.levelCount = desc.mipLevels;
+            barrier.subresourceRange.baseArrayLayer = 0;
+            barrier.subresourceRange.layerCount = desc.arrayLayers;
+            vkCmdPipelineBarrier(uploadCommandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+            VkBufferImageCopy region = {};
+            region.bufferOffset = 0;
+            region.bufferRowLength = 0;
+            region.bufferImageHeight = 0;
+            region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+            region.imageSubresource.mipLevel = 0;
+            region.imageSubresource.baseArrayLayer = 0;
+            region.imageSubresource.layerCount = desc.arrayLayers;
+            region.imageOffset = { 0, 0, 0 };
+            region.imageExtent = { desc.width, desc.height, desc.depth };
+            vkCmdCopyBufferToImage(uploadCommandBuffer_, stagingBuf, *outImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+            vkCmdPipelineBarrier(uploadCommandBuffer_, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+            vkEndCommandBuffer(uploadCommandBuffer_);
+            VkSubmitInfo si = {};
+            si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            si.commandBufferCount = 1;
+            si.pCommandBuffers = &uploadCommandBuffer_;
+            vkQueueSubmit(context_.GetGraphicsQueue(), 1, &si, VK_NULL_HANDLE);
+            vkQueueWaitIdle(context_.GetGraphicsQueue());
+            vmaDestroyBuffer(alloc, stagingBuf, stagingAlloc);
+        }
+        return true;
+    }
+#endif
 
     VkResult err = vkCreateImage(dev, &imageInfo, nullptr, outImage);
     if (err != VK_SUCCESS) return false;
@@ -586,10 +811,11 @@ TextureHandle VulkanRenderDevice::CreateTexture(const TextureDesc& desc, const v
     if (!context_.IsInitialized()) return TextureHandle{};
     if (desc.width == 0 || desc.height == 0) return TextureHandle{};
 
+    void* texVmaAlloc = nullptr;
     VkImage image = VK_NULL_HANDLE;
     VkDeviceMemory memory = VK_NULL_HANDLE;
     VkImageView view = VK_NULL_HANDLE;
-    if (!CreateTextureInternal(desc, data, &image, &memory, &view)) {
+    if (!CreateTextureInternal(desc, data, &image, &memory, &view, &texVmaAlloc)) {
         return TextureHandle{};
     }
 
@@ -600,6 +826,7 @@ TextureHandle VulkanRenderDevice::CreateTexture(const TextureDesc& desc, const v
     res.view = view;
     res.desc = desc;
     textures_[id] = std::move(res);
+    if (texVmaAlloc) textureAllocations_[id] = texVmaAlloc;
     TextureHandle h;
     h.id = id;
     return h;
@@ -649,10 +876,15 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     if (stages.empty()) return PipelineHandle{};
 
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+    VkPushConstantRange pushConstantRange = {};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = 256;  // glm::mat4 + padding, 与 kInstanceDescriptorDataSize 对齐
     VkPipelineLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutInfo.setLayoutCount = 0;
-    layoutInfo.pushConstantRangeCount = 0;
+    layoutInfo.pushConstantRangeCount = 1;
+    layoutInfo.pPushConstantRanges = &pushConstantRange;
     if (vkCreatePipelineLayout(dev, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
         return PipelineHandle{};
 
@@ -845,6 +1077,17 @@ void VulkanRenderDevice::DestroyBuffer(BufferHandle handle) {
     auto it = buffers_.find(handle.id);
     if (it == buffers_.end()) return;
     VulkanBufferRes& res = it->second;
+#ifdef KALE_USE_VMA
+    auto allocIt = bufferAllocations_.find(handle.id);
+    if (allocIt != bufferAllocations_.end()) {
+        VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator_);
+        if (alloc && res.mappedPtr) vmaUnmapMemory(alloc, static_cast<VmaAllocation>(allocIt->second));
+        if (alloc) vmaDestroyBuffer(alloc, res.buffer, static_cast<VmaAllocation>(allocIt->second));
+        bufferAllocations_.erase(allocIt);
+        buffers_.erase(it);
+        return;
+    }
+#endif
     if (res.mappedPtr) {
         vkUnmapMemory(context_.GetDevice(), res.memory);
         res.mappedPtr = nullptr;
@@ -865,6 +1108,16 @@ void VulkanRenderDevice::DestroyTexture(TextureHandle handle) {
     if (it == textures_.end()) return;
     VkDevice dev = context_.GetDevice();
     if (it->second.view != VK_NULL_HANDLE) vkDestroyImageView(dev, it->second.view, nullptr);
+#ifdef KALE_USE_VMA
+    auto allocIt = textureAllocations_.find(handle.id);
+    if (allocIt != textureAllocations_.end()) {
+        VmaAllocator alloc = static_cast<VmaAllocator>(vmaAllocator_);
+        if (alloc) vmaDestroyImage(alloc, it->second.image, static_cast<VmaAllocation>(allocIt->second));
+        textureAllocations_.erase(allocIt);
+        textures_.erase(it);
+        return;
+    }
+#endif
     if (it->second.image != VK_NULL_HANDLE) vkDestroyImage(dev, it->second.image, nullptr);
     if (it->second.memory != VK_NULL_HANDLE) vkFreeMemory(dev, it->second.memory, nullptr);
     textures_.erase(it);

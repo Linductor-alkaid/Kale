@@ -138,6 +138,25 @@ if(NOT TARGET executor::executor)
     message(WARNING "executor 未找到。安装 deb 包后可直接 cmake 构建；或设置 -DKALE_EXECUTOR_PATH=path/to/executor")
 endif()
 
+# Vulkan Memory Allocator（VMA）：Vulkan 设备层 GPU 内存管理
+# 仅当使用 Vulkan 时集成；kale_device 在链接 Vulkan 时链接 VMA
+if(TARGET Vulkan::Vulkan)
+  set(VMA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(VMA_BUILD_UTILS OFF CACHE BOOL "" FORCE)
+  set(VMA_INSTALL OFF CACHE BOOL "" FORCE)
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/VulkanMemoryAllocator/CMakeLists.txt")
+    message(STATUS "Using VMA from third_party/VulkanMemoryAllocator")
+    add_subdirectory(third_party/VulkanMemoryAllocator third_party/VulkanMemoryAllocator EXCLUDE_FROM_ALL)
+  else()
+    include(FetchContent)
+    FetchContent_Declare(VulkanMemoryAllocator
+      GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+      GIT_TAG        v3.0.1
+    )
+    FetchContent_MakeAvailable(VulkanMemoryAllocator)
+  endif()
+endif()
+
 # 子模块：各层独立 CMake，按依赖顺序添加
 add_subdirectory(src/kale_device)
 add_subdirectory(src/kale_executor)

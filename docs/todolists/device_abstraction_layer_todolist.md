@@ -116,7 +116,7 @@
 - [x] 实现 Fence：`CreateFence`、`WaitForFence`、`ResetFence`
 - [x] 实现 Semaphore：`CreateSemaphore`
 - [x] 实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal
-- [ ] 集成 VMA (Vulkan Memory Allocator)
+- [x] 集成 VMA (Vulkan Memory Allocator)
 
 ### 2.6 Vulkan Swapchain 与呈现
 

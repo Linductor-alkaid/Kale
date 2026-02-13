@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770982211_1091062 ===
+功能：phase13-13.5 集成 VMA
+状态：已完成
+- 实现：根 CMake 在 Vulkan 可用时集成 VulkanMemoryAllocator（third_party 或 FetchContent v3.0.1）；kale_device 链接 VulkanMemoryAllocator 并定义 KALE_USE_VMA。VulkanRenderDevice：Initialize 中创建 VmaAllocator，Shutdown 中先销毁 depthFramebuffers_/depthOnlyRenderPasses_，再按 bufferAllocations_/textureAllocations_ 用 vmaDestroyBuffer/vmaDestroyImage 释放并 vmaDestroyAllocator。CreateVmaOrAllocBuffer、CreateTextureInternal 在 outVmaAllocation 非空时走 vmaCreateBuffer/vmaCreateImage（含 staging 上传与 MAPPED_BIT）；CreateBuffer/CreateTexture 保存 allocation 到 bufferAllocations_/textureAllocations_，cpuVisible 时通过 vmaGetAllocationInfo 取 pMappedData。DestroyBuffer/DestroyTexture 对 VMA 分配走 vmaUnmapMemory+vmaDestroyBuffer、vmaDestroyImage。
+- 验证：编译通过，ctest 75/75 通过（新增 test_vma_integration：CreateBuffer device-local/cpuVisible+数据、CreateTexture 无数据/带数据、MapBuffer 内容一致、Destroy 不崩溃）。phase13-13.5 status=completed，hold=null。device_abstraction_layer_todolist 2.5 集成 VMA 已勾选。
+
+=== 2026-02-13 (session) agent_1770982211_1091062 ===
 功能：phase13-13.1 FrameData 与引擎主循环集成
 状态：已完成
 - 实现：RenderEngine::Run() 在每帧 Present 后调用 GetVisibleObjectsFrameData()->end_frame()，实现帧边界同步（主线程帧末 swap，worker 使用稳定快照）；与引擎主循环集成示例即主循环内 end_frame 调用。

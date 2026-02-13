@@ -2493,7 +2493,7 @@
       "steps": [
         "集成 VMA (Vulkan Memory Allocator)"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "hold": null
