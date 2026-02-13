@@ -2062,7 +2062,7 @@
         "重新创建受影响的 Pipeline",
         "与 resource_management_layer 的热重载对齐"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase10-10.8"],
       "test_verification": "着色器热重载正常工作",

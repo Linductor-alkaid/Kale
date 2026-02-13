@@ -254,10 +254,10 @@
 
 ### 5.2 着色器热重载集成
 
-- [ ] 集成文件监控（inotify/kqueue/FileSystemWatcher）或轮询
-- [ ] 着色器文件变更时调用 ReloadShader
-- [ ] 重新创建受影响的 Pipeline
-- [ ] 与 resource_management_layer 的热重载对齐
+- [x] 集成文件监控（inotify/kqueue/FileSystemWatcher）或轮询
+- [x] 着色器文件变更时调用 ReloadShader
+- [x] 重新创建受影响的 Pipeline
+- [x] 与 resource_management_layer 的热重载对齐
 
 ### 5.3 多相机/多视口
 

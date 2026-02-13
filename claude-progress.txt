@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.9 着色器热重载集成
+状态：已完成
+- 实现：ShaderManager 增加 EnableHotReload(bool)、IsHotReloadEnabled()、ProcessHotReload()、RegisterReloadCallback(ShaderReloadedCallback)；轮询已加载 path 的 mtime（pathLastModified_），LoadShader 成功时 RecordPathLastModified(path)；ProcessHotReload 检测 mtime 变化后调用 ReloadShader(path) 并派发回调，供应用层/材质层重新创建受影响的 Pipeline；与 resource_management_layer 的 EnableHotReload/ProcessHotReload 对齐。
+- 验证：编译通过，ctest 69/69 通过（新增 test_shader_hot_reload：EnableHotReload/IsHotReloadEnabled、ProcessHotReload 禁用不操作、LoadShader 后 mtime 变更触发 ReloadShader 与回调、再次 ProcessHotReload 无变化不回调）。phase10-10.9 status=completed，hold=null。rendering_pipeline_layer_todolist 5.2 着色器热重载集成四项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.8 Shader Manager
 状态：已完成
 - 实现：kale_pipeline 新增 shader_manager.hpp、src/shader_manager.cpp：ShaderManager 类，SetCompiler/SetDevice；LoadShader(path, stage, device) 经 ShaderCompiler::Compile 编译并缓存，缓存键 MakeCacheKey(path, stage) 即 path+"|"+Stage 后缀；GetShader(name) 按 name 查找；ReloadShader(path) 对前缀匹配 path+"|" 的条目 DestroyShader 后 Recompile 更新；shaders_ 为 unordered_map<string, ShaderHandle>。

@@ -372,6 +372,15 @@ target_link_libraries(test_shader_manager
 )
 add_test(NAME test_shader_manager COMMAND test_shader_manager)
 
+add_executable(test_shader_hot_reload test_shader_hot_reload.cpp)
+target_link_libraries(test_shader_hot_reload
+    PRIVATE
+        kale_pipeline
+        kale_resource
+        kale_device
+)
+add_test(NAME test_shader_hot_reload COMMAND test_shader_hot_reload)
+
 add_executable(test_render_engine_init test_render_engine_init.cpp)
 target_link_libraries(test_render_engine_init
     PRIVATE

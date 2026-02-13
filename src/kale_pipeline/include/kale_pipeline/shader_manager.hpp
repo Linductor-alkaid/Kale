@@ -8,8 +8,12 @@
 
 #pragma once
 
+#include <filesystem>
+#include <functional>
+#include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/render_device.hpp>
@@ -64,6 +68,21 @@ public:
      */
     void ReloadShader(const std::string& path);
 
+    /** 启用/禁用热重载轮询（与 resource_management_layer 的 EnableHotReload 对齐） */
+    void EnableHotReload(bool enable);
+    /** 是否已启用热重载 */
+    bool IsHotReloadEnabled() const { return hotReloadEnabled_; }
+
+    /**
+     * 每帧调用：检查已加载着色器路径的文件时间戳，若变化则调用 ReloadShader(path)
+     * 并派发 RegisterReloadCallback 注册的回调（供应用层/材质层重新创建受影响的 Pipeline）。
+     */
+    void ProcessHotReload();
+
+    /** 热重载成功后回调：(path)；用于重新创建受影响的 Pipeline */
+    using ShaderReloadedCallback = std::function<void(const std::string& path)>;
+    void RegisterReloadCallback(ShaderReloadedCallback cb);
+
     /** 构造与 LoadShader/GetShader 一致的缓存键，便于外部保存 name */
     static std::string MakeCacheKey(const std::string& path, kale_device::ShaderStage stage);
 
@@ -76,7 +95,13 @@ private:
     std::unordered_map<std::string, kale_device::ShaderHandle> shaders_;
     std::string lastError_;
 
+    bool hotReloadEnabled_ = false;
+    std::unordered_map<std::string, std::filesystem::file_time_type> pathLastModified_;
+    std::vector<ShaderReloadedCallback> reloadCallbacks_;
+    mutable std::mutex hotReloadMutex_;
+
     void SetLastError(const std::string& msg) { lastError_ = msg; }
+    void RecordPathLastModified(const std::string& path);
     static std::string StageSuffix(kale_device::ShaderStage stage);
     static kale_device::ShaderStage StageFromSuffix(const std::string& suffix);
 };

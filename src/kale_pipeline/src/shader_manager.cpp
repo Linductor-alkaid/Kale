@@ -6,11 +6,24 @@
 #include <kale_pipeline/shader_manager.hpp>
 #include <kale_resource/shader_compiler.hpp>
 
+#include <optional>
+#include <filesystem>
 #include <type_traits>
 
 namespace kale::pipeline {
 
 namespace {
+
+std::optional<std::filesystem::file_time_type> GetFileModificationTime(const std::string& path) {
+    try {
+        std::filesystem::path p(path);
+        if (!std::filesystem::exists(p) || !std::filesystem::is_regular_file(p))
+            return std::nullopt;
+        return std::filesystem::last_write_time(p);
+    } catch (...) {
+        return std::nullopt;
+    }
+}
 
 const char* kStageSuffixes[] = {
     "Vertex", "Fragment", "Compute", "Geometry", "TessControl", "TessEvaluation"
@@ -64,6 +77,7 @@ kale_device::ShaderHandle ShaderManager::LoadShader(const std::string& path,
     } else {
         shaders_[key] = handle;
     }
+    RecordPathLastModified(path);
     return handle;
 }
 
@@ -88,6 +102,63 @@ void ShaderManager::ReloadShader(const std::string& path) {
         if (handle.IsValid())
             device_->DestroyShader(handle);
         handle = compiler_->Recompile(compiler_->ResolvePath(path), stage, device_);
+    }
+}
+
+void ShaderManager::RecordPathLastModified(const std::string& path) {
+    if (!compiler_) return;
+    std::string resolved = compiler_->ResolvePath(path);
+    auto mt = GetFileModificationTime(resolved);
+    if (!mt) return;
+    std::lock_guard<std::mutex> lock(hotReloadMutex_);
+    pathLastModified_[path] = *mt;
+}
+
+void ShaderManager::EnableHotReload(bool enable) {
+    hotReloadEnabled_ = enable;
+}
+
+void ShaderManager::ProcessHotReload() {
+    if (!hotReloadEnabled_ || !compiler_) return;
+    std::vector<std::string> toReload;
+    {
+        std::lock_guard<std::mutex> lock(hotReloadMutex_);
+        for (const auto& [key, handle] : shaders_) {
+            (void)handle;
+            size_t pos = key.find('|');
+            if (pos == std::string::npos) continue;
+            std::string path = key.substr(0, pos);
+            std::string resolved = compiler_->ResolvePath(path);
+            auto current = GetFileModificationTime(resolved);
+            if (!current) continue;
+            auto it = pathLastModified_.find(path);
+            if (it == pathLastModified_.end()) {
+                pathLastModified_[path] = *current;
+                continue;
+            }
+            if (*current != it->second) {
+                it->second = *current;
+                toReload.push_back(path);
+            }
+        }
+    }
+    for (const std::string& path : toReload) {
+        ReloadShader(path);
+        std::vector<ShaderReloadedCallback> callbacks;
+        {
+            std::lock_guard<std::mutex> lock(hotReloadMutex_);
+            callbacks = reloadCallbacks_;
+        }
+        for (const auto& cb : callbacks) {
+            if (cb) cb(path);
+        }
+    }
+}
+
+void ShaderManager::RegisterReloadCallback(ShaderReloadedCallback cb) {
+    if (cb) {
+        std::lock_guard<std::mutex> lock(hotReloadMutex_);
+        reloadCallbacks_.push_back(std::move(cb));
     }
 }
 
