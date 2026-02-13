@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase12-12.9 场景切换与悬空引用
+状态：已完成
+- 实现：SceneManager::IsDescendantOf(parent, node)；EntityManager::UnbindSceneNodeRefsPointingToSubtree(sceneMgr, subtreeRoot)；SwitchToNewLevel(sceneMgr, entityMgr, newRoot) 先解绑再 SetActiveScene；SetActiveScene(root, em) 在 Debug 下若 em 非空则遍历 EntitiesWith<SceneNodeRef> 检查指向即将销毁子树的 ref 并 assert。新增 scene_switch.hpp/cpp。
+- 验证：编译通过，ctest 59/59 通过（新增 test_scene_switch：IsDescendantOf 自/子/孙/无关/null、Unbind 与 SwitchToNewLevel 后旧 handle 为 nullptr 且两实体 SceneNodeRef 被移除、新场景为活动根、可重新绑定）。phase12-12.9 status=completed，hold=null。scene_management_layer_todolist 5.3 与场景切换流程已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase12-12.3 引用计数与延迟释放
 状态：已完成
 - 实现：ResourceCache 在 Release 当 refCount=0 时加入 pendingReleases_、移除 pathToId_、不立即删除条目；新增 ProcessPendingReleases(callback) 对每项调用 callback 后擦除条目。CacheEntry 增加 pendingRelease 避免重复入队。ResourceManager 新增 Unload(ResourceHandleAny)、ProcessPendingReleases()，按 typeId 销毁 Mesh/Texture/Material（device 非空时 DestroyBuffer/DestroyTexture）。placeholder 在两次 Release 后调用 ProcessPendingReleases 仅清 any。

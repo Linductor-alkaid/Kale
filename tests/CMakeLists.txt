@@ -221,6 +221,13 @@ target_link_libraries(test_writeback_flow
 )
 add_test(NAME test_writeback_flow COMMAND test_writeback_flow)
 
+add_executable(test_scene_switch test_scene_switch.cpp)
+target_link_libraries(test_scene_switch
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_scene_switch COMMAND test_scene_switch)
+
 add_executable(test_material_base test_material_base.cpp)
 target_link_libraries(test_material_base
     PRIVATE

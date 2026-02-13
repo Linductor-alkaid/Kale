@@ -8,8 +8,11 @@
 #include <kale_scene/camera_node.hpp>
 #include <kale_scene/renderable.hpp>
 #include <kale_scene/frustum.hpp>
+#include <kale_scene/entity_manager.hpp>
+#include <kale_scene/scene_node_ref.hpp>
 #include <kale_resource/resource_types.hpp>
 
+#include <cassert>
 #include <functional>
 
 namespace kale::scene {
@@ -69,7 +72,25 @@ std::unique_ptr<SceneNode> SceneManager::CreateScene() {
     return root;
 }
 
-void SceneManager::SetActiveScene(std::unique_ptr<SceneNode> root) {
+bool SceneManager::IsDescendantOf(SceneNode* parent, SceneNode* node) {
+    if (!parent || !node) return false;
+    for (SceneNode* n = node; n; n = n->GetParent())
+        if (n == parent) return true;
+    return false;
+}
+
+void SceneManager::SetActiveScene(std::unique_ptr<SceneNode> root, EntityManager* em) {
+#ifndef NDEBUG
+    if (em && activeRoot_) {
+        for (Entity e : em->EntitiesWith<SceneNodeRef>()) {
+            SceneNodeRef* ref = em->GetComponent<SceneNodeRef>(e);
+            if (!ref || !ref->IsValid()) continue;
+            SceneNode* n = ref->GetNode(const_cast<SceneManager*>(this));
+            if (n && IsDescendantOf(activeRoot_, n))
+                assert(0 && "SetActiveScene: Entity has SceneNodeRef pointing to node in scene being destroyed; unbind first (e.g. SwitchToNewLevel or UnbindSceneNodeRefsPointingToSubtree).");
+        }
+    }
+#endif
     if (activeRootStorage_) {
         UnregisterSubtree(activeRootStorage_.get());
         activeRootStorage_.reset();

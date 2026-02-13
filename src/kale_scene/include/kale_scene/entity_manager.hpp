@@ -24,6 +24,7 @@
 namespace kale::scene {
 
 class SceneManager;
+class SceneNode;
 class EntityManager;
 
 /**
@@ -107,6 +108,14 @@ public:
     /// 返回同时拥有 Components... 的所有实体（无序）。至少一个组件类型时有效。
     template <typename... Components>
     std::vector<Entity> EntitiesWith() const;
+
+    /**
+     * 解除所有指向给定子树节点的 SceneNodeRef 组件（用于场景切换前先解绑，避免悬空引用）。
+     * 对每个拥有 SceneNodeRef 的实体，若其引用的节点是 subtreeRoot 自身或其子节点，则移除该组件。
+     * @param sceneMgr 场景管理器，用于解析 handle
+     * @param subtreeRoot 即将销毁的子树根（如当前活动场景根）
+     */
+    void UnbindSceneNodeRefsPointingToSubtree(SceneManager* sceneMgr, SceneNode* subtreeRoot);
 
     void RegisterSystem(std::unique_ptr<System> system);
 

@@ -2410,7 +2410,7 @@
         "Debug 模式下 SetActiveScene 可遍历 Entity 的 SceneNodeRef，检查是否有 handle 指向即将销毁的节点",
         "若有则断言或日志，强制调用方先解绑"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.6"],
       "test_verification": "场景切换无悬空引用",

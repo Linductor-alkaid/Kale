@@ -20,6 +20,7 @@
 namespace kale::scene {
 
 class CameraNode;
+class EntityManager;
 
 /**
  * 场景管理器：管理场景图节点句柄注册表与活动场景生命周期。
@@ -43,8 +44,9 @@ public:
     /**
      * 销毁旧场景（递归从 handleRegistry 移除并释放），激活新场景并取得所有权。
      * @param root 新场景根节点所有权；若为 nullptr 则仅销毁当前活动场景
+     * @param em 可选；Debug 模式下非空时，若存在 Entity 的 SceneNodeRef 指向即将销毁的子树则 assert
      */
-    void SetActiveScene(std::unique_ptr<SceneNode> root);
+    void SetActiveScene(std::unique_ptr<SceneNode> root, EntityManager* em = nullptr);
 
     /**
      * 每帧更新：递归计算活动场景中所有节点的世界矩阵。
@@ -102,6 +104,14 @@ public:
      * @param node 已注册的节点指针；若未注册则无操作
      */
     void UnregisterNode(SceneNode* node);
+
+    /**
+     * 判断 node 是否为 parent 自身或其子树中的节点（即从 node 沿父指针能到达 parent）。
+     * @param parent 子树根节点
+     * @param node 待判断节点
+     * @return node == parent 或 node 在 parent 的子树中时返回 true
+     */
+    static bool IsDescendantOf(SceneNode* parent, SceneNode* node);
 
 private:
     /** 递归计算世界矩阵：world = parentWorld * node->GetLocalTransform()，并递归子节点 */

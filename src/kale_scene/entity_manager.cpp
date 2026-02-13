@@ -4,6 +4,8 @@
  */
 
 #include <kale_scene/entity_manager.hpp>
+#include <kale_scene/scene_manager.hpp>
+#include <kale_scene/scene_node_ref.hpp>
 
 #include <algorithm>
 #include <queue>
@@ -66,6 +68,20 @@ void EntityManager::RemoveComponent(Entity entity, std::type_index type) {
     auto it = storages_.find(type);
     if (it != storages_.end())
         it->second->Remove(entity);
+}
+
+void EntityManager::UnbindSceneNodeRefsPointingToSubtree(SceneManager* sceneMgr, SceneNode* subtreeRoot) {
+    if (!sceneMgr || !subtreeRoot) return;
+    std::vector<Entity> toRemove;
+    for (Entity e : EntitiesWith<SceneNodeRef>()) {
+        SceneNodeRef* ref = GetComponent<SceneNodeRef>(e);
+        if (!ref || !ref->IsValid()) continue;
+        SceneNode* n = ref->GetNode(sceneMgr);
+        if (n && SceneManager::IsDescendantOf(subtreeRoot, n))
+            toRemove.push_back(e);
+    }
+    for (Entity e : toRemove)
+        RemoveComponent(e, std::type_index(typeid(SceneNodeRef)));
 }
 
 void EntityManager::RegisterSystem(std::unique_ptr<System> system) {

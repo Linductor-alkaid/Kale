@@ -199,10 +199,10 @@
 
 ### 5.3 场景切换与悬空引用
 
-- [ ] 实现 `SwitchToNewLevel` 流程：先解绑旧场景 SceneNodeRef → SetActiveScene → 重新绑定
-- [ ] 实现 `IsDescendantOf(parent, node)` 判断节点是否属于某子树
-- [ ] Debug 模式下 SetActiveScene 可遍历 Entity 的 SceneNodeRef，检查是否有 handle 指向即将销毁的节点
-- [ ] 若有则断言或日志，强制调用方先解绑
+- [x] 实现 `SwitchToNewLevel` 流程：先解绑旧场景 SceneNodeRef → SetActiveScene → 重新绑定
+- [x] 实现 `IsDescendantOf(parent, node)` 判断节点是否属于某子树
+- [x] Debug 模式下 SetActiveScene 可遍历 Entity 的 SceneNodeRef，检查是否有 handle 指向即将销毁的节点
+- [x] 若有则断言或日志，强制调用方先解绑
 
 ### 5.4 UpdateBounds（可选）
 
@@ -220,9 +220,9 @@
 
 ### 场景切换流程
 
-- [ ] 遍历 `EntitiesWith<SceneNodeRef>`，若 handle 指向旧场景子树则 `RemoveComponent<SceneNodeRef>`
-- [ ] 调用 `SetActiveScene(newSceneRoot)`
-- [ ] 为新场景中需要逻辑控制的节点重新绑定 SceneNodeRef
+- [x] 遍历 `EntitiesWith<SceneNodeRef>`，若 handle 指向旧场景子树则 `RemoveComponent<SceneNodeRef>`
+- [x] 调用 `SetActiveScene(newSceneRoot)`
+- [x] 为新场景中需要逻辑控制的节点重新绑定 SceneNodeRef
 
 ### 统一更新顺序
 

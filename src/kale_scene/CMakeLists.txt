@@ -6,6 +6,7 @@ add_library(kale_scene STATIC
     placeholder.cpp
     camera_node.cpp
     scene_manager.cpp
+    scene_switch.cpp
     frustum.cpp
     static_mesh.cpp
     entity_manager.cpp
