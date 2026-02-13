@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.5 GBuffer Pass
+状态：已完成
+- 实现：gbuffer_pass.hpp：SetupGBufferPass(rg) 声明 GBufferAlbedo(RGBA8)、GBufferNormal(RGBA16F)、GBufferDepth(D24S8)，AddPass("GBufferPass", setup, execute)；Setup 中 WriteColor(0,1)、WriteDepth、ReadTexture(GetHandleByName("ShadowMap")) 声明依赖；ExecuteGBufferPass 遍历 GetDrawsForPass(PassFlags::Opaque) 调用 renderable->Draw。无 Shadow 时仍可单独 Compile（单 Pass）。
+- 验证：编译通过，ctest 30/30 通过（新增 test_gbuffer_pass：SetupShadowPass+SetupGBufferPass+Compile、GetHandleByName 三个 GBuffer 纹理、拓扑序 2 Pass、GBuffer Pass 双 color+depth+readTextures、Execute 不崩溃；仅 SetupGBufferPass 时单 Pass Compile）。rendering_pipeline_layer_todolist 3.2 已勾选。
+- feature_list.json 中 phase8-8.5 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.4 Shadow Pass
 状态：已完成
 - 实现：shadow_pass.hpp：SetupShadowPass(rg, shadowMapSize) 声明 ShadowMap（TextureDesc D32 + DepthAttachment）、AddPass("ShadowPass", WriteDepth(shadowMap), ExecuteShadowPass)；ExecuteShadowPass 遍历 GetDrawsForPass(PassFlags::ShadowCaster) 调用 renderable->Draw；ShadowOrthoProjectionMatrix 提供正交投影矩阵。RenderGraph::RecordPasses 支持深度仅 Pass（hasRenderTarget = color 非空或 depth 有效时 BeginRenderPass）。Vulkan：GetOrCreateDepthOnlyRenderPass(VkFormat)、GetOrCreateDepthFramebuffer(TextureHandle)，VulkanCommandList::BeginRenderPass 在仅 depth 时使用上述 RP/FB 并 clear depth；DestroyTexture/Shutdown 释放 depth 缓存。

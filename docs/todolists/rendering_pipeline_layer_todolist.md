@@ -153,12 +153,12 @@
 
 ### 3.2 GBuffer Pass
 
-- [ ] 声明 GBuffer 纹理：Albedo、Normal、Depth（RGBA8、RGBA16F、D24S8）
-- [ ] 实现 GBuffer Pass：`AddPass("GBufferPass", setup, execute)`
-- [ ] Setup 中 `WriteColor(0, gbufferAlbedo)`、`WriteColor(1, gbufferNormal)`、`WriteDepth(gbufferDepth)`
-- [ ] Setup 中 `ReadTexture(shadowMap)` 声明依赖
-- [ ] Execute 中遍历 `GetDrawsForPass(PassFlags::Opaque)` 绘制
-- [ ] 依赖 Shadow Pass 完成
+- [x] 声明 GBuffer 纹理：Albedo、Normal、Depth（RGBA8、RGBA16F、D24S8）
+- [x] 实现 GBuffer Pass：`AddPass("GBufferPass", setup, execute)`
+- [x] Setup 中 `WriteColor(0, gbufferAlbedo)`、`WriteColor(1, gbufferNormal)`、`WriteDepth(gbufferDepth)`
+- [x] Setup 中 `ReadTexture(shadowMap)` 声明依赖
+- [x] Execute 中遍历 `GetDrawsForPass(PassFlags::Opaque)` 绘制
+- [x] 依赖 Shadow Pass 完成
 
 ### 3.3 Lighting Pass
 

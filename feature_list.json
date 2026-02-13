@@ -1638,7 +1638,7 @@
         "Execute 中遍历 GetDrawsForPass(PassFlags::Opaque) 绘制",
         "依赖 Shadow Pass 完成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.4"],
       "test_verification": "G-Buffer 正确渲染",
