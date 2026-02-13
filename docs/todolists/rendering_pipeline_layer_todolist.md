@@ -26,9 +26,9 @@
 
 ### 1.2 PassFlags 与 RG 资源句柄
 
-- [ ] 定义 `PassFlags` 枚举（ShadowCaster、Opaque、Transparent、All）
-- [ ] 定义 `RGResourceHandle = uint64_t` 类型（RG 内部逻辑句柄）
-- [ ] Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle
+- [x] 定义 `PassFlags` 枚举（ShadowCaster、Opaque、Transparent、All）
+- [x] 定义 `RGResourceHandle = uint64_t` 类型（RG 内部逻辑句柄）
+- [x] Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle
 
 ### 1.3 RenderPassBuilder
 

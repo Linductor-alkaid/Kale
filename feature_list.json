@@ -818,7 +818,7 @@
         "定义 RGResourceHandle = uint64_t 类型（RG 内部逻辑句柄）",
         "Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.5"],
       "test_verification": "Pass 标志和资源句柄定义正确"
