@@ -50,6 +50,8 @@ public:
     void CopyBufferToTexture(kale_device::BufferHandle, std::size_t,
                              kale_device::TextureHandle, std::uint32_t,
                              std::uint32_t, std::uint32_t, std::uint32_t) override {}
+    void CopyTextureToTexture(kale_device::TextureHandle, kale_device::TextureHandle,
+                              std::uint32_t, std::uint32_t) override {}
     void Barrier(const std::vector<kale_device::TextureHandle>&) override {}
     void ClearColor(kale_device::TextureHandle, const float*) override {}
     void ClearDepth(kale_device::TextureHandle, float, std::uint8_t) override {}

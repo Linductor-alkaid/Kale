@@ -40,7 +40,7 @@ inline void SetupPostProcessPass(RenderGraph& rg) {
     finalColorDesc.width = 0;
     finalColorDesc.height = 0;
     finalColorDesc.format = Format::RGBA8_UNORM;
-    finalColorDesc.usage = TextureUsage::ColorAttachment | TextureUsage::Sampled;
+    finalColorDesc.usage = TextureUsage::ColorAttachment | TextureUsage::Sampled | TextureUsage::Transfer;
 
     RGResourceHandle finalColor = rg.DeclareTexture("FinalColor", finalColorDesc);
 

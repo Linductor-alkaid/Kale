@@ -179,10 +179,10 @@
 
 ### 3.5 OutputToSwapchain Pass
 
-- [ ] 实现 `AddPass("OutputToSwapchain", setup, execute)`
-- [ ] Setup 中 `ReadTexture(finalColor)`、`WriteSwapchain()`
-- [ ] Execute 中 Blit/Copy finalColor → GetBackBuffer()
-- [ ] 依赖 PostProcess Pass 完成
+- [x] 实现 `AddPass("OutputToSwapchain", setup, execute)`
+- [x] Setup 中 `ReadTexture(finalColor)`、`WriteSwapchain()`
+- [x] Execute 中 Blit/Copy finalColor → GetBackBuffer()
+- [x] 依赖 PostProcess Pass 完成
 
 ### 3.6 SetupRenderGraph 示例
 

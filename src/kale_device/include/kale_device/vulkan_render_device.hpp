@@ -68,6 +68,8 @@ public:
                              TextureHandle dstTexture, std::uint32_t mipLevel,
                              std::uint32_t width, std::uint32_t height,
                              std::uint32_t depth = 1) override;
+    void CopyTextureToTexture(TextureHandle srcTexture, TextureHandle dstTexture,
+                              std::uint32_t width, std::uint32_t height) override;
     void Barrier(const std::vector<TextureHandle>& textures) override;
     void ClearColor(TextureHandle texture, const float color[4]) override;
     void ClearDepth(TextureHandle texture, float depth,

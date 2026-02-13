@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.8 OutputToSwapchain Pass
+状态：已完成
+- 实现：output_to_swapchain_pass.hpp：SetupOutputToSwapchainPass(rg) 依赖 GetHandleByName("FinalColor")，AddPass("OutputToSwapchain", setup, execute)；Setup 中 ReadTexture(finalColor)、WriteSwapchain()、SetExecuteWithoutRenderPass(true)；Execute 中 ExecuteOutputToSwapchainPass 调用 ctx.GetCompiledTexture(finalColor)、device->GetBackBuffer()、cmd.CopyTextureToTexture。RenderPassBuilder 增加 SetExecuteWithoutRenderPass/ExecuteWithoutRenderPass；CompiledPassInfo 增加 executeWithoutRenderPass；RecordPasses 对该类 Pass 不 BeginRenderPass 仅执行 execute；RenderPassContext 增加 graph_ 与 GetCompiledTexture(RGResourceHandle)。RDI CommandList 增加 CopyTextureToTexture；Vulkan 实现屏障与 vkCmdCopyImage，swapchain 目标拷贝后转为 PRESENT_SRC_KHR。FinalColor 增加 TextureUsage::Transfer 以便作拷贝源。
+- 验证：编译通过，ctest 33/33 通过（新增 test_output_to_swapchain_pass：完整链 5 Pass 拓扑序、executeWithoutRenderPass 与 writesSwapchain、Execute 不崩溃、无 FinalColor 时不添加 Pass）。rendering_pipeline_layer_todolist 3.5 已勾选。
+- feature_list.json 中 phase8-8.8 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.7 Post-Process Pass
 状态：已完成
 - 实现：post_process_pass.hpp：SetupPostProcessPass(rg) 声明 FinalColor(RGBA8)、AddPass("PostProcess", setup, execute)；Setup 中 ReadTexture(Lighting)、WriteColor(0, finalColor)；ExecutePostProcessPass 占位（Bloom/ToneMapping/FXAA 待 phase8-8.3 ShaderCompiler 接入）。

@@ -44,6 +44,14 @@ public:
         writesSwapchain_ = true;
     }
 
+    /**
+     * 标记本 Pass 不进入 Render Pass，仅执行 Execute（如 CopyTextureToTexture 到 Swapchain）。
+     * 与 WriteSwapchain 配合用于 OutputToSwapchain 等纯拷贝 Pass。
+     */
+    void SetExecuteWithoutRenderPass(bool value = true) {
+        executeWithoutRenderPass_ = value;
+    }
+
     // --- 供 RenderGraph::Compile 等内部使用的访问接口 ---
 
     /** 已声明的 color 输出：(slot, handle) 列表 */
@@ -60,11 +68,15 @@ public:
     /** 是否声明了写入 Swapchain */
     bool WritesSwapchain() const { return writesSwapchain_; }
 
+    /** 是否不进入 Render Pass 仅执行 Execute（用于 Copy 到 Swapchain） */
+    bool ExecuteWithoutRenderPass() const { return executeWithoutRenderPass_; }
+
 private:
     std::vector<std::pair<uint32_t, RGResourceHandle>> colorOutputs_;
     RGResourceHandle depthOutput_ = kInvalidRGResourceHandle;
     std::vector<RGResourceHandle> readTextures_;
     bool writesSwapchain_ = false;
+    bool executeWithoutRenderPass_ = false;
 };
 
 }  // namespace kale::pipeline

@@ -1698,7 +1698,7 @@
         "Execute 中 Blit/Copy finalColor → GetBackBuffer()",
         "依赖 PostProcess Pass 完成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.7"],
       "test_verification": "正确输出到交换链",

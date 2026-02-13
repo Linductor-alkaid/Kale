@@ -8,13 +8,17 @@
 
 #pragma once
 
+#include <kale_pipeline/rg_types.hpp>
 #include <kale_device/render_device.hpp>
+#include <kale_device/rdi_types.hpp>
 #include <kale_scene/renderable.hpp>
 #include <kale_scene/scene_types.hpp>
 #include <glm/glm.hpp>
 #include <vector>
 
 namespace kale::pipeline {
+
+class RenderGraph;
 
 /**
  * 单次提交的绘制项，由应用层 SubmitRenderable 填入。
@@ -26,14 +30,15 @@ struct SubmittedDraw {
 };
 
 /**
- * 渲染 Pass 执行时的上下文，提供本帧已提交的绘制列表及按 Pass 过滤。
+ * 渲染 Pass 执行时的上下文，提供本帧已提交的绘制列表、设备及 RG 句柄解析。
  */
 class RenderPassContext {
 public:
-    /** @param draws 本帧已提交的绘制项；@param device 当前渲染设备，供 Draw 时绑定实例级 DescriptorSet，可为 nullptr */
+    /** @param draws 本帧已提交的绘制项；@param device 当前渲染设备；@param graph 可选，用于 GetCompiledTexture */
     explicit RenderPassContext(const std::vector<SubmittedDraw>* draws,
-                              kale_device::IRenderDevice* device = nullptr)
-        : draws_(draws), device_(device) {}
+                              kale_device::IRenderDevice* device = nullptr,
+                              const RenderGraph* graph = nullptr)
+        : draws_(draws), device_(device), graph_(graph) {}
 
     /** 返回本帧所有已提交的绘制项（只读）。 */
     const std::vector<SubmittedDraw>& GetSubmittedDraws() const {
@@ -57,9 +62,13 @@ public:
     /** 返回当前渲染设备，供 Renderable::Draw 绑定实例级 DescriptorSet；可为 nullptr。 */
     kale_device::IRenderDevice* GetDevice() const { return device_; }
 
+    /** 将 RG 纹理句柄解析为 RDI TextureHandle（需构造时传入 graph）；无 graph 或无效 handle 返回空句柄。 */
+    kale_device::TextureHandle GetCompiledTexture(RGResourceHandle handle) const;
+
 private:
     const std::vector<SubmittedDraw>* draws_ = nullptr;
     kale_device::IRenderDevice* device_ = nullptr;
+    const RenderGraph* graph_ = nullptr;
     static inline const std::vector<SubmittedDraw> empty_{};
 };
 

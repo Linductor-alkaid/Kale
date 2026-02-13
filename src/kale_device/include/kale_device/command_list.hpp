@@ -89,6 +89,10 @@ public:
                                      std::uint32_t width, std::uint32_t height,
                                      std::uint32_t depth = 1) = 0;
 
+    /** Texture → Texture 拷贝（用于 e.g. FinalColor → BackBuffer）；内部处理屏障与布局转换。 */
+    virtual void CopyTextureToTexture(TextureHandle srcTexture, TextureHandle dstTexture,
+                                      std::uint32_t width, std::uint32_t height) = 0;
+
     // -------------------------------------------------------------------------
     // Resource Barriers
     // -------------------------------------------------------------------------

@@ -179,6 +179,7 @@ public:
         RGResourceHandle depthOutput = kInvalidRGResourceHandle;
         std::vector<RGResourceHandle> readTextures;
         bool writesSwapchain = false;
+        bool executeWithoutRenderPass = false;
     };
     const std::vector<CompiledPassInfo>& GetCompiledPassInfo() const { return compiledPassInfo_; }
 
@@ -271,6 +272,7 @@ inline bool RenderGraph::Compile(kale_device::IRenderDevice* device) {
         info.depthOutput = builder.GetDepthOutput();
         info.readTextures = builder.GetReadTextures();
         info.writesSwapchain = builder.WritesSwapchain();
+        info.executeWithoutRenderPass = builder.ExecuteWithoutRenderPass();
     }
 
     // 2) 依赖分析，构建拓扑序
@@ -429,7 +431,7 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
     std::vector<kale_device::CommandList*> cmdLists;
     if (!device || topologicalOrder_.empty()) return cmdLists;
 
-    RenderPassContext ctx(&submittedDraws_, device);
+    RenderPassContext ctx(&submittedDraws_, device, this);
 
     for (RenderPassHandle passIdx : topologicalOrder_) {
         if (passIdx >= passes_.size()) continue;
@@ -438,6 +440,13 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
 
         kale_device::CommandList* cmd = device->BeginCommandList(0);
         if (!cmd) continue;
+
+        if (info.executeWithoutRenderPass) {
+            if (pass.execute) pass.execute(ctx, *cmd);
+            device->EndCommandList(cmd);
+            cmdLists.push_back(cmd);
+            continue;
+        }
 
         // 解析 color attachments：WriteSwapchain 则用 back buffer，否则用 GetCompiledTexture
         std::vector<kale_device::TextureHandle> colorAttachments;
@@ -495,6 +504,10 @@ inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
 
     if (!cmdLists.empty())
         currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
+}
+
+inline kale_device::TextureHandle RenderPassContext::GetCompiledTexture(RGResourceHandle handle) const {
+    return graph_ ? graph_->GetCompiledTexture(handle) : kale_device::TextureHandle{};
 }
 
 }  // namespace kale::pipeline
