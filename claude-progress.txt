@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.2 Executor 性能与验证
+状态：已完成
+- 实现：新增 test_executor_performance_validation：scheduler 压力（20 轮×50 任务 SubmitRenderTask+WaitAll）、大 DAG（80 节点链式依赖）TaskGraph submit/wait、多轮 TaskGraph、ParallelRecordCommands 多层依赖、SubmitTaskGraph 多轮；共享状态仅用 std::atomic 与 DAG 依赖序，验证无死锁且计数正确即无数据竞争。
+- 验证：编译通过，ctest 88/88 通过。phase13-13.2 status=completed，hold=null。executor_layer_todolist 5.6 性能测试与调优、验证无死锁无数据竞争已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.6 Vulkan 多线程与 RenderTaskScheduler 集成
 状态：已完成
 - 实现：RenderTaskScheduler 新增 ParallelRecordCommands(recordFuncs, dependencies, maxThreads) 重载，录制函数签名为 void(uint32_t threadIndex)，供设备层 BeginCommandList(threadIndex) 使用；同层内按 maxThreads 分块分配 threadIndex。RenderGraph 新增 BuildTopologicalDependencies() 按拓扑序构建依赖表；RecordPasses 在 scheduler 非空时构建 recordFuncs 与 dependencies 并调用 ParallelRecordCommands(recordFuncs, dependencies, maxRec)，与 Vulkan 每线程独立 CommandPool 集成。

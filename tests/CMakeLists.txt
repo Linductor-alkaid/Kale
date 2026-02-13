@@ -60,6 +60,13 @@ target_link_libraries(test_render_graph_parallel_record_integration
 )
 add_test(NAME test_render_graph_parallel_record_integration COMMAND test_render_graph_parallel_record_integration)
 
+add_executable(test_executor_performance_validation test_executor_performance_validation.cpp)
+target_link_libraries(test_executor_performance_validation
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_executor_performance_validation COMMAND test_executor_performance_validation)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE
