@@ -1412,7 +1412,7 @@
         "实现 AnimationSystem 示例：声明依赖 PhysicsSystem",
         "验证 GetDependencies 建立的 DAG 正确性"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase7-7.5"],
       "test_verification": "写回流程正确执行",

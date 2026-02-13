@@ -120,3 +120,10 @@ target_link_libraries(test_ecs_executor_integration
         kale_executor
 )
 add_test(NAME test_ecs_executor_integration COMMAND test_ecs_executor_integration)
+
+add_executable(test_writeback_flow test_writeback_flow.cpp)
+target_link_libraries(test_writeback_flow
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_writeback_flow COMMAND test_writeback_flow)

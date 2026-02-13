@@ -142,9 +142,9 @@
 
 ### 3.6 写回流程示例
 
-- [ ] 实现 `PhysicsSystem` 示例：读取 PhysicsComponent，通过 SceneNodeRef 写回 `SetLocalTransform`
-- [ ] 实现 `AnimationSystem` 示例：声明依赖 PhysicsSystem
-- [ ] 验证 GetDependencies 建立的 DAG 正确性
+- [x] 实现 `PhysicsSystem` 示例：读取 PhysicsComponent，通过 SceneNodeRef 写回 `SetLocalTransform`
+- [x] 实现 `AnimationSystem` 示例：声明依赖 PhysicsSystem
+- [x] 验证 GetDependencies 建立的 DAG 正确性
 
 ### 3.7 写回冲突检测（可选）
 

@@ -1,3 +1,10 @@
+=== 2026-02-13 12:05:16 ===
+功能：phase7-7.6 写回流程示例
+状态：已完成
+- 实现：PhysicsSystem 读取 PhysicsComponent 通过 SceneNodeRef 写回 SetLocalTransform；AnimationSystem 声明依赖 PhysicsSystem，在物理之后应用 localOffset 写回；新增 writeback_systems.hpp（PhysicsComponent、AnimationComponent、PhysicsSystem、AnimationSystem）。
+- 验证：编译通过，ctest 通过（新增 test_writeback_flow：写回结果 T_phys*T_anim、无 SceneManager 不崩溃、无效 SceneNodeRef 不写回）；修复 test_task_graph 中 test_add_task_with_data 多线程写 order 的竞争（加 mutex），17/17 通过。scene_management_layer_todolist 3.6 已勾选。
+- feature_list.json 中 phase7-7.6 的 status 更新为 completed，hold=null。
+
 === 2026-02-13 (session) ===
 功能：phase7-7.5 与 executor 集成
 状态：已完成
