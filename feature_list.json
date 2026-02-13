@@ -1313,7 +1313,7 @@
         "实现 SceneNodeRef::FromNode(SceneNode* node) 工厂",
         "System 中调用 GetNode 后必须校验 if (!node) continue"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.3"],
       "test_verification": "SceneNodeRef 正确桥接 ECS 与 Scene Graph",

@@ -100,12 +100,12 @@
 
 ### 3.1 SceneNodeRef 桥接
 
-- [ ] 实现 `SceneNodeRef` 结构
-- [ ] 实现 `handle` 成员（SceneNodeHandle）
-- [ ] 实现 `IsValid()` 检查 handle != kInvalidSceneNodeHandle
-- [ ] 实现 `GetNode(SceneManager* sceneMgr)` 解析为 SceneNode*
-- [ ] 实现 `SceneNodeRef::FromNode(SceneNode* node)` 工厂
-- [ ] System 中调用 `GetNode` 后必须校验 `if (!node) continue;`
+- [x] 实现 `SceneNodeRef` 结构
+- [x] 实现 `handle` 成员（SceneNodeHandle）
+- [x] 实现 `IsValid()` 检查 handle != kInvalidSceneNodeHandle
+- [x] 实现 `GetNode(SceneManager* sceneMgr)` 解析为 SceneNode*
+- [x] 实现 `SceneNodeRef::FromNode(SceneNode* node)` 工厂
+- [x] System 中调用 `GetNode` 后必须校验 `if (!node) continue;`
 
 ### 3.2 Entity 与 ComponentStorage
 

@@ -84,3 +84,10 @@ target_link_libraries(test_draw_resource_check
         kale_device
 )
 add_test(NAME test_draw_resource_check COMMAND test_draw_resource_check)
+
+add_executable(test_scene_node_ref test_scene_node_ref.cpp)
+target_link_libraries(test_scene_node_ref
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_scene_node_ref COMMAND test_scene_node_ref)

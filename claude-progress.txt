@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.1 SceneNodeRef 桥接
+状态：已完成
+- 实现：SceneNodeRef 结构（handle、IsValid()、GetNode(SceneManager*)、FromNode(SceneNode*)）；新增 kale_scene/include/kale_scene/scene_node_ref.hpp。
+- 验证：编译通过，ctest 通过（新增 test_scene_node_ref：默认无效、GetNode(nullptr)、FromNode(nullptr)/FromNode(root)、场景切换后旧 handle 解析为 nullptr）；scene_management_layer_todolist 3.1 已勾选。
+- feature_list.json 中 phase7-7.1 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase4-4.6 Draw 时资源检查与触发加载
 状态：已完成
 - 实现：ResourceManager::IsReady<T>(handle)、Get<T>(handle)（未就绪返回 nullptr）、GetOrCreatePlaceholder<T>(path) 返回 (句柄, 是否新创建)；StaticMesh 类（meshPath/materialPath、GetOrCreatePlaceholder + 占位符 + 仅 created 时 LoadAsync）、Draw 中 BindVertexBuffer/BindIndexBuffer/DrawIndexed 或 Draw。
