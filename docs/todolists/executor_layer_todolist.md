@@ -89,9 +89,9 @@
 
 ### 3.3 submit_task_graph
 
-- [ ] 实现 `submit_task_graph(Executor& ex, TaskGraph& graph)` API
-- [ ] 内部调用 `Executor::submit` 将每个节点作为任务提交
-- [ ] 依赖通过 future 或自定义调度逻辑实现
+- [x] 实现 `submit_task_graph(Executor& ex, TaskGraph& graph)` API
+- [x] 内部调用 `Executor::submit` 将每个节点作为任务提交
+- [x] 依赖通过 future 或自定义调度逻辑实现
 
 ---
 

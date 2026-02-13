@@ -204,4 +204,9 @@ inline void TaskGraph::clear() {
     submitted_ = false;
 }
 
+/// 提交任务图到 executor 执行（等价于 graph.submit(ex)）
+inline void submit_task_graph(::executor::Executor& ex, TaskGraph& graph) {
+    graph.submit(ex);
+}
+
 }  // namespace kale::executor
