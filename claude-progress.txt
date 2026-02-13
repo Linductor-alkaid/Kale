@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase2-2.1 资源句柄与描述符类型（验证）
+状态：已完成
+- 验证：编译通过，ctest 39/39 通过；rdi_types 句柄与描述符类型已实现并全项目使用。
+- feature_list.json 中 phase2-2.1 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 2.1 已全部勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase9-9.1 Vulkan 多线程 CommandPool
 状态：已完成
 - 实现：DeviceConfig 增加 maxRecordingThreads（默认 4）；VulkanRenderDevice 在 Initialize 中保存并用于 CreateCommandPoolsAndBuffers，预分配多线程独立 CommandPool；BeginCommandList(threadIndex) 从 commandPools_[threadIndex] 分配，threadIndex >= maxRecordingThreads 返回 nullptr；Submit 已支持多 CommandList 按序合并。

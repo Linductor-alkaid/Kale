@@ -267,7 +267,7 @@
         "定义 BlendState、DepthStencilState、RasterizationState",
         "定义 PipelineDesc（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase1-1.3"
