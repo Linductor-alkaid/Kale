@@ -2373,7 +2373,7 @@
         "同组内多个 Shadow Pass 可并行录制",
         "每个 Shadow Pass 写入独立 ShadowMap 或 Cascade"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase8-8.4"],
       "test_verification": "多光源阴影正确渲染",

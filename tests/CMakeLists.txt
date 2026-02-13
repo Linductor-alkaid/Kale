@@ -485,6 +485,15 @@ target_link_libraries(test_shadow_pass
 )
 add_test(NAME test_shadow_pass COMMAND test_shadow_pass)
 
+add_executable(test_multi_shadow_passes test_multi_shadow_passes.cpp)
+target_link_libraries(test_multi_shadow_passes
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_multi_shadow_passes COMMAND test_multi_shadow_passes)
+
 add_executable(test_gbuffer_pass test_gbuffer_pass.cpp)
 target_link_libraries(test_gbuffer_pass
     PRIVATE

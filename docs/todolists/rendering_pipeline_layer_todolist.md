@@ -279,9 +279,9 @@
 
 ### 5.5 多光源 Shadow Pass
 
-- [ ] 支持多光源时多个 Shadow Pass（如 Directional + Point Lights）
-- [ ] 同组内多个 Shadow Pass 可并行录制
-- [ ] 每个 Shadow Pass 写入独立 ShadowMap 或 Cascade
+- [x] 支持多光源时多个 Shadow Pass（如 Directional + Point Lights）
+- [x] 同组内多个 Shadow Pass 可并行录制
+- [x] 每个 Shadow Pass 写入独立 ShadowMap 或 Cascade
 
 ---
 

@@ -1,3 +1,9 @@
+=== 2026-02-13 19:18:06 ===
+功能：phase12-12.7 多光源 Shadow Pass
+状态：已完成
+- 实现：shadow_pass.hpp 增加 AddShadowPass(rg, passName, shadowMapName, shadowMapSize)、SetupMultiShadowPasses(rg, shadowMapSize, numPasses)；SetupShadowPass 改为委托 AddShadowPass。多光源时每 Pass 写入独立 ShadowMap（ShadowMap0/1/...），无依赖故同拓扑组可并行录制。
+- 验证：编译通过，ctest 72/72 通过（新增 test_multi_shadow_passes：AddShadowPass 命名 Pass/ShadowMap、SetupMultiShadowPasses 三 Pass 同组、Execute 不崩溃、SetupShadowPass 仍单 Pass）。phase12-12.7 status=completed，hold=null。rendering_pipeline_layer_todolist 5.5 三项已勾选。
+
 
 === 2026-02-13 (session) ===
 功能：phase12-12.6 多相机/多视口
