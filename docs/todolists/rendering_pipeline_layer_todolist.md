@@ -16,13 +16,13 @@
 
 ### 1.1 SubmittedDraw 与 RenderPassContext
 
-- [ ] 定义 `SubmittedDraw` 结构
-- [ ] 实现 `renderable` 成员（`Renderable*`）
-- [ ] 实现 `worldTransform` 成员（`glm::mat4`）
-- [ ] 实现 `passFlags` 成员（`PassFlags`：ShadowCaster | Opaque | Transparent）
-- [ ] 定义 `RenderPassContext` 结构
-- [ ] 实现 `GetSubmittedDraws()` 返回 `const std::vector<SubmittedDraw>&`
-- [ ] 实现 `GetDrawsForPass(PassFlags pass)` 按 Pass 过滤（过滤条件 `(draw.passFlags & pass) != 0`）
+- [x] 定义 `SubmittedDraw` 结构
+- [x] 实现 `renderable` 成员（`Renderable*`）
+- [x] 实现 `worldTransform` 成员（`glm::mat4`）
+- [x] 实现 `passFlags` 成员（`PassFlags`：ShadowCaster | Opaque | Transparent）
+- [x] 定义 `RenderPassContext` 结构
+- [x] 实现 `GetSubmittedDraws()` 返回 `const std::vector<SubmittedDraw>&`
+- [x] 实现 `GetDrawsForPass(PassFlags pass)` 按 Pass 过滤（过滤条件 `(draw.passFlags & pass) != 0`）
 
 ### 1.2 PassFlags 与 RG 资源句柄
 

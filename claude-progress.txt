@@ -3,6 +3,13 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase6-6.6 SubmittedDraw 与 RenderPassContext
+状态：已完成
+- 定义 SubmittedDraw（renderable, worldTransform, passFlags），RenderPassContext（GetSubmittedDraws、GetDrawsForPass）
+- 新增 kale_pipeline/include/kale_pipeline/render_pass_context.hpp，placeholder 引用以验证编译
+- 编译通过，ctest 通过
+
+=== 2026-02-13 ===
 功能：phase6-6.5 ModelLoader 集成 Staging
 状态：已完成
 - ModelLoader：当 ctx.stagingMgr 非空时走 Staging 路径（CreateBuffer(desc,nullptr) + Allocate 顶点/索引 + memcpy + SubmitUpload + FlushUploads + WaitForFence + Free）

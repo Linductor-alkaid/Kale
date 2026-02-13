@@ -801,7 +801,7 @@
         "实现 GetSubmittedDraws() 返回 const std::vector<SubmittedDraw>&",
         "实现 GetDrawsForPass(PassFlags pass) 按 Pass 过滤（过滤条件 (draw.passFlags & pass) != 0）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.10"],
       "test_verification": "绘制提交和上下文结构正常工作"

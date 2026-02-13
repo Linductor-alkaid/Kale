@@ -1,7 +1,13 @@
 // Kale 渲染管线层 - 占位源文件
 
+#include <kale_pipeline/render_pass_context.hpp>
+
 namespace kale::pipeline {
 
-void placeholder() {}
+void placeholder() {
+    (void)sizeof(SubmittedDraw);
+    RenderPassContext ctx(nullptr);
+    (void)ctx.GetSubmittedDraws();
+}
 
 }  // namespace kale::pipeline
