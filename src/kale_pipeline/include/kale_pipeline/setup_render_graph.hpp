@@ -14,6 +14,7 @@
 #include <kale_pipeline/shadow_pass.hpp>
 #include <kale_pipeline/gbuffer_pass.hpp>
 #include <kale_pipeline/lighting_pass.hpp>
+#include <kale_pipeline/transparent_pass.hpp>
 #include <kale_pipeline/post_process_pass.hpp>
 #include <kale_pipeline/output_to_swapchain_pass.hpp>
 
@@ -21,7 +22,7 @@ namespace kale::pipeline {
 
 /**
  * 为 RenderGraph 配置完整 Deferred + Shadow 管线。
- * 建立 Pass 依赖 DAG：Shadow → GBuffer → Lighting → PostProcess → OutputToSwapchain；
+ * 建立 Pass 依赖 DAG：Shadow → GBuffer → Lighting → Transparent → PostProcess → OutputToSwapchain；
  * DeclareTexture 使用当前 SetResolution 的宽高（GBuffer/Lighting/FinalColor 等）。
  *
  * @param rg 待配置的 RenderGraph（本函数内会调用 SetResolution）
@@ -37,6 +38,7 @@ inline void SetupRenderGraph(RenderGraph& rg,
     SetupShadowPass(rg, shadowMapSize);
     SetupGBufferPass(rg);
     SetupLightingPass(rg);
+    SetupTransparentPass(rg);
     SetupPostProcessPass(rg);
     SetupOutputToSwapchainPass(rg);
 }

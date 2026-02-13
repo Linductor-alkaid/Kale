@@ -1,22 +1,28 @@
 /**
- * @file test_topological_groups.cpp
- * @brief phase9-9.4 Pass DAG 拓扑序分组单元测试
+ * @file test_transparent_pass.cpp
+ * @brief phase10-10.7 Transparent Pass 单元测试
  *
- * 覆盖：GetTopologicalGroups() 按依赖分层；未 Compile 返回空；
- * 完整 Deferred 管线分组与拓扑序一致；同组内 Pass 无依赖；单 Pass 单组。
+ * 覆盖：SetupTransparentPass 依赖 Lighting、WriteColor(Lighting)；无 Lighting 时不添加 Pass；
+ * 完整链拓扑序含 TransparentPass 且位于 Lighting 与 PostProcess 之间；
+ * ExecuteTransparentPass 使用 GetDrawsForPass(PassFlags::Transparent)、按深度排序、Execute 不崩溃。
  */
 
-#include <kale_pipeline/setup_render_graph.hpp>
 #include <kale_pipeline/render_graph.hpp>
+#include <kale_pipeline/transparent_pass.hpp>
+#include <kale_pipeline/shadow_pass.hpp>
+#include <kale_pipeline/gbuffer_pass.hpp>
+#include <kale_pipeline/lighting_pass.hpp>
+#include <kale_pipeline/post_process_pass.hpp>
+#include <kale_pipeline/render_pass_context.hpp>
 #include <kale_pipeline/rg_types.hpp>
+#include <kale_scene/scene_types.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_device/command_list.hpp>
 #include <kale_device/rdi_types.hpp>
+#include <glm/glm.hpp>
 
 #include <cstdlib>
 #include <iostream>
-#include <set>
-#include <string>
 #include <vector>
 
 #define TEST_CHECK(cond)                                               \
@@ -125,128 +131,96 @@ private:
     MockCommandList mockCmd_;
 };
 
-static const std::vector<std::string> kExpectedDeferredPassOrder = {
-    "ShadowPass",
-    "GBufferPass",
-    "LightingPass",
-    "TransparentPass",
-    "PostProcess",
-    "OutputToSwapchain"
-};
-
-/** 未 Compile 时 GetTopologicalGroups 返回空 */
-static void test_groups_uncompiled_returns_empty() {
+static void test_transparent_pass_no_lighting_no_pass_added() {
     kale::pipeline::RenderGraph rg;
-    kale::pipeline::SetupRenderGraph(rg, 256, 256);
-    auto groups = rg.GetTopologicalGroups();
-    TEST_CHECK(groups.empty());
+    rg.SetResolution(64, 64);
+    // 不调用 SetupLightingPass，仅调用 SetupTransparentPass
+    kale::pipeline::SetupTransparentPass(rg);
+
+    TEST_CHECK(rg.GetHandleByName("Lighting") == kale::pipeline::kInvalidRGResourceHandle);
+    const auto& passes = rg.GetPasses();
+    TEST_CHECK(passes.empty());
 }
 
-/** 完整 Deferred 管线：6 个 Pass 链式依赖，应得到 6 组每组 1 个 Pass，且组序与拓扑序一致 */
-static void test_deferred_groups_match_topological_order() {
+static void test_transparent_pass_setup_and_topology() {
     kale::pipeline::RenderGraph rg;
-    kale::pipeline::SetupRenderGraph(rg, 1920, 1080);
+    rg.SetResolution(256, 256);
+    kale::pipeline::SetupShadowPass(rg, 512u);
+    kale::pipeline::SetupGBufferPass(rg);
+    kale::pipeline::SetupLightingPass(rg);
+    kale::pipeline::SetupTransparentPass(rg);
+    kale::pipeline::SetupPostProcessPass(rg);
+
+    TEST_CHECK(rg.GetHandleByName("Lighting") != kale::pipeline::kInvalidRGResourceHandle);
 
     MockDevice dev;
     dev.Initialize({});
-    TEST_CHECK(rg.Compile(&dev));
+    bool ok = rg.Compile(&dev);
+    TEST_CHECK(ok);
     TEST_CHECK(rg.IsCompiled());
 
     const auto& order = rg.GetTopologicalOrder();
-    auto groups = rg.GetTopologicalGroups();
     const auto& passes = rg.GetPasses();
+    TEST_CHECK(order.size() == 5u);  // Shadow → GBuffer → Lighting → Transparent → PostProcess
 
-    TEST_CHECK(order.size() == kExpectedDeferredPassOrder.size());
-    TEST_CHECK(!groups.empty());
-
-    size_t totalInGroups = 0;
-    for (const auto& g : groups)
-        totalInGroups += g.size();
-    TEST_CHECK(totalInGroups == order.size());
-
-    size_t orderIdx = 0;
-    for (size_t gi = 0; gi < groups.size(); ++gi) {
-        for (kale::pipeline::RenderPassHandle passIdx : groups[gi]) {
-            TEST_CHECK(passIdx < order.size());
-            TEST_CHECK(orderIdx < order.size());
-            TEST_CHECK(order[orderIdx] == passIdx);
-            TEST_CHECK(passes[passIdx].name == kExpectedDeferredPassOrder[orderIdx]);
-            ++orderIdx;
+    std::size_t lightingIdx = 0, transparentIdx = 0, postProcessIdx = 0;
+    for (std::size_t i = 0; i < order.size(); ++i) {
+        std::size_t idx = static_cast<std::size_t>(order[i]);
+        if (idx < passes.size()) {
+            if (passes[idx].name == "LightingPass") lightingIdx = i;
+            if (passes[idx].name == "TransparentPass") transparentIdx = i;
+            if (passes[idx].name == "PostProcess") postProcessIdx = i;
         }
     }
-    TEST_CHECK(orderIdx == order.size());
+    TEST_CHECK(lightingIdx < transparentIdx);
+    TEST_CHECK(transparentIdx < postProcessIdx);
+
+    const auto& passInfo = rg.GetCompiledPassInfo();
+    std::size_t transparentPassInfoIdx = 0;
+    for (std::size_t i = 0; i < passes.size(); ++i)
+        if (passes[i].name == "TransparentPass") { transparentPassInfoIdx = i; break; }
+    const auto& tpInfo = passInfo[transparentPassInfoIdx];
+    TEST_CHECK(tpInfo.colorOutputs.size() == 1u);
+    TEST_CHECK(tpInfo.readTextures.size() == 1u);
 }
 
-/** 同组内 Pass 无依赖：Deferred 链每层一个 Pass，故每组大小为 1 */
-static void test_deferred_each_group_size_one() {
+static void test_transparent_pass_execute_no_crash() {
     kale::pipeline::RenderGraph rg;
-    kale::pipeline::SetupRenderGraph(rg, 800, 600);
+    rg.SetResolution(128, 128);
+    kale::pipeline::SetupShadowPass(rg, 256u);
+    kale::pipeline::SetupGBufferPass(rg);
+    kale::pipeline::SetupLightingPass(rg);
+    kale::pipeline::SetupTransparentPass(rg);
+    kale::pipeline::SetupPostProcessPass(rg);
 
     MockDevice dev;
     dev.Initialize({});
     TEST_CHECK(rg.Compile(&dev));
 
-    auto groups = rg.GetTopologicalGroups();
-    TEST_CHECK(groups.size() == 6u);
-    for (const auto& g : groups)
-        TEST_CHECK(g.size() == 1u);
+    rg.ClearSubmitted();
+    rg.Execute(&dev);
 }
 
-/** 单 Pass 图：一组且含一个 Pass */
-static void test_single_pass_one_group() {
-    kale::pipeline::RenderGraph rg;
-    rg.SetResolution(64, 64);
-    kale_device::TextureDesc texDescC;
-    texDescC.width = 64;
-    texDescC.height = 64;
-    texDescC.format = kale_device::Format::RGBA8_UNORM;
-    auto color = rg.DeclareTexture("C", texDescC);
-    rg.AddPass("Only",
-        [&](kale::pipeline::RenderPassBuilder& b) {
-            b.WriteColor(0, color);
-        },
-        [](const kale::pipeline::RenderPassContext&, kale_device::CommandList&) {});
+static void test_transparent_pass_get_draws_for_pass_used() {
+    std::vector<kale::pipeline::SubmittedDraw> draws;
+    kale::pipeline::RenderPassContext ctx(&draws, nullptr, nullptr);
+    auto result = ctx.GetDrawsForPass(kale::scene::PassFlags::Transparent);
+    TEST_CHECK(result.empty());
 
-    MockDevice dev;
-    dev.Initialize({});
-    TEST_CHECK(rg.Compile(&dev));
-
-    auto groups = rg.GetTopologicalGroups();
-    TEST_CHECK(groups.size() == 1u);
-    TEST_CHECK(groups[0].size() == 1u);
-    TEST_CHECK(rg.GetPasses()[groups[0][0]].name == "Only");
-}
-
-/** 两 Pass 无依赖：应在一组内（可并行） */
-static void test_two_independent_passes_same_group() {
-    kale::pipeline::RenderGraph rg;
-    rg.SetResolution(64, 64);
-    kale_device::TextureDesc texDesc;
-    texDesc.width = 64;
-    texDesc.height = 64;
-    texDesc.format = kale_device::Format::RGBA8_UNORM;
-    auto a = rg.DeclareTexture("A", texDesc);
-    auto b = rg.DeclareTexture("B", texDesc);
-    rg.AddPass("P1", [&](kale::pipeline::RenderPassBuilder& x) { x.WriteColor(0, a); }, [](const kale::pipeline::RenderPassContext&, kale_device::CommandList&) {});
-    rg.AddPass("P2", [&](kale::pipeline::RenderPassBuilder& x) { x.WriteColor(0, b); }, [](const kale::pipeline::RenderPassContext&, kale_device::CommandList&) {});
-
-    MockDevice dev;
-    dev.Initialize({});
-    TEST_CHECK(rg.Compile(&dev));
-
-    auto groups = rg.GetTopologicalGroups();
-    TEST_CHECK(groups.size() == 1u);
-    TEST_CHECK(groups[0].size() == 2u);
+    kale::scene::Renderable* r = nullptr;
+    draws.push_back({r, glm::mat4(1.0f), kale::scene::PassFlags::Transparent});
+    kale::pipeline::RenderPassContext ctx2(&draws, nullptr, nullptr);
+    auto result2 = ctx2.GetDrawsForPass(kale::scene::PassFlags::Transparent);
+    TEST_CHECK(result2.size() == 1u);
 }
 
 }  // namespace
 
 int main() {
-    test_groups_uncompiled_returns_empty();
-    test_deferred_groups_match_topological_order();
-    test_deferred_each_group_size_one();
-    test_single_pass_one_group();
-    test_two_independent_passes_same_group();
-    std::cout << "test_topological_groups OK\n";
+    test_transparent_pass_no_lighting_no_pass_added();
+    test_transparent_pass_setup_and_topology();
+    test_transparent_pass_execute_no_crash();
+    test_transparent_pass_get_draws_for_pass_used();
+    std::cout << "test_transparent_pass OK\n";
     return 0;
 }

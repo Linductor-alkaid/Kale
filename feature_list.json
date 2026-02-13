@@ -2022,11 +2022,11 @@
         "透明 Pass 插在 Lighting 与 PostProcess 之间，或 PostProcess 前",
         "Blend 状态：Alpha 混合"
       ],
-      "status": "inprogress",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase8-8.9"],
       "test_verification": "透明物体正确渲染",
-      "hold": "agent_1770951035_477597"
+      "hold": null
     },
     {
       "id": "phase10-10.8",

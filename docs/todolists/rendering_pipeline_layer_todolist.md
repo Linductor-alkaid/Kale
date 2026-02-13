@@ -270,12 +270,12 @@
 
 ### 5.4 Transparent Pass
 
-- [ ] 实现 Transparent Pass：`AddPass("TransparentPass", setup, execute)`
-- [ ] Setup 中依赖 Lighting 结果，WriteColor 到混合目标
-- [ ] Execute 中遍历 `GetDrawsForPass(PassFlags::Transparent)`
-- [ ] 实现透明物体排序（按深度或距离相机远近）
-- [ ] 透明 Pass 插在 Lighting 与 PostProcess 之间，或 PostProcess 前
-- [ ] Blend 状态：Alpha 混合
+- [x] 实现 Transparent Pass：`AddPass("TransparentPass", setup, execute)`
+- [x] Setup 中依赖 Lighting 结果，WriteColor 到混合目标
+- [x] Execute 中遍历 `GetDrawsForPass(PassFlags::Transparent)`
+- [x] 实现透明物体排序（按深度或距离相机远近）
+- [x] 透明 Pass 插在 Lighting 与 PostProcess 之间，或 PostProcess 前
+- [x] Blend 状态：Alpha 混合
 
 ### 5.5 多光源 Shadow Pass
 

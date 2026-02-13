@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.7 Transparent Pass
+状态：已完成
+- 实现：kale_pipeline 新增 transparent_pass.hpp：SetupTransparentPass(rg) 依赖 GetHandleByName("Lighting")，AddPass("TransparentPass") 中 ReadTexture(Lighting)、WriteColor(0, Lighting)；ExecuteTransparentPass 取 GetDrawsForPass(PassFlags::Transparent)，按 worldTransform[3][2] 从远到近排序后依次 Draw。SetupRenderGraph 在 Lighting 与 PostProcess 之间插入 SetupTransparentPass；DAG 为 Shadow→GBuffer→Lighting→Transparent→PostProcess→OutputToSwapchain。
+- 验证：编译通过，ctest 67/67 通过（新增 test_transparent_pass：无 Lighting 时不添加 Pass、拓扑序含 TransparentPass 且位于 Lighting 与 PostProcess 之间、Execute 不崩溃、GetDrawsForPass(Transparent) 使用正确；test_setup_render_graph 与 test_topological_groups 更新为 6 Pass）。phase10-10.7 status=completed，hold=null。rendering_pipeline_layer_todolist 5.4 Transparent Pass 六项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.6 GPU Instancing
 状态：已完成
 - 实现：kale_pipeline 新增 instanced_draw.hpp/cpp：CreateInstanceBuffer(device, data, size) 创建 Vertex 用途的实例缓冲；DrawInstanced(cmd, device, mesh, material, instanceBuffer, offset, instanceCount) 绑定 material（仅 pipeline+set0）、BindVertexBuffer(0, mesh)、BindVertexBuffer(1, instanceBuffer)、DrawIndexed(indexCount, instanceCount) 或 Draw(vertexCount, instanceCount)。与 Material 的 AcquireInstanceDescriptorSet 替代方案：实例数据走 binding 1，不绑定 set 1。

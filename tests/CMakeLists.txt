@@ -501,6 +501,16 @@ target_link_libraries(test_setup_render_graph
 )
 add_test(NAME test_setup_render_graph COMMAND test_setup_render_graph)
 
+add_executable(test_transparent_pass test_transparent_pass.cpp)
+target_link_libraries(test_transparent_pass
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+        glm::glm
+)
+add_test(NAME test_transparent_pass COMMAND test_transparent_pass)
+
 add_executable(test_topological_groups test_topological_groups.cpp)
 target_link_libraries(test_topological_groups
     PRIVATE

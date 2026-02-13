@@ -3,7 +3,7 @@
  * @brief phase8-8.9 SetupRenderGraph 示例单元测试
  *
  * 覆盖：SetupRenderGraph 设置分辨率并添加完整 Deferred+Shadow 管线；
- * Pass 依赖 DAG 为 Shadow → GBuffer → Lighting → PostProcess → OutputToSwapchain；
+ * Pass 依赖 DAG 为 Shadow → GBuffer → Lighting → Transparent → PostProcess → OutputToSwapchain；
  * Compile 成功、拓扑序 5、分辨率与 DeclareTexture 一致；
  * Execute 不崩溃。
  */
@@ -130,6 +130,7 @@ static const std::vector<std::string> kExpectedDeferredPassOrder = {
     "ShadowPass",
     "GBufferPass",
     "LightingPass",
+    "TransparentPass",
     "PostProcess",
     "OutputToSwapchain"
 };
@@ -170,7 +171,7 @@ static void test_setup_render_graph_custom_shadow_size() {
     MockDevice dev;
     dev.Initialize({});
     TEST_CHECK(rg.Compile(&dev));
-    TEST_CHECK(rg.GetTopologicalOrder().size() == 5u);
+    TEST_CHECK(rg.GetTopologicalOrder().size() == 6u);
 }
 
 static void test_setup_render_graph_execute_no_crash() {
