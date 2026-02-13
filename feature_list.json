@@ -176,7 +176,7 @@
         "实现 ExecutorFuture<T>::get() 阻塞直到就绪",
         "实现 ExecutorFuture<T>::valid() 有效性检查"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase0-0.1"],
       "test_verification": "Promise/Future 异步结果传递正常工作"
