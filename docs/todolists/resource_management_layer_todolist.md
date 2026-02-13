@@ -181,12 +181,12 @@
 
 ### 4.3 ShaderCompiler
 
-- [ ] 实现 `ShaderCompiler` 类（非 IResourceLoader，独立接口）
-- [ ] 实现 `Compile(path, stage, device)` 加载并编译
-- [ ] 实现 `LoadSPIRV(path)` 加载 .spv 文件
-- [ ] 实现 `CompileGLSLToSPIRV(path, stage)` 使用 glslang/shaderc
-- [ ] 支持 .vert、.frag、.comp、.spv
-- [ ] 实现 `Recompile(path, stage, device)` 热重载时重新编译
+- [x] 实现 `ShaderCompiler` 类（非 IResourceLoader，独立接口）
+- [x] 实现 `Compile(path, stage, device)` 加载并编译
+- [x] 实现 `LoadSPIRV(path)` 加载 .spv 文件
+- [x] 实现 `CompileGLSLToSPIRV(path, stage)` 使用 glslang/shaderc
+- [x] 支持 .vert、.frag、.comp、.spv
+- [x] 实现 `Recompile(path, stage, device)` 热重载时重新编译
 
 ### 4.4 压缩纹理支持
 

@@ -8,6 +8,7 @@ add_library(kale_resource STATIC
     staging_memory_manager.cpp
     texture_loader.cpp
     model_loader.cpp
+    shader_compiler.cpp
 )
 
 target_include_directories(kale_resource

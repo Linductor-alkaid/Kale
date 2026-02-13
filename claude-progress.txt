@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.3 ShaderCompiler
+状态：已完成
+- 实现：ShaderCompiler 类（kale_resource/shader_compiler.hpp + .cpp）：独立于 IResourceLoader；SetBasePath/ResolvePath（绝对路径不拼接）；LoadSPIRV(path, outCode) 读取 .spv 二进制；CompileGLSLToSPIRV(path, stage) 未链接 glslang 时尝试 path+".spv" 约定；Compile(path, stage, device) 按扩展名 .spv 直接加载、.vert/.frag/.comp 走 CompileGLSLToSPIRV 后 CreateShader；Recompile 同 Compile；StageFromExtension/SupportsExtension。
+- 验证：编译通过，ctest 37/37 通过（新增 test_shader_compiler：StageFromExtension、SupportsExtension、ResolvePath、LoadSPIRV 成功/失败、Compile null 与非法扩展、Compile 有效 .spv + mock 设备、Recompile 新句柄）。
+- feature_list.json 中 phase8-8.3 的 status 更新为 completed，hold=null。resource_management_layer_todolist 4.3 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase9-9.2 DescriptorSet 池化
 状态：已完成
 - 实现：IRenderDevice 增加 AcquireInstanceDescriptorSet(instanceData, size)、ReleaseInstanceDescriptorSet(handle) 默认空/无效实现；VulkanRenderDevice 实现实例池：按单 layout（单 UBO binding）分组，CreateInstancePoolLayoutAndPool 创建 layout 与 VkDescriptorPool，Acquire 从 freeList 复用或新分配 set+buffer，Release 归还 freeList；Material 改为调用 device->AcquireInstanceDescriptorSet/ReleaseInstanceDescriptorSet，移除 Material 内 instancePool_，保留 instanceInUse_ 与 deviceForInstancePool_；rdi_types 增加 kInstanceDescriptorDataSize。

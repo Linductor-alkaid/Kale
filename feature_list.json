@@ -1596,7 +1596,7 @@
         "支持 .vert、.frag、.comp、.spv",
         "实现 Recompile(path, stage, device) 热重载时重新编译"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "着色器正确编译",

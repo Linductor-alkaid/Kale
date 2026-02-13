@@ -197,6 +197,14 @@ target_link_libraries(test_material_loader
 )
 add_test(NAME test_material_loader COMMAND test_material_loader)
 
+add_executable(test_shader_compiler test_shader_compiler.cpp)
+target_link_libraries(test_shader_compiler
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_shader_compiler COMMAND test_shader_compiler)
+
 add_executable(test_render_engine_init test_render_engine_init.cpp)
 target_link_libraries(test_render_engine_init
     PRIVATE
