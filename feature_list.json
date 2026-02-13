@@ -210,7 +210,7 @@
         "集成到 LoadResourceAsync 等上层 API",
         "确保 promise::set_value 仅调用一次，标准库保证线程安全"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.7"],
       "test_verification": "异步加载不阻塞主线程，返回正确的 Future"
