@@ -1554,7 +1554,7 @@
         "可选：支持 .obj、.fbx（通过 assimp）",
         "支持 LOD（若有多个 mesh）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.8", "phase6-6.5"],
       "test_verification": "完整模型正确加载和渲染",

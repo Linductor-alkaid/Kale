@@ -164,9 +164,9 @@
 
 ### 4.1 完整 ModelLoader
 
-- [ ] 支持 glTF 材质引用
-- [ ] 解析 glTF 中的 material 索引，关联 Material 路径
-- [ ] 支持 SubMesh 与材质映射
+- [x] 支持 glTF 材质引用
+- [x] 解析 glTF 中的 material 索引，关联 Material 路径
+- [x] 支持 SubMesh 与材质映射
 - [ ] 可选：支持 .obj、.fbx（通过 assimp）
 - [ ] 支持 LOD（若有多个 mesh）
 

@@ -40,6 +40,13 @@ bool SupportsExtension(const std::string& path) {
     return HasExtension(path, ".gltf") || HasExtension(path, ".glb");
 }
 
+// 从文件路径得到所在目录（不含末尾 /）；若无目录则返回 "." 
+std::string GetBaseDir(const std::string& path) {
+    std::string::size_type pos = path.find_last_of("/\\");
+    if (pos == std::string::npos) return ".";
+    return path.substr(0, pos);
+}
+
 // 顶点格式：位置(3) + 法线(3) + UV(2) = 8 float
 struct VertexPNT {
     float px, py, pz;
@@ -231,6 +238,26 @@ std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoa
         return nullptr;
     }
 
+    // 构建材质路径列表：materialPaths[glTF material index] = 供 Load<Material> 使用的路径
+    std::string baseDir = GetBaseDir(path);
+    std::vector<std::string> materialPaths;
+    if (!model.materials.empty()) {
+        materialPaths.reserve(model.materials.size());
+        for (size_t i = 0; i < model.materials.size(); ++i) {
+            const std::string& name = model.materials[i].name;
+            std::string matPath = baseDir + "/materials/";
+            if (name.empty()) {
+                matPath += "material_" + std::to_string(i) + ".json";
+            } else {
+                matPath += name + ".json";
+            }
+            materialPaths.push_back(matPath);
+        }
+    } else {
+        // 无材质时保证 materialIndex 0 有效
+        materialPaths.push_back("");
+    }
+
     kale_device::BufferDesc vbDesc;
     vbDesc.size = allVertices.size() * sizeof(VertexPNT);
     vbDesc.usage = kale_device::BufferUsage::Vertex;
@@ -300,6 +327,7 @@ std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoa
     mesh->bounds.min = boundsMin;
     mesh->bounds.max = boundsMax;
     mesh->subMeshes = std::move(subMeshes);
+    mesh->materialPaths = std::move(materialPaths);
     return mesh;
 }
 

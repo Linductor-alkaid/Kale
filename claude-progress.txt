@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.1 完整 ModelLoader
+状态：已完成
+- 实现：Mesh 增加 materialPaths（std::vector<std::string>），SubMesh::materialIndex 索引到 materialPaths；ModelLoader::LoadGLTF 中从 glTF 文件路径取 baseDir，遍历 model.materials 生成 materialPaths（baseDir/materials/name.json 或 material_N.json），无材质时 materialPaths 为单元素 ""。
+- 验证：编译通过，ctest 35/35 通过（新增 test_full_model_loader：有材质时 materialPaths 含 TestMat 与 .json、SubMesh materialIndex 与 indexCount；无材质时 materialPaths.size()==1；baseDir 解析）。
+- feature_list.json 中 phase8-8.1 的 status 更新为 completed，hold=null。resource_management_layer_todolist 4.1 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.9 SetupRenderGraph 示例
 状态：已完成
 - 实现：setup_render_graph.hpp：SetupRenderGraph(rg, width, height, shadowMapSize) 依次 SetResolution、SetupShadowPass、SetupGBufferPass、SetupLightingPass、SetupPostProcessPass、SetupOutputToSwapchainPass，一键配置完整 Deferred+Shadow 管线；与 SetResolution 配合使 DeclareTexture 使用当前分辨率。

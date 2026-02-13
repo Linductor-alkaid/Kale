@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <string>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -71,7 +72,11 @@ struct SubMesh {
 // Mesh
 // =============================================================================
 
-/** 网格资源：顶点/索引缓冲、拓扑、包围盒、子网格 */
+/**
+ * 网格资源：顶点/索引缓冲、拓扑、包围盒、子网格。
+ * materialPaths[i] 为第 i 号材质的资源路径，供 ResourceManager::Load<Material>(path) 使用；
+ * SubMesh::materialIndex 索引到 materialPaths。
+ */
 struct Mesh {
     kale_device::BufferHandle vertexBuffer{};
     kale_device::BufferHandle indexBuffer{};
@@ -80,6 +85,8 @@ struct Mesh {
     kale_device::PrimitiveTopology topology = kale_device::PrimitiveTopology::TriangleList;
     BoundingBox bounds{};
     std::vector<SubMesh> subMeshes;
+    /** 材质路径列表：materialPaths[materialIndex] 对应 SubMesh 使用的材质路径（如 "materials/foo.json"） */
+    std::vector<std::string> materialPaths;
 };
 
 // =============================================================================
