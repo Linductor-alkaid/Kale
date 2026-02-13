@@ -23,8 +23,10 @@
 #include <kale_executor/render_task_scheduler.hpp>
 
 #include <glm/glm.hpp>
+#include <chrono>
 #include <functional>
 #include <queue>
+#include <thread>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -67,6 +69,12 @@ public:
     std::uint32_t GetResolutionWidth() const { return resolutionWidth_; }
     /** 当前分辨率高 */
     std::uint32_t GetResolutionHeight() const { return resolutionHeight_; }
+
+    /**
+     * 设置退出检查回调；Execute 在等待 GPU 时若超时会调用，返回 true 则跳过本帧并退出。
+     * 用于在长时间阻塞时保持窗口响应（如处理关闭事件）。
+     */
+    void SetQuitCallback(std::function<bool()> cb) { quitCallback_ = std::move(cb); }
 
     /**
      * 设置覆盖的输出目标（多视口/离屏，phase12-12.6）。
@@ -293,6 +301,8 @@ private:
     /** 当前帧视图/投影矩阵，供 Pass 计算 MVP；由 SetViewProjection 设置。 */
     glm::mat4 viewMatrix_{1.f};
     glm::mat4 projectionMatrix_{1.f};
+
+    std::function<bool()> quitCallback_;
 };
 
 // -----------------------------------------------------------------------------
@@ -664,7 +674,10 @@ inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
     const std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
 
     if (frameIndex < frameFences_.size() && frameFences_[frameIndex].IsValid()) {
-        device->WaitForFence(frameFences_[frameIndex]);
+        while (!device->IsFenceSignaled(frameFences_[frameIndex])) {
+            if (quitCallback_ && quitCallback_()) return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
         device->ResetFence(frameFences_[frameIndex]);
     }
 

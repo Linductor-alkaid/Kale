@@ -208,11 +208,16 @@ struct RenderDemoApp : kale::IApplication {
         auto* sceneMgr = engine->GetSceneManager();
         auto* rg = engine->GetRenderGraph();
         auto* device = engine->GetRenderDevice();
-        if (!sceneMgr || !rg || !device) return;
+        auto* windowSystem = engine->GetWindowSystem();
+        if (!sceneMgr || !rg || !device || !windowSystem) return;
+
+        // 每帧同步窗口尺寸到 RenderGraph，支持窗口 resize 时 viewport/scissor 正确
+        std::uint32_t w = windowSystem->GetWidth();
+        std::uint32_t h = windowSystem->GetHeight();
+        if (w > 0 && h > 0) rg->SetResolution(w, h);
 
         if (camera) {
-            float aspect = static_cast<float>(engine->GetWindowSystem()->GetWidth()) /
-                          static_cast<float>(std::max(1u, engine->GetWindowSystem()->GetHeight()));
+            float aspect = static_cast<float>(w) / static_cast<float>(std::max(1u, h));
             camera->UpdateViewProjection(aspect, true);  // true = Vulkan NDC Y 翻转
             rg->SetViewProjection(camera->viewMatrix, camera->projectionMatrix);
         }
@@ -230,6 +235,7 @@ int main() {
     config.height = 768;
     config.title = "Kale Render Demo - 完整渲染示例";
     config.enableValidation = false;
+    config.useExecutor = false;  // 禁用 executor 避免关闭时阻塞
 
     if (!engine.Initialize(config)) {
         std::cerr << "RenderEngine::Initialize failed: " << engine.GetLastError() << "\n";
@@ -291,7 +297,10 @@ int main() {
 
     // 配置 Render Graph（Forward Pass）
     rg->SetResolution(config.width, config.height);
-    rg->SetScheduler(nullptr);  // 单线程录制，避免关闭时 executor 卡死
+    auto pumpQuit = [&engine]() { return engine.PumpEventsAndCheckQuit(); };
+    rg->SetQuitCallback(pumpQuit);
+    device->SetQuitCallback(pumpQuit);
+    // useExecutor=false 时 rg 已无 scheduler
     kale::pipeline::SetupForwardPassWithCamera(*rg);
     if (!rg->Compile(device)) {
         std::cerr << "RenderGraph::Compile failed: " << rg->GetLastError() << "\n";
@@ -306,7 +315,6 @@ int main() {
     app.cubeMesh = std::move(cubeMesh);
     app.cubeMaterial = std::move(cubeMaterial);
     engine.Run(&app);
-
     engine.Shutdown();
     std::cout << "Render Demo exited.\n";
     return 0;

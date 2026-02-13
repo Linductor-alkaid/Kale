@@ -15,6 +15,7 @@
 #include <kale_device/vulkan_context.hpp>
 #include <kale_device/vulkan_rdi_utils.hpp>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -149,6 +150,7 @@ public:
     bool IsFenceSignaled(FenceHandle fence) const override;
     SemaphoreHandle CreateSemaphore() override;
 
+    void SetQuitCallback(std::function<bool()> cb) override { quitCallback_ = std::move(cb); }
     std::uint32_t AcquireNextImage() override;
     void Present() override;
     TextureHandle GetBackBuffer() override;
@@ -233,6 +235,8 @@ private:
     void* vmaAllocator_ = nullptr;
     std::unordered_map<std::uint64_t, void*> bufferAllocations_;
     std::unordered_map<std::uint64_t, void*> textureAllocations_;
+
+    std::function<bool()> quitCallback_;
 
     // 上传用（UpdateBuffer/UpdateTexture 的 staging 与 copy 命令）
     VkCommandPool uploadCommandPool_ = nullptr;

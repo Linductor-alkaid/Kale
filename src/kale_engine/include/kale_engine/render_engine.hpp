@@ -70,6 +70,8 @@ public:
         enum BackendType { Vulkan, OpenGL } backend = Vulkan;
         std::string assetPath = "./assets";
         std::string shaderPath = "./shaders";
+        /** 为 false 时不创建 executor/scheduler，避免关闭时阻塞（调试用） */
+        bool useExecutor = true;
     };
 
     RenderEngine() = default;
@@ -104,6 +106,9 @@ public:
 
     /** 由应用层在 OnUpdate/OnRender 中调用以请求主循环退出（如按 Escape） */
     void RequestQuit();
+
+    /** 处理窗口事件并检查是否应退出；供 RenderGraph 在等待 GPU 时调用以保持窗口响应 */
+    bool PumpEventsAndCheckQuit();
 
     kale_device::IRenderDevice* GetRenderDevice();
     kale_device::InputManager* GetInputManager();

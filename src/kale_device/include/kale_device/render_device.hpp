@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -138,6 +139,9 @@ public:
     virtual SemaphoreHandle CreateSemaphore() = 0;
 
     // --- 交换链 ---
+    /** 设置退出检查回调；AcquireNextImage 等待时若调用返回 true 则提前返回 kInvalidSwapchainImageIndex。 */
+    virtual void SetQuitCallback(std::function<bool()> cb) { (void)cb; }
+
     /** 获取下一帧 swapchain 图像索引；失败返回 kInvalidSwapchainImageIndex。 */
     virtual std::uint32_t AcquireNextImage() = 0;
     static constexpr std::uint32_t kInvalidSwapchainImageIndex = 0xFFFFFFFFu;

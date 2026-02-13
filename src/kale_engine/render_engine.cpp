@@ -95,26 +95,30 @@ bool RenderEngine::Initialize(const Config& config) {
     impl.inputManager = std::make_unique<kale_device::InputManager>();
     impl.inputManager->Initialize(impl.windowSystem->GetWindow());
 
-    // 4. scheduler（需先创建 executor）
-    impl.executor = std::make_unique<::executor::Executor>();
-    impl.executor->initialize(::executor::ExecutorConfig{});
-    impl.scheduler =
-        std::make_unique<kale::executor::RenderTaskScheduler>(impl.executor.get());
+    // 4. scheduler（需先创建 executor）；useExecutor=false 时跳过，避免关闭阻塞
+    kale::executor::RenderTaskScheduler* sched = nullptr;
+    if (config.useExecutor) {
+        impl.executor = std::make_unique<::executor::Executor>();
+        impl.executor->initialize(::executor::ExecutorConfig{});
+        impl.scheduler =
+            std::make_unique<kale::executor::RenderTaskScheduler>(impl.executor.get());
+        sched = impl.scheduler.get();
+    }
 
     // 5. sceneManager
     impl.sceneManager = std::make_unique<kale::scene::SceneManager>();
 
     // 6. entityManager(scheduler, sceneManager)
     impl.entityManager = std::make_unique<kale::scene::EntityManager>(
-        impl.scheduler.get(), impl.sceneManager.get());
+        sched, impl.sceneManager.get());
 
     // 7. resourceManager(scheduler, device, stagingMgr=nullptr)
     impl.resourceManager = std::make_unique<kale::resource::ResourceManager>(
-        impl.scheduler.get(), impl.renderDevice.get(), nullptr);
+        sched, impl.renderDevice.get(), nullptr);
 
     // 8. renderGraph（注入 scheduler 以支持多线程 RecordPasses）
     impl.renderGraph = std::make_unique<kale::pipeline::RenderGraph>();
-    impl.renderGraph->SetScheduler(impl.scheduler.get());
+    impl.renderGraph->SetScheduler(sched);
 
     return true;
 }
@@ -127,15 +131,12 @@ std::string RenderEngine::GetLastError() const {
 void RenderEngine::Shutdown() {
     if (!impl_) return;
     RenderEngineImpl& impl = *static_cast<RenderEngineImpl*>(impl_);
-    // 释放顺序：先依赖资源的，再底层
     impl.renderGraph.reset();
     impl.resourceManager.reset();
     impl.entityManager.reset();
     impl.sceneManager.reset();
     impl.scheduler.reset();
-    if (impl.executor) {
-        impl.executor->shutdown(true);  // 等待工作线程结束，避免关闭时卡死
-    }
+    if (impl.executor) impl.executor->shutdown(true);
     impl.executor.reset();
     impl.inputManager.reset();
     impl.renderDevice.reset();
@@ -189,6 +190,14 @@ void RenderEngine::RequestQuit() {
     static_cast<RenderEngineImpl*>(impl_)->runRequestedQuit = true;
 }
 
+bool RenderEngine::PumpEventsAndCheckQuit() {
+    if (!impl_) return true;
+    RenderEngineImpl& impl = *static_cast<RenderEngineImpl*>(impl_);
+    kale_device::InputManager* input = impl.inputManager.get();
+    if (input) input->Update();
+    return (input && input->QuitRequested()) || impl.runRequestedQuit;
+}
+
 void RenderEngine::Run(IApplication* app) {
     if (!impl_ || !app) return;
     RenderEngineImpl& impl = *static_cast<RenderEngineImpl*>(impl_);
@@ -211,6 +220,7 @@ void RenderEngine::Run(IApplication* app) {
         tPrev = tNow;
 
         inputManager->Update();
+        if (inputManager->QuitRequested() || impl.runRequestedQuit) break;
 
         if (windowSystem) {
             std::uint32_t w = windowSystem->GetWidth();
@@ -229,6 +239,7 @@ void RenderEngine::Run(IApplication* app) {
         bool skipRender = windowSystem && (windowSystem->GetWidth() == 0 || windowSystem->GetHeight() == 0);
         if (!skipRender) {
             app->OnRender();
+            if (inputManager->QuitRequested() || impl.runRequestedQuit) break;
             device->Present();
             // 帧边界同步：主线程帧末对 FrameData 调用 end_frame，使本帧写入在下一帧对 read_buffer() 可见
             kale::executor::RenderTaskScheduler* sched = impl.scheduler.get();

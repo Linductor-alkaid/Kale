@@ -13,7 +13,9 @@
 #include <vulkan/vulkan.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
+#include <thread>
 #include <vector>
 
 namespace kale_device {
@@ -1832,7 +1834,14 @@ std::uint32_t VulkanRenderDevice::AcquireNextImage() {
     if (!context_.IsInitialized()) return IRenderDevice::kInvalidSwapchainImageIndex;
     VkDevice dev = context_.GetDevice();
     std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
-    vkWaitForFences(dev, 1, &frameFences_[frameIndex], VK_TRUE, UINT64_MAX);
+    if (quitCallback_) {
+        while (vkGetFenceStatus(dev, frameFences_[frameIndex]) != VK_SUCCESS) {
+            if (quitCallback_()) return IRenderDevice::kInvalidSwapchainImageIndex;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    } else {
+        vkWaitForFences(dev, 1, &frameFences_[frameIndex], VK_TRUE, UINT64_MAX);
+    }
     vkResetFences(dev, 1, &frameFences_[frameIndex]);
     std::uint32_t imageIndex = 0;
     VkResult err = vkAcquireNextImageKHR(dev, context_.GetSwapchain(), UINT64_MAX,

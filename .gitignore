@@ -74,3 +74,4 @@ test_*.cpp
 CMakeLists_test.txt
 # 官方单元测试保留在 tests/ 目录
 !tests/test_*.cpp
+Testing/
