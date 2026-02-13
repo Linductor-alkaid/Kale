@@ -134,6 +134,15 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/fixtures DESTINATION ${CMAKE_CURRENT_BINAR
 add_test(NAME test_texture_loader_staging COMMAND test_texture_loader_staging)
 set_tests_properties(test_texture_loader_staging PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
 
+add_executable(test_compressed_texture_ktx test_compressed_texture_ktx.cpp)
+target_link_libraries(test_compressed_texture_ktx
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_compressed_texture_ktx COMMAND test_compressed_texture_ktx)
+set_tests_properties(test_compressed_texture_ktx PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
+
 add_executable(test_draw_resource_check test_draw_resource_check.cpp)
 target_link_libraries(test_draw_resource_check
     PRIVATE

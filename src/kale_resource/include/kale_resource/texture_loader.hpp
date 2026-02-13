@@ -15,9 +15,10 @@
 namespace kale::resource {
 
 /**
- * @brief 纹理加载器：支持 .png、.jpg（使用 stb_image）
+ * @brief 纹理加载器：支持 .png、.jpg（stb_image）、.ktx（KTX1 压缩/未压缩）
  *
- * Load 返回 std::unique_ptr<Texture>，通过 RDI CreateTexture 直接上传像素数据。
+ * Load 返回 std::unique_ptr<Texture>；Staging 可用时经 Staging 上传，否则回退 CreateTexture(desc, data)。
+ * phase12-12.5：LoadKTX 支持 KTX1，根据 glInternalFormat 选择 RDI Format（RGBA8、BC1/BC3/BC5/BC7）。
  */
 class TextureLoader : public IResourceLoader {
 public:
@@ -27,6 +28,7 @@ public:
 
 private:
     std::unique_ptr<Texture> LoadSTB(const std::string& path, ResourceLoadContext& ctx);
+    std::unique_ptr<Texture> LoadKTX(const std::string& path, ResourceLoadContext& ctx);
 };
 
 }  // namespace kale::resource

@@ -2335,7 +2335,7 @@
         "实现 LoadDDS(path) 加载 DDS 格式（可选）",
         "根据格式选择 RDI CreateTexture 的 Format"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase3-3.7"],
       "test_verification": "压缩纹理正确加载",

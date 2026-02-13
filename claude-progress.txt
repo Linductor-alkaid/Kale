@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase12-12.5 压缩纹理支持
+状态：已完成
+- 实现：TextureLoader::Supports 增加 .ktx；Load 按扩展名分发到 LoadKTX 或 LoadSTB。LoadKTX 内联解析 KTX1（12 字节 identifier、endianness、glInternalFormat→RDI Format 映射 RGBA8/BC1/BC3/BC5/BC7），有 Staging 时 CreateTexture(desc,nullptr)+Allocate+SubmitUpload+FlushUploads+WaitForFence+Free，无 Staging 时仅 RGBA8 走 CreateTexture(desc, data)。kale_device 增加 FromVkFormat(VkFormat) 供后续 KTX2/Vk 格式使用。
+- 验证：编译通过，ctest 63/63 通过（新增 test_compressed_texture_ktx：Supports .ktx/.png、无效路径与错误 magic 返回空、最小合法 KTX1 4x4 RGBA8 经 Staging 加载后 handle 有效、width/height/format 正确）。phase12-12.5 status=completed，hold=null。resource_management_layer_todolist 4.4 中 KTX 三项与“根据格式选择 RDI Format”已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.7 设备能力查询
 状态：已完成
 - 实现：VulkanRenderDevice::Initialize 中从 VkPhysicalDevice 查询 VkPhysicalDeviceProperties / VkPhysicalDeviceFeatures 及队列族，填充 DeviceCapabilities（maxTextureSize、maxComputeWorkGroupSize、supportsGeometryShader、supportsTessellation、supportsComputeShader、maxRecordingThreads）。

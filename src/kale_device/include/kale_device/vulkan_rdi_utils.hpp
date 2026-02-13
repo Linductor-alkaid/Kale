@@ -14,6 +14,8 @@ namespace kale_device {
 
 // --- Format / Usage 转换 ---
 VkFormat ToVkFormat(Format f);
+/** VkFormat -> RDI Format（KTX/外部格式加载时使用；未映射返回 Format::Undefined） */
+Format FromVkFormat(VkFormat vkFormat);
 VkBufferUsageFlags ToVkBufferUsage(BufferUsage u);
 VkImageUsageFlags ToVkImageUsage(TextureUsage u);
 VkShaderStageFlagBits ToVkShaderStage(ShaderStage s);

@@ -33,6 +33,33 @@ VkFormat ToVkFormat(Format f) {
     }
 }
 
+Format FromVkFormat(VkFormat vkFormat) {
+    switch (vkFormat) {
+        case VK_FORMAT_R8_UNORM: return Format::R8_UNORM;
+        case VK_FORMAT_R8G8_UNORM: return Format::RG8_UNORM;
+        case VK_FORMAT_R8G8B8A8_UNORM: return Format::RGBA8_UNORM;
+        case VK_FORMAT_R8G8B8A8_SRGB: return Format::RGBA8_SRGB;
+        case VK_FORMAT_R16_SFLOAT: return Format::R16F;
+        case VK_FORMAT_R16G16_SFLOAT: return Format::RG16F;
+        case VK_FORMAT_R16G16B16A16_SFLOAT: return Format::RGBA16F;
+        case VK_FORMAT_R32_SFLOAT: return Format::R32F;
+        case VK_FORMAT_R32G32_SFLOAT: return Format::RG32F;
+        case VK_FORMAT_R32G32B32_SFLOAT: return Format::RGB32F;
+        case VK_FORMAT_R32G32B32A32_SFLOAT: return Format::RGBA32F;
+        case VK_FORMAT_D16_UNORM: return Format::D16;
+        case VK_FORMAT_X8_D24_UNORM_PACK32: return Format::D24;
+        case VK_FORMAT_D32_SFLOAT: return Format::D32;
+        case VK_FORMAT_D24_UNORM_S8_UINT: return Format::D24S8;
+        case VK_FORMAT_D32_SFLOAT_S8_UINT: return Format::D32S8;
+        case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
+        case VK_FORMAT_BC1_RGBA_UNORM_BLOCK: return Format::BC1;
+        case VK_FORMAT_BC3_UNORM_BLOCK: return Format::BC3;
+        case VK_FORMAT_BC5_UNORM_BLOCK: return Format::BC5;
+        case VK_FORMAT_BC7_UNORM_BLOCK: return Format::BC7;
+        default: return Format::Undefined;
+    }
+}
+
 VkBufferUsageFlags ToVkBufferUsage(BufferUsage u) {
     VkBufferUsageFlags f = 0;
     if (HasBufferUsage(u, BufferUsage::Vertex)) f |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
