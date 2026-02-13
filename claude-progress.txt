@@ -1,4 +1,12 @@
 === 2026-02-13 ===
+功能：phase6-6.12 Execute 流程单线程
+状态：已完成
+- 实现 RenderGraph::Execute(device)：WaitForFence/ResetFence(frameFences_[currentFrameIndex_])、AcquireNextImage()、BuildFrameDrawList()、RecordPasses(device)、Submit(cmdLists, {}, {}, submitFence)、ReleaseFrameResources()、currentFrameIndex_ 轮转
+- BuildFrameDrawList() 预留扩展；RecordPasses 按拓扑序单线程录制，WriteSwapchain 时 color 用 GetBackBuffer()，否则用 GetCompiledTexture；ReleaseFrameResources() 空实现
+- Compile 时创建 frameFences_（kMaxFramesInFlight=3），Execute 使用设备默认 wait/signal semaphore，仅传入 fence
+- 编译通过，ctest 通过，hello_kale 运行正常
+
+=== 2026-02-13 ===
 功能：phase6-6.11 Compile 流程
 状态：已完成
 - 实现 RenderGraph::Compile(IRenderDevice* device)：运行各 Pass Setup 填充 CompiledPassInfo，BuildTopologicalOrder() 基于 Read/Write 推导 Pass 依赖并 Kahn 拓扑排序，按 DeclareTexture/DeclareBuffer 创建 RDI 资源并建立 RGResourceHandle→RDI 句柄映射

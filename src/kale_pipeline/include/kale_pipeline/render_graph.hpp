@@ -136,6 +136,13 @@ public:
      */
     bool Compile(kale_device::IRenderDevice* device);
 
+    /**
+     * 执行一帧渲染（每帧由应用层在 SubmitRenderable 后调用）。
+     * 流程：WaitFence → ResetFence → AcquireNextImage → BuildFrameDrawList → RecordPasses → Submit → ReleaseFrameResources。
+     * Present() 由应用层在 Execute 返回后调用。
+     */
+    void Execute(kale_device::IRenderDevice* device);
+
     /** Compile 失败时的错误信息（空表示无错误或未执行过 Compile）。 */
     const std::string& GetLastError() const { return compileError_; }
 
@@ -198,6 +205,12 @@ public:
 private:
     /** Pass 依赖分析：根据 compiledPassInfo_ 的读写构建有向边，返回拓扑序；若存在环则返回空。 */
     std::vector<RenderPassHandle> BuildTopologicalOrder() const;
+    /** 整理本帧绘制列表（当前为 submittedDraws_ 的引用，预留排序等扩展）。 */
+    void BuildFrameDrawList();
+    /** 按拓扑序单线程录制所有 Pass，返回本帧的 CommandList 列表。 */
+    std::vector<kale_device::CommandList*> RecordPasses(kale_device::IRenderDevice* device);
+    /** 帧末回收（如实例级 DescriptorSet）；当前无材质系统时为空实现。 */
+    void ReleaseFrameResources();
 
     std::uint32_t resolutionWidth_ = 0;
     std::uint32_t resolutionHeight_ = 0;
@@ -214,6 +227,11 @@ private:
     std::vector<kale_device::TextureHandle> compiledTextures_;
     std::vector<kale_device::BufferHandle> compiledBuffers_;
     std::string compileError_;
+
+    /** 帧流水线：Fence 在 Compile 时创建，Execute 中 Wait/Reset，Submit 时传入以 signal。 */
+    static constexpr std::uint32_t kMaxFramesInFlight = 3;
+    std::vector<kale_device::FenceHandle> frameFences_;
+    std::uint32_t currentFrameIndex_ = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -302,6 +320,19 @@ inline bool RenderGraph::Compile(kale_device::IRenderDevice* device) {
         }
     }
 
+    // 4) 帧流水线 Fence：首次 Compile 时创建，供 Execute 使用
+    if (frameFences_.size() != kMaxFramesInFlight) {
+        frameFences_.clear();
+        for (std::uint32_t i = 0; i < kMaxFramesInFlight; ++i) {
+            auto f = device->CreateFence(true);  // signaled 避免首帧 Wait 阻塞
+            if (!f.IsValid()) {
+                frameFences_.clear();
+                return true;  // 不因 Fence 创建失败而整体失败，Execute 时可不传 fence
+            }
+            frameFences_.push_back(f);
+        }
+    }
+
     return true;
 }
 
@@ -377,6 +408,85 @@ inline std::vector<RenderPassHandle> RenderGraph::BuildTopologicalOrder() const 
 
     if (order.size() != n) return {};  // 存在环
     return order;
+}
+
+inline void RenderGraph::BuildFrameDrawList() {
+    // 当前 submittedDraws_ 已由应用层每帧填入，此处预留排序/分组等扩展，无需拷贝。
+}
+
+inline void RenderGraph::ReleaseFrameResources() {
+    // 帧末回收实例级 DescriptorSet 等，待材质系统实现后扩展。
+}
+
+inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_device::IRenderDevice* device) {
+    std::vector<kale_device::CommandList*> cmdLists;
+    if (!device || topologicalOrder_.empty()) return cmdLists;
+
+    RenderPassContext ctx(&submittedDraws_);
+
+    for (RenderPassHandle passIdx : topologicalOrder_) {
+        if (passIdx >= passes_.size()) continue;
+        const auto& pass = passes_[passIdx];
+        const auto& info = compiledPassInfo_[passIdx];
+
+        kale_device::CommandList* cmd = device->BeginCommandList(0);
+        if (!cmd) continue;
+
+        // 解析 color attachments：WriteSwapchain 则用 back buffer，否则用 GetCompiledTexture
+        std::vector<kale_device::TextureHandle> colorAttachments;
+        kale_device::TextureHandle depthAttachment;
+        if (info.writesSwapchain) {
+            colorAttachments.push_back(device->GetBackBuffer());
+        } else {
+            for (const auto& p : info.colorOutputs) {
+                auto th = GetCompiledTexture(p.second);
+                if (th.IsValid()) colorAttachments.push_back(th);
+            }
+            if (info.depthOutput != kInvalidRGResourceHandle) {
+                depthAttachment = GetCompiledTexture(info.depthOutput);
+            }
+        }
+
+        if (!colorAttachments.empty()) {
+            cmd->BeginRenderPass(colorAttachments, depthAttachment);
+            if (pass.execute) pass.execute(ctx, *cmd);
+            cmd->EndRenderPass();
+        } else if (pass.execute) {
+            pass.execute(ctx, *cmd);
+        }
+
+        device->EndCommandList(cmd);
+        cmdLists.push_back(cmd);
+    }
+
+    return cmdLists;
+}
+
+inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
+    if (!device || !IsCompiled()) return;
+
+    const std::uint32_t frameIndex = currentFrameIndex_ % kMaxFramesInFlight;
+
+    if (frameIndex < frameFences_.size() && frameFences_[frameIndex].IsValid()) {
+        device->WaitForFence(frameFences_[frameIndex]);
+        device->ResetFence(frameFences_[frameIndex]);
+    }
+
+    if (device->AcquireNextImage() == 0) return;  // 例如 OUT_OF_DATE 等，跳过本帧
+
+    BuildFrameDrawList();
+
+    std::vector<kale_device::CommandList*> cmdLists = RecordPasses(device);
+
+    kale_device::FenceHandle submitFence;
+    if (frameIndex < frameFences_.size()) submitFence = frameFences_[frameIndex];
+    if (!cmdLists.empty())
+        device->Submit(cmdLists, {}, {}, submitFence);
+
+    ReleaseFrameResources();
+
+    if (!cmdLists.empty())
+        currentFrameIndex_ = (currentFrameIndex_ + 1) % kMaxFramesInFlight;
 }
 
 }  // namespace kale::pipeline

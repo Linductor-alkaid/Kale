@@ -67,16 +67,16 @@
 
 ### 1.7 Execute 流程（单线程）
 
-- [ ] 实现 `Execute(IRenderDevice* device)` 每帧调用
-- [ ] 实现 `BuildFrameDrawList()` 整理 submittedDraws_
-- [ ] 实现 帧流水线：`WaitForFence(frameFences_[currentFrameIndex_])`
-- [ ] 实现 `ResetFence(frameFences_[currentFrameIndex_])`
-- [ ] 实现 `AcquireNextImage()` 获取 imageIndex
-- [ ] 实现 `RecordPasses(device)` 按拓扑序单线程录制
-- [ ] 实现 `Submit(cmdLists, waitSem, signalSem, fence)`
-- [ ] 实现 `ReleaseFrameResources()` 帧末回收
-- [ ] 实现 `currentFrameIndex_` 轮转（`kMaxFramesInFlight = 3`）
-- [ ] 实现 `frameFences_`、`acquireSemaphore_`、`renderCompleteSemaphore_` 管理
+- [x] 实现 `Execute(IRenderDevice* device)` 每帧调用
+- [x] 实现 `BuildFrameDrawList()` 整理 submittedDraws_
+- [x] 实现 帧流水线：`WaitForFence(frameFences_[currentFrameIndex_])`
+- [x] 实现 `ResetFence(frameFences_[currentFrameIndex_])`
+- [x] 实现 `AcquireNextImage()` 获取 imageIndex
+- [x] 实现 `RecordPasses(device)` 按拓扑序单线程录制
+- [x] 实现 `Submit(cmdLists, waitSem, signalSem, fence)`
+- [x] 实现 `ReleaseFrameResources()` 帧末回收
+- [x] 实现 `currentFrameIndex_` 轮转（`kMaxFramesInFlight = 3`）
+- [x] 实现 `frameFences_`、`acquireSemaphore_`、`renderCompleteSemaphore_` 管理
 
 ### 1.8 简单 Forward Pass
 

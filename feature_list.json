@@ -921,7 +921,7 @@
         "实现 currentFrameIndex_ 轮转（kMaxFramesInFlight = 3）",
         "实现 frameFences_、acquireSemaphore_、renderCompleteSemaphore_ 管理"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.11", "phase2-2.6"],
       "test_verification": "单线程渲染流程正常工作"
