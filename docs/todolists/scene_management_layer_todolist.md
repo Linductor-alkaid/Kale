@@ -117,14 +117,14 @@
 
 ### 3.3 EntityManager
 
-- [ ] 实现 `EntityManager` 类
-- [ ] 构造函数 `EntityManager(RenderTaskScheduler* scheduler, SceneManager* sceneMgr = nullptr)`
-- [ ] 实现 `SetSceneManager(SceneManager*)` / `GetSceneManager()`
-- [ ] 实现 `CreateEntity()` / `DestroyEntity(Entity)` / `IsAlive(Entity)`
-- [ ] 实现 `Update(float deltaTime)` 根据 GetDependencies 构建 DAG，提交 executor
-- [ ] 实现 `AddComponent<T>` / `GetComponent<T>` / `HasComponent<T>` / `RemoveComponent`
-- [ ] 实现 `EntitiesWith<Components...>()` 查询
-- [ ] 实现 `RegisterSystem(std::unique_ptr<System>)`
+- [x] 实现 `EntityManager` 类
+- [x] 构造函数 `EntityManager(RenderTaskScheduler* scheduler, SceneManager* sceneMgr = nullptr)`
+- [x] 实现 `SetSceneManager(SceneManager*)` / `GetSceneManager()`
+- [x] 实现 `CreateEntity()` / `DestroyEntity(Entity)` / `IsAlive(Entity)`
+- [x] 实现 `Update(float deltaTime)` 根据 GetDependencies 构建 DAG，提交 executor
+- [x] 实现 `AddComponent<T>` / `GetComponent<T>` / `HasComponent<T>` / `RemoveComponent`
+- [x] 实现 `EntitiesWith<Components...>()` 查询
+- [x] 实现 `RegisterSystem(std::unique_ptr<System>)`
 
 ### 3.4 System 基类
 

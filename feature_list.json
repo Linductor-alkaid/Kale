@@ -241,7 +241,7 @@
         "集成到 LoadResourceAsync 等上层 API",
         "确保 promise::set_value 仅调用一次，标准库保证线程安全"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase1-1.7"
@@ -1356,7 +1356,7 @@
         "实现 EntitiesWith<Components...>() 查询",
         "实现 RegisterSystem(std::unique_ptr<System>)"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.2", "phase4-4.1"],
       "test_verification": "EntityManager 正确管理实体和系统",

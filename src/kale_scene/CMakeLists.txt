@@ -7,7 +7,7 @@ add_library(kale_scene STATIC
     scene_manager.cpp
     frustum.cpp
     static_mesh.cpp
-    # 待实现：scene_node.cpp, entity_manager.cpp, culling.cpp
+    entity_manager.cpp
 )
 
 target_include_directories(kale_scene

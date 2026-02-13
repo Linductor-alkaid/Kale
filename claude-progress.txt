@@ -1,4 +1,17 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.3 EntityManager
+状态：已完成
+- 实现：EntityManager 类（CreateEntity/DestroyEntity/IsAlive、generations_/freeList_/freeSet_）；AddComponent/GetComponent/HasComponent/RemoveComponent（类型擦除 IComponentStorage + StorageHolder<T>）；EntitiesWith<Components...>；RegisterSystem、Update 按 GetDependencies 构建 DAG 拓扑序执行；scene::System 基类（Update(deltaTime, EntityManager&)、GetDependencies、OnEntityCreated/OnEntityDestroyed）。新增 entity_manager.hpp、entity_manager.cpp。
+- 验证：编译通过，ctest 通过（新增 test_entity_manager：Create/Destroy/IsAlive、组件 CRUD、EntitiesWith 单/多类型、RemoveComponent、RegisterSystem/Update、OnEntityCreated/Destroyed、依赖 DAG）；scene_management_layer_todolist 3.3 已勾选。
+- feature_list.json 中 phase7-7.3 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
+功能：phase1-1.9 async_load API（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过（test_executor_future、test_load_async 覆盖异步加载与 Future）；executor_layer_todolist 2.3 集成 LoadResourceAsync 已勾选。
+- feature_list.json 中 phase1-1.9 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.2 Entity 与 ComponentStorage
 状态：已完成
 - 实现：Entity 结构（id, generation、IsValid、operator==/!=）、Entity::Null() 与 kNullEntity；ComponentStorage<T>（Add/Remove/Get/Has、entityToIndex_ + indexToEntity_ 稠密存储、Remove 交换末尾保持稠密）；新增 kale_scene/include/kale_scene/entity.hpp、component_storage.hpp。

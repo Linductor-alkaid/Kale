@@ -60,7 +60,7 @@
 ### 2.3 集成与 API
 
 - [x] 实现 `async_load<T>(Executor& ex, std::function<T()> loader)` API
-- [ ] 集成到 `LoadResourceAsync` 等上层 API
+- [x] 集成到 `LoadResourceAsync` 等上层 API
 - [x] 确保 `promise::set_value` 仅调用一次，标准库保证线程安全
 
 ---
