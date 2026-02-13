@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase6-6.6～6.12 Render Graph 基础（验证）
+状态：已完成
+- 验证：编译通过，ctest 57/57 通过；phase6-6.6 SubmittedDraw 与 RenderPassContext、phase6-6.7 PassFlags 与 RG 资源句柄、phase6-6.8 RenderPassBuilder、phase6-6.9 RenderGraph 声明式接口、phase6-6.10 应用层显式提交、phase6-6.11 Compile 流程、phase6-6.12 Execute 流程单线程 已由前期实现，本会话运行全量测试通过，将上述 7 项 status 从 verifying 更新为 completed，hold 保持 null。rendering_pipeline_layer_todolist 1.1～1.7 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase6-6.5 ModelLoader 集成 Staging（验证）
 状态：已完成
 - 验证：编译通过，ctest 57/57 通过；ModelLoader 当 ctx.stagingMgr 非空时走 Staging 路径（CreateBuffer(desc,nullptr)+Allocate+SubmitUpload+FlushUploads+WaitForFence+Free）已由前期实现；本会话新增 test_model_loader_staging（Staging 路径成功加载、CreateBuffer(nullptr) 与 fence 提交、无 stagingMgr 回退路径、无效路径返回空）。phase6-6.5 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.5 已为已勾选状态。

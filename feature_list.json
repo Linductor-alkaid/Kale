@@ -929,7 +929,7 @@
         "实现 GetSubmittedDraws() 返回 const std::vector<SubmittedDraw>&",
         "实现 GetDrawsForPass(PassFlags pass) 按 Pass 过滤（过滤条件 (draw.passFlags & pass) != 0）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase5-5.10"
@@ -949,7 +949,7 @@
         "定义 RGResourceHandle = uint64_t 类型（RG 内部逻辑句柄）",
         "Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase5-5.5"
@@ -972,7 +972,7 @@
         "实现 WriteSwapchain() 声明写入当前 back buffer",
         "Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.7"
@@ -996,7 +996,7 @@
         "定义 RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)> 类型",
         "实现 SetResolution(uint32_t width, uint32_t height) 影响 DeclareTexture 尺寸"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.8"
@@ -1016,7 +1016,7 @@
         "实现 ClearSubmitted() 清空本帧提交",
         "实现 submittedDraws_ 成员存储每帧提交的绘制项"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.9"
@@ -1040,7 +1040,7 @@
         "Compile 失败时返回 false 或抛出，GetLastError 获取原因",
         "资源分配失败时保证已分配资源可释放"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.9",
@@ -1068,7 +1068,7 @@
         "实现 currentFrameIndex_ 轮转（kMaxFramesInFlight = 3）",
         "实现 frameFences_、acquireSemaphore_、renderCompleteSemaphore_ 管理"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.11",
