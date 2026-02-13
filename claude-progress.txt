@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase5-5.8 视锥剔除（验证）
+状态：已完成
+- 验证：编译通过，ctest 52/52 通过；FrustumPlanes、ExtractFrustumPlanes、IsBoundsInFrustum 已由前期实现（frustum.hpp/cpp），SceneManager::CullScene 中已使用视锥剔除。本会话新增 test_frustum（平面归一化、视锥内 AABB 可见、相机后方/远侧外不可见、退化 AABB）覆盖 phase5-5.8。phase5-5.8 的 status 从 verifying 更新为 completed，hold=null。scene_management_layer_todolist 2.2 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase5-5.7 BoundingBox 与数学（验证）
 状态：已完成
 - 验证：编译通过，ctest 51/51 通过；BoundingBox（resource_types.hpp）、BoundingBox::Transform、TransformBounds 已由前期实现，本会话新增 test_bounding_box（单位矩阵、平移、缩放、组合变换）覆盖包围盒变换；test_cull_scene_multi_camera、test_scene_node_factories、SceneManager::CullScene 中 TransformBounds 使用已覆盖。phase5-5.7 的 status 从 verifying 更新为 completed，hold=null。scene_management_layer_todolist 2.1 已为已勾选状态。

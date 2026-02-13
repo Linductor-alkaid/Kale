@@ -74,6 +74,13 @@ target_link_libraries(test_bounding_box
 )
 add_test(NAME test_bounding_box COMMAND test_bounding_box)
 
+add_executable(test_frustum test_frustum.cpp)
+target_link_libraries(test_frustum
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_frustum COMMAND test_frustum)
+
 add_executable(test_load_async test_load_async.cpp)
 target_link_libraries(test_load_async
     PRIVATE
