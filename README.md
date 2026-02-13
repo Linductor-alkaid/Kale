@@ -29,7 +29,8 @@ kale/
 │   ├── kale_pipeline/          # 渲染管线层 (Render Graph、Material)
 │   └── kale_engine/            # 引擎主入口
 ├── apps/                       # 示例应用
-│   └── hello_kale/
+│   ├── hello_kale/
+│   └── gamepad_monitor/        # 手柄输入监控（仅 SDL3，无需 Vulkan）
 └── docs/                       # 设计文档与任务清单
     ├── design/
     └── todolists/
@@ -41,6 +42,14 @@ kale/
 
 使用 `scripts/setup_dependencies.sh`（Linux/macOS）或 `scripts/setup_dependencies.ps1`（Windows）可自动拉取 third_party 依赖。
 
+**FetchContent 依赖**（优先 third_party，否则自动拉取到 build 目录）：
+| 依赖 | 用途 | scripts 已支持 |
+|------|------|---------------|
+| stb | stb_image 加载 PNG/JPG | ✓ |
+| tinygltf | glTF 模型解析 | ✓ |
+| nlohmann/json | 材质 JSON 解析 | ✓ |
+| glm | 数学库 | ✓ |
+
 | 依赖 | 说明 |
 |------|------|
 | CMake 3.16+ | 构建系统 |
@@ -48,21 +57,23 @@ kale/
 | glm | 数学库（未找到时自动 FetchContent） |
 | Vulkan | 图形 API（可选，设备层需要） |
 | SDL3 | 窗口与输入（可选，设备层需要） |
-| executor | 任务调度库（需指定路径） |
+| executor | 任务调度库（deb 安装或源码路径） |
 
 ### executor 集成
 
-executor 为 Kale 的任务调度基础，需在配置时指定路径：
+executor 为 Kale 的任务调度基础。**优先**通过 deb 安装后由 `find_package` 自动找到：
 
 ```bash
-cmake -B build -DKALE_EXECUTOR_PATH=/path/to/executor
+# 方式一：deb 安装后直接构建（推荐，见 docs/executor/PACKAGE_DEB.md）
+sudo dpkg -i dist/libexecutor-dev_0.1.0_amd64.deb
+cmake -B build
 cmake --build build
 ```
 
-或安装后使用 `find_package(executor)`：
+或使用源码路径（未安装 deb 时）：
 
 ```bash
-cmake -B build
+cmake -B build -DKALE_EXECUTOR_PATH=/path/to/executor
 cmake --build build
 ```
 
@@ -80,7 +91,7 @@ cmake --build build
 | `KALE_BUILD_APPS` | ON | 构建示例应用 |
 | `KALE_ENABLE_VALIDATION` | ON | Vulkan Validation Layer |
 | `KALE_ENABLE_OPENGL_BACKEND` | OFF | 构建 OpenGL 后端 |
-| `KALE_EXECUTOR_PATH` | - | executor 源码路径 |
+| `KALE_EXECUTOR_PATH` | - | executor 源码路径（未 deb 安装时） |
 | `KALE_USE_VCPKG` | OFF | 使用 vcpkg 管理依赖 |
 
 ## 模块独立构建

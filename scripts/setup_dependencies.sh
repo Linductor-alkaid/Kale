@@ -5,6 +5,8 @@
 set -e
 
 # Parse arguments
+SKIP_STB=false
+SKIP_TINYGLTF=false
 SKIP_GLM=false
 SKIP_SDL=false
 SKIP_SDL_IMAGE=false
@@ -17,6 +19,8 @@ SKIP_IMGUI=false
 
 for arg in "$@"; do
     case $arg in
+        --SkipSTB) SKIP_STB=true ;;
+        --SkipTinyGLTF) SKIP_TINYGLTF=true ;;
         --SkipGLM) SKIP_GLM=true ;;
         --SkipSDL) SKIP_SDL=true ;;
         --SkipSDLImage) SKIP_SDL_IMAGE=true ;;
@@ -86,21 +90,35 @@ clone_if_needed() {
     git clone --depth 1 --branch "$branch" "$url" "$dir"
 }
 
-# 1. Clone GLM
+# 1. Clone stb（单头文件库，texture_loader 用于 PNG/JPG）
+if [[ "$SKIP_STB" != "true" ]]; then
+    clone_if_needed "stb" "https://github.com/nothings/stb.git" "master" "stb"
+else
+    echo -e "${GRAY}Skipping stb (using --SkipSTB)${NC}"
+fi
+
+# 2. Clone tinygltf（glTF 模型解析）
+if [[ "$SKIP_TINYGLTF" != "true" ]]; then
+    clone_if_needed "tinygltf" "https://github.com/syoyo/tinygltf.git" "v2.8.13" "tinygltf"
+else
+    echo -e "${GRAY}Skipping tinygltf (using --SkipTinyGLTF)${NC}"
+fi
+
+# 3. Clone GLM
 if [[ "$SKIP_GLM" != "true" ]]; then
     clone_if_needed "glm" "https://github.com/g-truc/glm.git" "1.0.1" "glm"
 else
     echo -e "${GRAY}Skipping GLM (using --SkipGLM)${NC}"
 fi
 
-# 2. Clone SDL3
+# 4. Clone SDL3
 if [[ "$SKIP_SDL" != "true" ]]; then
     clone_if_needed "SDL" "https://github.com/libsdl-org/SDL.git" "release-3.2.0" "SDL3"
 else
     echo -e "${GRAY}Skipping SDL (using --SkipSDL)${NC}"
 fi
 
-# 3. Clone SDL_image
+# 5. Clone SDL_image
 if [[ "$SKIP_SDL_IMAGE" != "true" ]]; then
     clone_if_needed "SDL_image" "https://github.com/libsdl-org/SDL_image.git" "release-3.4.0" "SDL_image"
 
@@ -140,7 +158,7 @@ else
     echo -e "${GRAY}Skipping SDL_image (using --SkipSDLImage)${NC}"
 fi
 
-# 4. Clone SDL_ttf
+# 6. Clone SDL_ttf
 if [[ "$SKIP_SDL_TTF" != "true" ]]; then
     clone_if_needed "SDL_ttf" "https://github.com/libsdl-org/SDL_ttf.git" "release-3.2.2" "SDL_ttf"
 
@@ -207,35 +225,35 @@ else
     echo -e "${GRAY}Skipping SDL_ttf (using --SkipSDLTTF)${NC}"
 fi
 
-# 5. Clone nlohmann/json
+# 7. Clone nlohmann/json
 if [[ "$SKIP_JSON" != "true" ]]; then
     clone_if_needed "json" "https://github.com/nlohmann/json.git" "v3.11.3" "nlohmann/json"
 else
     echo -e "${GRAY}Skipping nlohmann/json (using --SkipJSON)${NC}"
 fi
 
-# 6. Clone Assimp
+# 8. Clone Assimp
 if [[ "$SKIP_ASSIMP" != "true" ]]; then
     clone_if_needed "assimp" "https://github.com/assimp/assimp.git" "v5.4.3" "Assimp"
 else
     echo -e "${GRAY}Skipping Assimp (using --SkipAssimp)${NC}"
 fi
 
-# 7. Clone meshoptimizer
+# 9. Clone meshoptimizer
 if [[ "$SKIP_MESH_OPTIMIZER" != "true" ]]; then
     clone_if_needed "meshoptimizer" "https://github.com/zeux/meshoptimizer.git" "v0.20" "meshoptimizer"
 else
     echo -e "${GRAY}Skipping meshoptimizer (using --SkipMeshOptimizer)${NC}"
 fi
 
-# 8. Clone bullet3
+# 10. Clone bullet3
 if [[ "$SKIP_BULLET3" != "true" ]]; then
     clone_if_needed "bullet3" "https://github.com/bulletphysics/bullet3.git" "3.25" "bullet3"
 else
     echo -e "${GRAY}Skipping bullet3 (using --SkipBullet3)${NC}"
 fi
 
-# 9. Clone ImGui (docking branch)
+# 11. Clone ImGui (docking branch)
 if [[ "$SKIP_IMGUI" != "true" ]]; then
     NEEDS_CLONE=false
     if [[ -d "imgui" ]]; then

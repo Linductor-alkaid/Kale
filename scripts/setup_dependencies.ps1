@@ -2,6 +2,8 @@
 # This script automatically downloads and configures all required third-party libraries
 
 param(
+    [switch]$SkipSTB = $false,
+    [switch]$SkipTinyGLTF = $false,
     [switch]$SkipGLM = $false,
     [switch]$SkipSDL = $false,
     [switch]$SkipSDLImage = $false,
@@ -49,7 +51,69 @@ if (-not (Test-Path $ThirdPartyDir)) {
 
 Push-Location $ThirdPartyDir
 
-# 1. Clone GLM
+# 1. Clone stb（单头文件库，texture_loader 用于 PNG/JPG）
+if (-not $SkipSTB) {
+    $STBDir = "stb"
+    $needsClone = $false
+
+    if (Test-Path $STBDir) {
+        $stbItems = Get-ChildItem -Path $STBDir -ErrorAction SilentlyContinue
+        if ($null -eq $stbItems -or $stbItems.Count -eq 0) {
+            Write-Host "stb directory exists but is empty, removing and re-cloning..." -ForegroundColor Yellow
+            Remove-Item -Path $STBDir -Recurse -Force
+            $needsClone = $true
+        } else {
+            Write-Host "stb already exists and is complete, skipping clone" -ForegroundColor Green
+        }
+    } else {
+        $needsClone = $true
+    }
+
+    if ($needsClone) {
+        Write-Host "Cloning stb (master)..." -ForegroundColor Yellow
+        git clone --depth 1 --branch master https://github.com/nothings/stb.git
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Error: stb clone failed" -ForegroundColor Red
+            Pop-Location
+            exit 1
+        }
+    }
+} else {
+    Write-Host "Skipping stb (using -SkipSTB)" -ForegroundColor Gray
+}
+
+# 2. Clone tinygltf（glTF 模型解析）
+if (-not $SkipTinyGLTF) {
+    $TinyGLTFDir = "tinygltf"
+    $needsClone = $false
+
+    if (Test-Path $TinyGLTFDir) {
+        $tinygltfItems = Get-ChildItem -Path $TinyGLTFDir -ErrorAction SilentlyContinue
+        if ($null -eq $tinygltfItems -or $tinygltfItems.Count -eq 0) {
+            Write-Host "tinygltf directory exists but is empty, removing and re-cloning..." -ForegroundColor Yellow
+            Remove-Item -Path $TinyGLTFDir -Recurse -Force
+            $needsClone = $true
+        } else {
+            Write-Host "tinygltf already exists and is complete, skipping clone" -ForegroundColor Green
+        }
+    } else {
+        $needsClone = $true
+    }
+
+    if ($needsClone) {
+        Write-Host "Cloning tinygltf (v2.8.13)..." -ForegroundColor Yellow
+        git clone --depth 1 --branch v2.8.13 https://github.com/syoyo/tinygltf.git
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Error: tinygltf clone failed" -ForegroundColor Red
+            Pop-Location
+            exit 1
+        }
+    }
+} else {
+    Write-Host "Skipping tinygltf (using -SkipTinyGLTF)" -ForegroundColor Gray
+}
+
+# 3. Clone GLM
 if (-not $SkipGLM) {
     $GLMDir = "glm"
     $needsClone = $false
@@ -77,10 +141,10 @@ if (-not $SkipGLM) {
         }
     }
 } else {
-    Write-Host "Skipping GLM (using --SkipGLM)" -ForegroundColor Gray
+    Write-Host "Skipping GLM (using -SkipGLM)" -ForegroundColor Gray
 }
 
-# 2. Clone SDL3
+# 4. Clone SDL3
 if (-not $SkipSDL) {
     $SDLDir = "SDL"
     $needsClone = $false
@@ -108,10 +172,10 @@ if (-not $SkipSDL) {
         }
     }
 } else {
-    Write-Host "Skipping SDL (using --SkipSDL)" -ForegroundColor Gray
+    Write-Host "Skipping SDL (using -SkipSDL)" -ForegroundColor Gray
 }
 
-# 3. Clone SDL_image
+# 5. Clone SDL_image
 if (-not $SkipSDLImage) {
     $SDLImageDir = "SDL_image"
     $needsClone = $false
@@ -190,10 +254,10 @@ if (-not $SkipSDLImage) {
         }
     }
 } else {
-    Write-Host "Skipping SDL_image (using --SkipSDLImage)" -ForegroundColor Gray
+    Write-Host "Skipping SDL_image (using -SkipSDLImage)" -ForegroundColor Gray
 }
 
-# 4. Clone SDL_ttf
+# 6. Clone SDL_ttf
 if (-not $SkipSDLTTF) {
     $SDLTTFDir = "SDL_ttf"
     $needsClone = $false
@@ -350,10 +414,10 @@ if (-not $SkipSDLTTF) {
         Write-Host "SDL_ttf is complete and ready" -ForegroundColor Green
     }
 } else {
-    Write-Host "Skipping SDL_ttf (using --SkipSDLTTF)" -ForegroundColor Gray
+    Write-Host "Skipping SDL_ttf (using -SkipSDLTTF)" -ForegroundColor Gray
 }
 
-# 5. Clone nlohmann/json
+# 7. Clone nlohmann/json
 if (-not $SkipJSON) {
     $JSONDir = "json"
     $needsClone = $false
@@ -381,10 +445,10 @@ if (-not $SkipJSON) {
         }
     }
 } else {
-    Write-Host "Skipping nlohmann/json (using --SkipJSON)" -ForegroundColor Gray
+    Write-Host "Skipping nlohmann/json (using -SkipJSON)" -ForegroundColor Gray
 }
 
-# 6. Clone Assimp
+# 8. Clone Assimp
 if (-not $SkipAssimp) {
     $AssimpDir = "assimp"
     $needsClone = $false
@@ -412,10 +476,10 @@ if (-not $SkipAssimp) {
         }
     }
 } else {
-    Write-Host "Skipping Assimp (using --SkipAssimp)" -ForegroundColor Gray
+    Write-Host "Skipping Assimp (using -SkipAssimp)" -ForegroundColor Gray
 }
 
-# 7. Clone meshoptimizer
+# 9. Clone meshoptimizer
 if (-not $SkipMeshOptimizer) {
     $MeshOptimizerDir = "meshoptimizer"
     $needsClone = $false
@@ -443,10 +507,10 @@ if (-not $SkipMeshOptimizer) {
         }
     }
 } else {
-    Write-Host "Skipping meshoptimizer (using --SkipMeshOptimizer)" -ForegroundColor Gray
+    Write-Host "Skipping meshoptimizer (using -SkipMeshOptimizer)" -ForegroundColor Gray
 }
 
-# 8. Clone bullet3
+# 10. Clone bullet3
 if (-not $SkipBullet3) {
     $Bullet3Dir = "bullet3"
     $needsClone = $false
@@ -474,10 +538,10 @@ if (-not $SkipBullet3) {
         }
     }
 } else {
-    Write-Host "Skipping bullet3 (using --SkipBullet3)" -ForegroundColor Gray
+    Write-Host "Skipping bullet3 (using -SkipBullet3)" -ForegroundColor Gray
 }
 
-# 9. Clone ImGui and switch to docking branch
+# 11. Clone ImGui and switch to docking branch
 if (-not $SkipImGui) {
     $ImGuiDir = "imgui"
     $needsClone = $false
@@ -542,7 +606,7 @@ if (-not $SkipImGui) {
         Pop-Location
     }
 } else {
-    Write-Host "Skipping ImGui (using --SkipImGui)" -ForegroundColor Gray
+    Write-Host "Skipping ImGui (using -SkipImGui)" -ForegroundColor Gray
 }
 
 Pop-Location
