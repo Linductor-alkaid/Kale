@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.2 ResourceCache 基础（验证）
+状态：已完成
+- 验证：编译通过，ctest 45/45 通过；ResourceCache 基础（CacheEntry、Register/RegisterPlaceholder、Get/IsReady/SetResource/SetReady、FindByPath、AddRef/Release、线程安全）已由前期实现，本会话将 phase3-3.2 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.2 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.1 资源句柄类型（验证）
 状态：已完成
 - 验证：编译通过，ctest 45/45 通过；资源句柄类型（ResourceHandle/ResourceHandleAny/ToAny、Mesh/Texture/Material 句柄别名）已由前期实现，本会话将 phase3-3.1 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.1 已为已勾选状态。
