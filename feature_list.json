@@ -347,7 +347,7 @@
         "实现 Destroy* 系列接口",
         "实现 UpdateBuffer / UpdateTexture（含 Staging Buffer 上传路径）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.2"
