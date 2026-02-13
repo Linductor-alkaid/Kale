@@ -18,6 +18,13 @@ target_link_libraries(test_executor_future
 
 add_test(NAME test_executor_future COMMAND test_executor_future)
 
+add_executable(test_task_data_manager test_task_data_manager.cpp)
+target_link_libraries(test_task_data_manager
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_task_data_manager COMMAND test_task_data_manager)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE

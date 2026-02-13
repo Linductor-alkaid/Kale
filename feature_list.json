@@ -1113,7 +1113,7 @@
         "输入槽在任务开始前填充，任务执行期间只读",
         "输出槽在任务执行期间独占写入，完成后生效"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.5"],
       "test_verification": "DataSlot 分配和依赖绑定正常工作",

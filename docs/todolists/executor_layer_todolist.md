@@ -69,13 +69,13 @@
 
 ### 3.1 DataSlot 与 TaskDataManager
 
-- [ ] 定义 `DataSlotHandle` 结构（id + generation）
-- [ ] 实现 `TaskDataManager::allocate_slot(size_t size_bytes)`
-- [ ] 实现 `TaskDataManager::get_slot(DataSlotHandle h)`
-- [ ] 实现 `TaskDataManager::release_slot(DataSlotHandle h)`
-- [ ] 实现 `TaskDataManager::bind_dependency(task_a, slot_a_out, task_b, slot_b_in)`
-- [ ] 输入槽在任务开始前填充，任务执行期间只读
-- [ ] 输出槽在任务执行期间独占写入，完成后生效
+- [x] 定义 `DataSlotHandle` 结构（id + generation）
+- [x] 实现 `TaskDataManager::allocate_slot(size_t size_bytes)`
+- [x] 实现 `TaskDataManager::get_slot(DataSlotHandle h)`
+- [x] 实现 `TaskDataManager::release_slot(DataSlotHandle h)`
+- [x] 实现 `TaskDataManager::bind_dependency(task_a, slot_a_out, task_b, slot_b_in)`
+- [x] 输入槽在任务开始前填充，任务执行期间只读
+- [x] 输出槽在任务执行期间独占写入，完成后生效
 
 ### 3.2 TaskGraph
 

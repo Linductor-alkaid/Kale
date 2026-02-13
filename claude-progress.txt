@@ -1,3 +1,10 @@
+=== 2026-02-13 10:53:19 ===
+功能：phase2-2.7 DataSlot 与 TaskDataManager
+状态：已完成
+- 实现：DataSlotHandle(id+generation)、TaskDataManager(allocate_slot/get_slot/release_slot/bind_dependency)
+- 验证：编译通过，ctest 通过（test_task_data_manager 覆盖分配/释放/依赖绑定）
+- feature_list.json 中 phase2-2.7 的 status 更新为 completed，hold=null
+
 === 2026-02-13 10:49:17 ===
 功能：phase1-1.8 then 续接（验证）
 状态：已完成
