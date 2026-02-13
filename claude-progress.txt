@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase2-2.2 IRenderDevice 接口定义（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，hello_kale 启动正常（Vulkan 初始化成功）
+- feature_list.json 中 phase2-2.2 的 status 更新为 completed
+
+=== 2026-02-13 (session) ===
 功能：phase2-2.1 资源句柄与描述符类型（验证）
 状态：已完成
 - 验证：编译通过，ctest 通过，句柄与描述符类型由 rdi_types 定义、全项目引用正常
