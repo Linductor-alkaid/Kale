@@ -1,10 +1,11 @@
 /**
  * @file test_staging_memory_manager.cpp
- * @brief phase6-6.1 StagingMemoryManager 单元测试
+ * @brief phase6-6.1 / phase6-6.3 StagingMemoryManager 与 Upload Queue 单元测试
  *
  * 覆盖：null/零 size Allocate 返回无效；有效 device Allocate 返回有效且可写；
  * Free 即时回收、Free(alloc,fence) 延迟回收、ReclaimCompleted 回收已 signal 的；
- * SubmitUpload(cmd=null) 加入 pending、FlushUploads 执行并返回 Fence。
+ * SubmitUpload(cmd=null) 加入 pending、FlushUploads 执行并返回 Fence；
+ * phase6-6.3：SubmitUpload(cmd 非空) 立即录制不加入 pending、Buffer→Texture pending 经 FlushUploads 触发 CopyBufferToTexture。
  */
 
 #include <kale_resource/staging_memory_manager.hpp>
@@ -254,6 +255,35 @@ static void test_flush_uploads_null_device_returns_invalid() {
     TEST_CHECK(!f.IsValid());
 }
 
+/** phase6-6.3：cmd 非空时立即录制，不加入 pending */
+static void test_submit_upload_with_cmd_immediate_record() {
+    MockStagingDevice dev;
+    kale::resource::StagingMemoryManager mgr(&dev);
+    kale::resource::StagingAllocation src = mgr.Allocate(256);
+    TEST_CHECK(src.IsValid());
+    kale_device::BufferHandle dst{100};
+    dev.mockCmd_.copyBufferCalls_ = 0;
+    mgr.SubmitUpload(&dev.mockCmd_, src, dst, 0);
+    TEST_CHECK(dev.mockCmd_.copyBufferCalls_ == 1);
+    kale_device::FenceHandle f = mgr.FlushUploads(&dev);
+    TEST_CHECK(!f.IsValid());  /* pending 为空，不提交 */
+    TEST_CHECK(dev.mockCmd_.copyBufferCalls_ == 1);  /* 未再录制 */
+}
+
+/** phase6-6.3：Buffer→Texture pending 路径，FlushUploads 触发 CopyBufferToTexture */
+static void test_submit_upload_buffer_to_texture_pending_flush() {
+    MockStagingDevice dev;
+    kale::resource::StagingMemoryManager mgr(&dev);
+    kale::resource::StagingAllocation src = mgr.Allocate(64 * 64 * 4);
+    TEST_CHECK(src.IsValid());
+    kale_device::TextureHandle dst{200};
+    dev.mockCmd_.copyTextureCalls_ = 0;
+    mgr.SubmitUpload(nullptr, src, dst, 0, 64, 64, 1);
+    kale_device::FenceHandle f = mgr.FlushUploads(&dev);
+    TEST_CHECK(f.IsValid());
+    TEST_CHECK(dev.mockCmd_.copyTextureCalls_ == 1);
+}
+
 int main() {
     test_allocate_null_device_returns_invalid();
     test_allocate_zero_size_returns_invalid();
@@ -265,5 +295,7 @@ int main() {
     test_submit_upload_buffer_to_texture_invalid_src_noop();
     test_flush_uploads_empty_returns_invalid();
     test_flush_uploads_null_device_returns_invalid();
+    test_submit_upload_with_cmd_immediate_record();
+    test_submit_upload_buffer_to_texture_pending_flush();
     return 0;
 }

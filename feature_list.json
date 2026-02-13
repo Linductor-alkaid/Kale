@@ -860,7 +860,7 @@
         "收集 pendingUploads_ 待执行上传",
         "实现 FlushUploads(device) 在 Execute 前提交 Copy 命令"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.2"

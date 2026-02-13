@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase6-6.3 Upload Queue 与 Copy 命令（验证）
+状态：已完成
+- 验证：编译通过，ctest 55/55 通过；SubmitUpload(cmd, src, dstTexture, mipLevel)/SubmitUpload(cmd, src, dstBuffer, dstOffset)、pendingUploads_、FlushUploads(device) 已由前期实现于 staging_memory_manager；本会话在 test_staging_memory_manager 中新增 test_submit_upload_with_cmd_immediate_record（cmd 非空时立即录制不加入 pending）、test_submit_upload_buffer_to_texture_pending_flush（Buffer→Texture pending 经 FlushUploads 触发 CopyBufferToTexture）覆盖 phase6-6.3。phase6-6.3 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.3 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase6-6.2 Staging Buffer 池化（验证）
 状态：已完成
 - 验证：编译通过，ctest 55/55 通过；Staging Buffer 池化（poolBuffers_/freeLists_、Free(alloc,fence) 延迟回收、ReclaimCompleted、分配不足时先 ReclaimCompleted 再扩展池）已由前期实现于 staging_memory_manager；test_staging_memory_manager 覆盖 Free 即时回收、Free(alloc,fence) 延迟回收与 ReclaimCompleted。phase6-6.2 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.2 已为已勾选状态。
