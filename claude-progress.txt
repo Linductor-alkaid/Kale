@@ -1,3 +1,9 @@
+
+- 验证：编译通过，ctest 61/61 通过（新增 test_preload_batch：Preload 同步路径下缓存就绪、LoadAsyncBatch 一一对应、空 paths、scheduler 异步路径、批量中部分无 loader 对应 Future 异常）。phase12-12.4 status=completed，hold=null。resource_management_layer_todolist 5.4 已勾选。
+- 实现：ResourceManager::Preload<T>(paths) 对每 path 调用 LoadAsync 触发预加载；LoadAsyncBatch<T>(paths) 返回与 paths 一一对应的 std::vector<ExecutorFuture<ResourceHandle<T>>>。场景切换前可调用 Preload 预加载新场景资源。
+状态：已完成
+功能：phase12-12.4 预加载与批量加载
+=== 2026-02-13 17:34:35 ===
 === 2026-02-13 (session) ===
 功能：phase12-12.2 热重载流程
 状态：已完成

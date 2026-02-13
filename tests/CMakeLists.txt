@@ -99,6 +99,14 @@ target_link_libraries(test_load_async
 )
 add_test(NAME test_load_async COMMAND test_load_async)
 
+add_executable(test_preload_batch test_preload_batch.cpp)
+target_link_libraries(test_preload_batch
+    PRIVATE
+        kale_resource
+        kale_executor
+)
+add_test(NAME test_preload_batch COMMAND test_preload_batch)
+
 add_executable(test_placeholders test_placeholders.cpp)
 target_link_libraries(test_placeholders
     PRIVATE

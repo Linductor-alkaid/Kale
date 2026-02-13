@@ -233,9 +233,9 @@
 
 ### 5.4 预加载与批量加载
 
-- [ ] 实现 `Preload(paths)` 预加载一批资源
-- [ ] 实现 `LoadAsyncBatch<T>(paths)` 返回 `std::vector<Future<ResourceHandle<T>>>`
-- [ ] 场景切换前调用 Preload 预加载新场景资源
+- [x] 实现 `Preload(paths)` 预加载一批资源
+- [x] 实现 `LoadAsyncBatch<T>(paths)` 返回 `std::vector<Future<ResourceHandle<T>>>`
+- [x] 场景切换前调用 Preload 预加载新场景资源
 
 ### 5.5 性能测试与调优
 

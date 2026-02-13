@@ -101,6 +101,24 @@ public:
     kale::executor::ExecutorFuture<ResourceHandle<T>> LoadAsync(const std::string& path);
 
     /**
+     * @brief 预加载一批资源（触发异步加载，不返回句柄；场景切换前可调用）
+     * @tparam T 资源类型（Mesh、Texture、Material 等）
+     * @param paths 资源路径列表（相对 assetPath 或带别名）
+     */
+    template <typename T>
+    void Preload(const std::vector<std::string>& paths);
+
+    /**
+     * @brief 批量异步加载，返回每个路径对应的 Future
+     * @tparam T 资源类型（Mesh、Texture、Material 等）
+     * @param paths 资源路径列表
+     * @return std::vector<ExecutorFuture<ResourceHandle<T>>>，与 paths 一一对应
+     */
+    template <typename T>
+    std::vector<kale::executor::ExecutorFuture<ResourceHandle<T>>> LoadAsyncBatch(
+        const std::vector<std::string>& paths);
+
+    /**
      * @brief 获取最后一次错误信息（如 Load 失败原因）
      */
     std::string GetLastError() const;
@@ -392,6 +410,27 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         p.set_exception(std::current_exception());
     }
     return f;
+}
+
+// -----------------------------------------------------------------------------
+// Preload / LoadAsyncBatch（phase12-12.4）
+// -----------------------------------------------------------------------------
+template <typename T>
+void ResourceManager::Preload(const std::vector<std::string>& paths) {
+    for (const auto& p : paths) {
+        (void)LoadAsync<T>(p);
+    }
+}
+
+template <typename T>
+std::vector<kale::executor::ExecutorFuture<ResourceHandle<T>>>
+ResourceManager::LoadAsyncBatch(const std::vector<std::string>& paths) {
+    std::vector<kale::executor::ExecutorFuture<ResourceHandle<T>>> result;
+    result.reserve(paths.size());
+    for (const auto& p : paths) {
+        result.push_back(LoadAsync<T>(p));
+    }
+    return result;
 }
 
 // -----------------------------------------------------------------------------

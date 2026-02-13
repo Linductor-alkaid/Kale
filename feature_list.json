@@ -2315,7 +2315,7 @@
         "实现 LoadAsyncBatch<T>(paths) 返回 std::vector<Future<ResourceHandle<T>>>",
         "场景切换前调用 Preload 预加载新场景资源"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase4-4.3"],
       "test_verification": "预加载和批量加载正确",
