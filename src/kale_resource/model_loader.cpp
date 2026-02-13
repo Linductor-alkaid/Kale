@@ -5,8 +5,10 @@
 
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <typeindex>
 #include <vector>
@@ -41,8 +43,38 @@ bool HasExtension(const std::string& path, const char* ext) {
     return suffix == ext;
 }
 
+// 去掉 #lodN 后缀得到用于扩展检查的路径
+std::string PathWithoutLodSuffix(const std::string& path) {
+    std::string::size_type hash = path.find('#');
+    if (hash == std::string::npos) return path;
+    return path.substr(0, hash);
+}
+
+// 解析 path#lodN，返回 (basePath, lodIndex)；无 #lod 时 lodIndex = -1
+void ParseLodPath(const std::string& path, std::string* outBasePath, int* outLodIndex) {
+    std::string::size_type hash = path.find('#');
+    if (hash == std::string::npos) {
+        *outBasePath = path;
+        *outLodIndex = -1;
+        return;
+    }
+    *outBasePath = path.substr(0, hash);
+    std::string suffix = path.substr(hash + 1);
+    if (suffix.size() >= 4 && suffix.substr(0, 3) == "lod") {
+        try {
+            *outLodIndex = std::stoi(suffix.substr(3));
+            if (*outLodIndex < 0) *outLodIndex = -1;
+        } catch (...) {
+            *outLodIndex = -1;
+        }
+    } else {
+        *outLodIndex = -1;
+    }
+}
+
 bool SupportsExtension(const std::string& path) {
-    return HasExtension(path, ".gltf") || HasExtension(path, ".glb");
+    std::string base = PathWithoutLodSuffix(path);
+    return HasExtension(base, ".gltf") || HasExtension(base, ".glb") || HasExtension(base, ".obj");
 }
 
 // 从文件路径得到所在目录（不含末尾 /）；若无目录则返回 "." 
@@ -160,9 +192,95 @@ bool LoadImageDataStb(tinygltf::Image* image, const int image_idx, std::string* 
     return true;
 }
 
+// 简易 OBJ 解析：v, vn, vt, f（三角形）；未提供时法线/UV 用默认值
+bool ParseOBJ(const std::string& path,
+              std::vector<VertexPNT>* outVertices,
+              std::vector<std::uint32_t>* outIndices,
+              std::string* outError) {
+    std::ifstream f(path);
+    if (!f.is_open()) {
+        if (outError) *outError = "cannot open file: " + path;
+        return false;
+    }
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> uvs;
+    outVertices->clear();
+    outIndices->clear();
+    std::string line;
+    while (std::getline(f, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream iss(line);
+        std::string tok;
+        iss >> tok;
+        if (tok == "v") {
+            float x, y, z;
+            if (iss >> x >> y >> z)
+                positions.push_back({x, y, z});
+        } else if (tok == "vn") {
+            float x, y, z;
+            if (iss >> x >> y >> z)
+                normals.push_back({x, y, z});
+        } else if (tok == "vt") {
+            float u, v;
+            if (iss >> u >> v)
+                uvs.push_back({u, v});
+        } else if (tok == "f") {
+            // 支持 f v1 v2 v3 或 f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+            std::uint32_t idx[3];
+            for (int i = 0; i < 3; ++i) {
+                std::string v;
+                if (!(iss >> v)) {
+                    if (outError) *outError = "OBJ f needs 3 vertices: " + line;
+                    return false;
+                }
+                std::uint32_t vi = 0, vti = 0, vni = 0;
+                size_t slash1 = v.find('/');
+                if (slash1 == std::string::npos) {
+                    vi = static_cast<std::uint32_t>(std::stoul(v));
+                } else {
+                    vi = static_cast<std::uint32_t>(std::stoul(v.substr(0, slash1)));
+                    size_t slash2 = v.find('/', slash1 + 1);
+                    if (slash2 != std::string::npos && slash2 > slash1 + 1)
+                        vti = static_cast<std::uint32_t>(std::stoul(v.substr(slash1 + 1, slash2 - slash1 - 1)));
+                    if (slash2 != std::string::npos && slash2 + 1 < v.size())
+                        vni = static_cast<std::uint32_t>(std::stoul(v.substr(slash2 + 1)));
+                }
+                if (vi > 0 && vi <= positions.size()) {
+                    VertexPNT vert;
+                    const glm::vec3& p = positions[vi - 1];
+                    vert.px = p.x; vert.py = p.y; vert.pz = p.z;
+                    if (vni > 0 && vni <= normals.size()) {
+                        const glm::vec3& n = normals[vni - 1];
+                        vert.nx = n.x; vert.ny = n.y; vert.nz = n.z;
+                    } else {
+                        vert.nx = 0.f; vert.ny = 0.f; vert.nz = 1.f;
+                    }
+                    if (vti > 0 && vti <= uvs.size()) {
+                        const glm::vec2& uv = uvs[vti - 1];
+                        vert.u = uv.x; vert.v = uv.y;
+                    } else {
+                        vert.u = 0.f; vert.v = 0.f;
+                    }
+                    idx[i] = static_cast<std::uint32_t>(outVertices->size());
+                    outVertices->push_back(vert);
+                } else {
+                    if (outError) *outError = "OBJ f vertex index out of range: " + v;
+                    return false;
+                }
+            }
+            outIndices->push_back(idx[0]);
+            outIndices->push_back(idx[1]);
+            outIndices->push_back(idx[2]);
+        }
+    }
+    return !outVertices->empty() && !outIndices->empty();
+}
+
 }  // namespace
 
 bool ModelLoader::Supports(const std::string& path) const {
+    (void)this;
     return SupportsExtension(path);
 }
 
@@ -172,12 +290,21 @@ std::type_index ModelLoader::GetResourceType() const {
 
 std::any ModelLoader::Load(const std::string& path, ResourceLoadContext& ctx) {
     if (!ctx.device) return {};
-    auto mesh = LoadGLTF(path, ctx);
+    std::string basePath;
+    int lodIndex = -1;
+    ParseLodPath(path, &basePath, &lodIndex);
+    std::string base = PathWithoutLodSuffix(basePath);
+    std::unique_ptr<Mesh> mesh;
+    if (HasExtension(base, ".gltf") || HasExtension(base, ".glb")) {
+        mesh = LoadGLTF(basePath, ctx, lodIndex);
+    } else if (HasExtension(base, ".obj")) {
+        mesh = LoadOBJ(basePath, ctx);
+    }
     if (!mesh) return {};
     return std::any(mesh.release());
 }
 
-std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoadContext& ctx) {
+std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoadContext& ctx, int lodIndex) {
     tinygltf::TinyGLTF loader;
     loader.SetImageLoader(LoadImageDataStb, nullptr);
     tinygltf::Model model;
@@ -194,13 +321,25 @@ std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoa
         return nullptr;
     }
 
+    if (lodIndex >= 0) {
+        if (static_cast<size_t>(lodIndex) >= model.meshes.size()) {
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("glTF LOD index out of range: " + path);
+            return nullptr;
+        }
+    }
+
     std::vector<VertexPNT> allVertices;
     std::vector<std::uint32_t> allIndices;
     std::vector<SubMesh> subMeshes;
     glm::vec3 boundsMin(std::numeric_limits<float>::max());
     glm::vec3 boundsMax(std::numeric_limits<float>::lowest());
 
-    for (const tinygltf::Mesh& gltfMesh : model.meshes) {
+    const size_t meshStart = (lodIndex >= 0) ? static_cast<size_t>(lodIndex) : 0u;
+    const size_t meshEnd   = (lodIndex >= 0) ? static_cast<size_t>(lodIndex) + 1u : model.meshes.size();
+
+    for (size_t mi = meshStart; mi < meshEnd; ++mi) {
+        const tinygltf::Mesh& gltfMesh = model.meshes[mi];
         for (const tinygltf::Primitive& prim : gltfMesh.primitives) {
             if (prim.mode != TINYGLTF_MODE_TRIANGLES && prim.mode >= 0) continue;
 
@@ -352,6 +491,103 @@ std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoa
             if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
             if (ctx.resourceManager)
                 ctx.resourceManager->SetLastError("CreateBuffer failed for: " + path);
+            return nullptr;
+        }
+    }
+
+    auto mesh = std::make_unique<Mesh>();
+    mesh->vertexBuffer = vh;
+    mesh->indexBuffer = ih;
+    mesh->indexCount = static_cast<std::uint32_t>(allIndices.size());
+    mesh->vertexCount = static_cast<std::uint32_t>(allVertices.size());
+    mesh->topology = kale_device::PrimitiveTopology::TriangleList;
+    mesh->bounds.min = boundsMin;
+    mesh->bounds.max = boundsMax;
+    mesh->subMeshes = std::move(subMeshes);
+    mesh->materialPaths = std::move(materialPaths);
+    return mesh;
+}
+
+std::unique_ptr<Mesh> ModelLoader::LoadOBJ(const std::string& path, ResourceLoadContext& ctx) {
+    std::vector<VertexPNT> allVertices;
+    std::vector<std::uint32_t> allIndices;
+    std::string err;
+    if (!ParseOBJ(path, &allVertices, &allIndices, &err)) {
+        if (ctx.resourceManager)
+            ctx.resourceManager->SetLastError(err.empty() ? "OBJ parse failed: " + path : err);
+        return nullptr;
+    }
+
+    glm::vec3 boundsMin(std::numeric_limits<float>::max());
+    glm::vec3 boundsMax(std::numeric_limits<float>::lowest());
+    for (const VertexPNT& v : allVertices) {
+        boundsMin.x = std::min(boundsMin.x, v.px);
+        boundsMin.y = std::min(boundsMin.y, v.py);
+        boundsMin.z = std::min(boundsMin.z, v.pz);
+        boundsMax.x = std::max(boundsMax.x, v.px);
+        boundsMax.y = std::max(boundsMax.y, v.py);
+        boundsMax.z = std::max(boundsMax.z, v.pz);
+    }
+
+    SubMesh sub;
+    sub.indexOffset = 0;
+    sub.indexCount = static_cast<std::uint32_t>(allIndices.size());
+    sub.materialIndex = 0;
+    std::vector<SubMesh> subMeshes = {sub};
+    std::vector<std::string> materialPaths = {""};
+
+    kale_device::BufferDesc vbDesc;
+    vbDesc.size = allVertices.size() * sizeof(VertexPNT);
+    vbDesc.usage = kale_device::BufferUsage::Vertex;
+    vbDesc.cpuVisible = false;
+    kale_device::BufferDesc ibDesc;
+    ibDesc.size = allIndices.size() * sizeof(std::uint32_t);
+    ibDesc.usage = kale_device::BufferUsage::Index;
+    ibDesc.cpuVisible = false;
+
+    kale_device::BufferHandle vh;
+    kale_device::BufferHandle ih;
+
+    if (ctx.stagingMgr && ctx.device) {
+        vh = ctx.device->CreateBuffer(vbDesc, nullptr);
+        ih = ctx.device->CreateBuffer(ibDesc, nullptr);
+        if (!vh.IsValid() || !ih.IsValid()) {
+            if (vh.IsValid()) ctx.device->DestroyBuffer(vh);
+            if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("CreateBuffer failed for OBJ: " + path);
+            return nullptr;
+        }
+        const std::size_t vbBytes = allVertices.size() * sizeof(VertexPNT);
+        const std::size_t ibBytes = allIndices.size() * sizeof(std::uint32_t);
+        StagingAllocation stagingV = ctx.stagingMgr->Allocate(vbBytes);
+        StagingAllocation stagingI = ctx.stagingMgr->Allocate(ibBytes);
+        if (!stagingV.IsValid() || !stagingI.IsValid()) {
+            if (stagingV.IsValid()) ctx.stagingMgr->Free(stagingV);
+            if (stagingI.IsValid()) ctx.stagingMgr->Free(stagingI);
+            ctx.device->DestroyBuffer(vh);
+            ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("Staging Allocate failed for OBJ: " + path);
+            return nullptr;
+        }
+        std::memcpy(stagingV.mappedPtr, allVertices.data(), vbBytes);
+        std::memcpy(stagingI.mappedPtr, allIndices.data(), ibBytes);
+        ctx.stagingMgr->SubmitUpload(nullptr, stagingV, vh, 0);
+        ctx.stagingMgr->SubmitUpload(nullptr, stagingI, ih, 0);
+        kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
+        if (fence.IsValid())
+            ctx.device->WaitForFence(fence);
+        ctx.stagingMgr->Free(stagingV);
+        ctx.stagingMgr->Free(stagingI);
+    } else {
+        vh = ctx.device->CreateBuffer(vbDesc, allVertices.data());
+        ih = ctx.device->CreateBuffer(ibDesc, allIndices.data());
+        if (!vh.IsValid() || !ih.IsValid()) {
+            if (vh.IsValid()) ctx.device->DestroyBuffer(vh);
+            if (ih.IsValid()) ctx.device->DestroyBuffer(ih);
+            if (ctx.resourceManager)
+                ctx.resourceManager->SetLastError("CreateBuffer failed for OBJ: " + path);
             return nullptr;
         }
     }

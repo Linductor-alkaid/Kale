@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.11 ModelLoader 可选格式与 LOD
+状态：已完成
+- 实现：ModelLoader 支持 path#lodN 约定，仅加载 glTF 第 N 个 mesh（lodIndex>=0）；无 #lod 时合并全部 mesh；LOD 越界返回 nullptr 并 SetLastError。简易 OBJ 解析（ParseOBJ：v/vn/vt/f），LoadOBJ 生成 VertexPNT 与索引、Staging/非 Staging 双路径创建缓冲。Supports 增加 .obj；Load 按扩展名分发 gltf/glb→LoadGLTF、obj→LoadOBJ。
+- 验证：编译通过，ctest 95/95 通过。新增 test_model_loader_lod_obj：Supports .obj/.gltf#lod0、无 #lod 合并、#lod0 单 mesh、#lod1 越界失败、OBJ 最小三角形加载、无效路径失败；test_full_model_loader 改为 Supports("model.obj") 为 true。resource_management_layer_todolist 1.7 可选 .obj、4.1 可选 .obj/.fbx 与 LOD 已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.8 OpenGL 设备能力查询
 状态：已完成
 - 实现：OpenGLRenderDevice::Initialize 中通过 QueryGLCapabilities 从当前 GL 上下文填充 DeviceCapabilities；加载 glGetIntegerv/glGetString；GL_MAX_TEXTURE_SIZE 填 maxTextureSize，GL_MAJOR_VERSION/MINOR_VERSION 判 3.2+ 几何着色器、4.0+ 曲面细分、4.3+ 计算着色器与 GL_MAX_COMPUTE_WORK_GROUP_SIZE；maxRecordingThreads=1。新增 test_opengl_device_capabilities 验证 maxTextureSize>0、maxComputeWorkGroupSize>=1、maxRecordingThreads==1。

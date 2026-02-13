@@ -1,9 +1,8 @@
 /**
- * @file test_full_model_loader.cpp
- * @brief phase8-8.1 完整 ModelLoader 单元测试
+ * @file test_model_loader_lod_obj.cpp
+ * @brief phase13-13.11 ModelLoader 可选格式与 LOD 单元测试
  *
- * 覆盖：glTF 材质引用、materialPaths 与 SubMesh materialIndex 映射；
- * 有材质时 materialPaths 为 baseDir/materials/name.json，无材质时 materialPaths 为单元素 ""。
+ * 覆盖：path#lodN 仅加载第 N 个 glTF mesh；LOD 越界失败；.obj 简易解析加载。
  */
 
 #include <kale_resource/model_loader.hpp>
@@ -29,7 +28,6 @@
 
 namespace {
 
-/** Mock 设备：CreateBuffer 返回有效句柄，供 ModelLoader 创建顶点/索引缓冲 */
 class MockModelDevice : public kale_device::IRenderDevice {
 public:
     bool Initialize(const kale_device::DeviceConfig&) override { return true; }
@@ -108,49 +106,11 @@ private:
 
 int main() {
     using namespace kale::resource;
-
     ModelLoader loader;
-    TEST_CHECK(loader.Supports("model.gltf"));
-    TEST_CHECK(loader.Supports("model.glb"));
     TEST_CHECK(loader.Supports("model.obj"));
-    TEST_CHECK(loader.GetResourceType() == typeid(Mesh));
-
-    // 最小 glTF：1 个三角形、1 个材质 "TestMat"，buffer 内嵌 base64
-    // 索引：3 x uint16 = 6 字节；顶点：3 x vec3 float = 36 字节；共 42 字节
-    const char* minimalGltf = R"({
-        "asset": {"version": "2.0"},
-        "scene": 0,
-        "scenes": [{"nodes": [0]}],
-        "nodes": [{"mesh": 0}],
-        "meshes": [{
-            "primitives": [{
-                "attributes": {"POSITION": 1},
-                "indices": 0,
-                "material": 0,
-                "mode": 4
-            }]
-        }],
-        "materials": [{"name": "TestMat"}],
-        "accessors": [
-            {"bufferView": 0, "componentType": 5123, "count": 3, "type": "SCALAR"},
-            {"bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC3"}
-        ],
-        "bufferViews": [
-            {"buffer": 0, "byteOffset": 0, "byteLength": 6, "target": 34963},
-            {"buffer": 0, "byteOffset": 6, "byteLength": 36, "target": 34962}
-        ],
-        "buffers": [{
-            "byteLength": 42,
-            "uri": "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-        }]
-    })";
-
-    std::string gltfPath = "/tmp/kale_test_full_model_loader.gltf";
-    {
-        std::ofstream f(gltfPath);
-        TEST_CHECK(f);
-        f << minimalGltf;
-    }
+    TEST_CHECK(loader.Supports("model.gltf"));
+    TEST_CHECK(loader.Supports("model.gltf#lod0"));
+    TEST_CHECK(loader.Supports("model.glb#lod1"));
 
     ResourceManager mgr(nullptr, nullptr, nullptr);
     mgr.SetAssetPath(".");
@@ -164,60 +124,76 @@ int main() {
     ctx.device = &dev;
     ctx.resourceManager = &mgr;
 
-    std::any result = loader.Load(gltfPath, ctx);
-    TEST_CHECK(result.has_value());
-    Mesh* mesh = std::any_cast<Mesh*>(result);
-    TEST_CHECK(mesh != nullptr);
-
-    // 完整 ModelLoader：materialPaths 与 SubMesh 材质映射
-    TEST_CHECK(!mesh->materialPaths.empty());
-    TEST_CHECK(mesh->materialPaths.size() >= 1u);
-    // baseDir 为 "."，材质名为 "TestMat" -> "./materials/TestMat.json"
-    TEST_CHECK(mesh->materialPaths[0].find("TestMat") != std::string::npos);
-    TEST_CHECK(mesh->materialPaths[0].find(".json") != std::string::npos);
-
-    TEST_CHECK(!mesh->subMeshes.empty());
-    TEST_CHECK(mesh->subMeshes[0].materialIndex == 0u);
-    TEST_CHECK(mesh->subMeshes[0].indexCount == 3u);
-
-    // 无材质 glTF：materialPaths 应为单元素（空或默认）
-    const char* noMaterialGltf = R"({
-        "asset": {"version": "2.0"},
-        "scene": 0,
-        "scenes": [{"nodes": [0]}],
-        "nodes": [{"mesh": 0}],
-        "meshes": [{
-            "primitives": [{
-                "attributes": {"POSITION": 1},
-                "indices": 0,
-                "mode": 4
-            }]
-        }],
-        "accessors": [
-            {"bufferView": 0, "componentType": 5123, "count": 3, "type": "SCALAR"},
-            {"bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC3"}
-        ],
-        "bufferViews": [
-            {"buffer": 0, "byteOffset": 0, "byteLength": 6, "target": 34963},
-            {"buffer": 0, "byteOffset": 6, "byteLength": 36, "target": 34962}
-        ],
-        "buffers": [{
-            "byteLength": 42,
-            "uri": "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-        }]
-    })";
-    std::string noMatPath = "/tmp/kale_test_full_model_loader_nomat.gltf";
-    {
-        std::ofstream f(noMatPath);
+    // 与 test_full_model_loader 相同的 glTF；若该文件已存在（如刚运行过 test_full_model_loader）则直接用，否则创建
+    std::string gltfPath = "/tmp/kale_test_full_model_loader.gltf";
+    std::ifstream probe(gltfPath);
+    if (!probe.good()) {
+        // 42 字节需 56 字符 base64；不足则用 = 填充
+        const char* minimalGltf = R"({
+            "asset": {"version": "2.0"},
+            "scene": 0,
+            "scenes": [{"nodes": [0]}],
+            "nodes": [{"mesh": 0}],
+            "meshes": [{"primitives": [{"attributes": {"POSITION": 1}, "indices": 0, "material": 0, "mode": 4}]}],
+            "materials": [{"name": "TestMat"}],
+            "accessors": [{"bufferView": 0, "componentType": 5123, "count": 3, "type": "SCALAR"}, {"bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC3"}],
+            "bufferViews": [{"buffer": 0, "byteOffset": 0, "byteLength": 6, "target": 34963}, {"buffer": 0, "byteOffset": 6, "byteLength": 36, "target": 34962}],
+            "buffers": [{"byteLength": 42, "uri": "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA===="}]
+        })";
+        std::ofstream f(gltfPath);
         TEST_CHECK(f);
-        f << noMaterialGltf;
+        f << minimalGltf;
     }
-    std::any result3 = loader.Load(noMatPath, ctx);
-    TEST_CHECK(result3.has_value());
-    Mesh* mesh3 = std::any_cast<Mesh*>(result3);
-    TEST_CHECK(mesh3 != nullptr);
-    TEST_CHECK(mesh3->materialPaths.size() == 1u);
-    TEST_CHECK(mesh3->subMeshes[0].materialIndex == 0u);
+
+    // 无 #lod：合并（单 mesh 时即 1 个 mesh）
+    std::any merged = loader.Load(gltfPath, ctx);
+    TEST_CHECK(merged.has_value());
+    Mesh* meshMerged = std::any_cast<Mesh*>(merged);
+    TEST_CHECK(meshMerged != nullptr);
+    TEST_CHECK(meshMerged->subMeshes.size() >= 1u);
+    TEST_CHECK(meshMerged->subMeshes[0].indexCount == 3u);
+
+    // #lod0：仅第一个 mesh（单 mesh 文件等价于合并）
+    std::any lod0 = loader.Load(gltfPath + "#lod0", ctx);
+    TEST_CHECK(lod0.has_value());
+    Mesh* meshLod0 = std::any_cast<Mesh*>(lod0);
+    TEST_CHECK(meshLod0 != nullptr);
+    TEST_CHECK(meshLod0->subMeshes.size() == 1u);
+    TEST_CHECK(meshLod0->subMeshes[0].indexCount == 3u);
+
+    // #lod1：仅 1 个 mesh 时越界，应失败
+    std::any lod1 = loader.Load(gltfPath + "#lod1", ctx);
+    TEST_CHECK(!lod1.has_value());
+    TEST_CHECK(!mgr.GetLastError().empty());
+
+    // #lod99：越界，应失败
+    std::any lod99 = loader.Load(gltfPath + "#lod99", ctx);
+    TEST_CHECK(!lod99.has_value());
+    TEST_CHECK(!mgr.GetLastError().empty());
+
+    // 最小 OBJ：3 个顶点、1 个三角形
+    std::string objPath = "/tmp/kale_test_model_loader_obj.obj";
+    {
+        std::ofstream f(objPath);
+        TEST_CHECK(f);
+        f << "v 0 0 0\nv 1 0 0\nv 0.5 1 0\n";
+        f << "f 1 2 3\n";
+    }
+
+    std::any objResult = loader.Load(objPath, ctx);
+    TEST_CHECK(objResult.has_value());
+    Mesh* meshObj = std::any_cast<Mesh*>(objResult);
+    TEST_CHECK(meshObj != nullptr);
+    TEST_CHECK(meshObj->vertexCount == 3u);
+    TEST_CHECK(meshObj->indexCount == 3u);
+    TEST_CHECK(meshObj->vertexBuffer.IsValid());
+    TEST_CHECK(meshObj->indexBuffer.IsValid());
+    TEST_CHECK(meshObj->subMeshes.size() == 1u);
+    TEST_CHECK(meshObj->materialPaths.size() == 1u);
+
+    // OBJ 无效路径
+    std::any objInvalid = loader.Load("/nonexistent/kale_test_12345.obj", ctx);
+    TEST_CHECK(!objInvalid.has_value());
 
     return 0;
 }

@@ -2593,7 +2593,7 @@
         "可选：支持 .obj、.fbx（通过 assimp）",
         "支持 LOD（若有多个 mesh）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase4-4.1"],
       "hold": null
