@@ -250,17 +250,17 @@
 
 ### RenderEngine 初始化
 
-- [ ] `StagingMemoryManager` 在 ResourceManager 之前创建
-- [ ] `ResourceManager(scheduler, device, stagingMgr)` 构造
-- [ ] `resourceManager_->SetAssetPath(config.assetPath)`
-- [ ] 注册 Loader：ModelLoader、TextureLoader、MaterialLoader
-- [ ] `CreatePlaceholders()` 创建占位符
+- [x] `StagingMemoryManager` 在 ResourceManager 之前创建
+- [x] `ResourceManager(scheduler, device, stagingMgr)` 构造
+- [x] `resourceManager_->SetAssetPath(config.assetPath)`
+- [x] 注册 Loader：ModelLoader、TextureLoader、MaterialLoader
+- [x] `CreatePlaceholders()` 创建占位符
 
 ### 主循环中的资源处理
 
-- [ ] `Run()` 中每帧调用 `resourceManager_->ProcessHotReload()`
-- [ ] 可选：`ProcessLoadedCallbacks()` 处理加载完成回调
-- [ ] 与 RenderEngine::Run 流程对齐
+- [x] `Run()` 中每帧调用 `resourceManager_->ProcessHotReload()`
+- [x] 可选：`ProcessLoadedCallbacks()` 处理加载完成回调
+- [x] 与 RenderEngine::Run 流程对齐
 
 ### 依赖关系
 

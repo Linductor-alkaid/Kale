@@ -13,7 +13,12 @@
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+// 与根 CMake 对 tinygltf 的 TINYGLTF_NO_STB_IMAGE 一致，避免头文件内默认取址 &tinygltf::LoadImageData 导致未定义引用
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_STB_IMAGE_WRITE
 #include <tiny_gltf.h>
+// 使用 kale_resource 内 texture_loader 提供的 stb 实现，不在此定义 STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include <kale_device/rdi_types.hpp>
 #include <kale_resource/resource_manager.hpp>
@@ -123,6 +128,38 @@ void ReadIndices(const tinygltf::Model& model, int accessorIndex, std::vector<st
     }
 }
 
+// tinygltf 在 TINYGLTF_NO_STB_IMAGE 下无默认 image loader，用 stb 解码（实现来自 texture_loader.cpp）
+bool LoadImageDataStb(tinygltf::Image* image, const int image_idx, std::string* err,
+                      std::string* warn, int req_width, int req_height,
+                      const unsigned char* bytes, int size, void* user_data) {
+    (void)image_idx;
+    (void)warn;
+    (void)req_width;
+    (void)req_height;
+    (void)user_data;
+    if (!bytes || size <= 0) {
+        if (err) *err += "LoadImageDataStb: no data\n";
+        return false;
+    }
+    int w = 0, h = 0, comp = 0;
+    const int req_comp = 4;
+    unsigned char* data = stbi_load_from_memory(bytes, size, &w, &h, &comp, req_comp);
+    if (!data) {
+        if (err) *err += "LoadImageDataStb: stbi_load_from_memory failed\n";
+        return false;
+    }
+    image->width = w;
+    image->height = h;
+    image->component = req_comp;
+    image->bits = 8;
+    image->pixel_type = TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE;
+    const size_t total = static_cast<size_t>(w) * static_cast<size_t>(h) * static_cast<size_t>(req_comp);
+    image->image.resize(total);
+    std::memcpy(image->image.data(), data, total);
+    stbi_image_free(data);
+    return true;
+}
+
 }  // namespace
 
 bool ModelLoader::Supports(const std::string& path) const {
@@ -142,6 +179,7 @@ std::any ModelLoader::Load(const std::string& path, ResourceLoadContext& ctx) {
 
 std::unique_ptr<Mesh> ModelLoader::LoadGLTF(const std::string& path, ResourceLoadContext& ctx) {
     tinygltf::TinyGLTF loader;
+    loader.SetImageLoader(LoadImageDataStb, nullptr);
     tinygltf::Model model;
     std::string err, warn;
     bool ok = false;

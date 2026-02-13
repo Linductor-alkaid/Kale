@@ -4,7 +4,8 @@
  *
  * 顺序：SDL(WindowSystem::Create) → CreateRenderDevice(DeviceConfig 来自 window)
  * → InputManager::Initialize → executor → scheduler → sceneManager
- * → entityManager(scheduler, sceneManager) → resourceManager(scheduler, device) → renderGraph
+ * → entityManager(scheduler, sceneManager) → stagingMemoryManager → resourceManager(scheduler, device, stagingMgr)
+ * → SetAssetPath → 注册 ModelLoader/TextureLoader/MaterialLoader → CreatePlaceholders → renderGraph
  */
 
 #include <kale_engine/render_engine.hpp>
@@ -15,6 +16,10 @@
 #include <kale_scene/scene_manager.hpp>
 #include <kale_scene/entity_manager.hpp>
 #include <kale_resource/resource_manager.hpp>
+#include <kale_resource/staging_memory_manager.hpp>
+#include <kale_resource/model_loader.hpp>
+#include <kale_resource/texture_loader.hpp>
+#include <kale_pipeline/material_loader.hpp>
 #include <kale_pipeline/render_graph.hpp>
 #include <executor/executor.hpp>
 
@@ -33,6 +38,7 @@ struct RenderEngineImpl {
     std::unique_ptr<kale::executor::RenderTaskScheduler> scheduler;
     std::unique_ptr<kale::scene::SceneManager> sceneManager;
     std::unique_ptr<kale::scene::EntityManager> entityManager;
+    std::unique_ptr<kale::resource::StagingMemoryManager> stagingMemoryManager;
     std::unique_ptr<kale::resource::ResourceManager> resourceManager;
     std::unique_ptr<kale::pipeline::RenderGraph> renderGraph;
     bool runRequestedQuit = false;
@@ -112,11 +118,21 @@ bool RenderEngine::Initialize(const Config& config) {
     impl.entityManager = std::make_unique<kale::scene::EntityManager>(
         sched, impl.sceneManager.get());
 
-    // 7. resourceManager(scheduler, device, stagingMgr=nullptr)
-    impl.resourceManager = std::make_unique<kale::resource::ResourceManager>(
-        sched, impl.renderDevice.get(), nullptr);
+    // 7. stagingMemoryManager（在 ResourceManager 之前创建，供 Loader 上传使用）
+    impl.stagingMemoryManager = std::make_unique<kale::resource::StagingMemoryManager>(
+        impl.renderDevice.get());
 
-    // 8. renderGraph（注入 scheduler 以支持多线程 RecordPasses）
+    // 8. resourceManager(scheduler, device, stagingMgr)
+    impl.resourceManager = std::make_unique<kale::resource::ResourceManager>(
+        sched, impl.renderDevice.get(), impl.stagingMemoryManager.get());
+
+    impl.resourceManager->SetAssetPath(config.assetPath);
+    impl.resourceManager->RegisterLoader(std::make_unique<kale::resource::ModelLoader>());
+    impl.resourceManager->RegisterLoader(std::make_unique<kale::resource::TextureLoader>());
+    impl.resourceManager->RegisterLoader(std::make_unique<kale::pipeline::MaterialLoader>());
+    impl.resourceManager->CreatePlaceholders();
+
+    // 9. renderGraph（注入 scheduler 以支持多线程 RecordPasses）
     impl.renderGraph = std::make_unique<kale::pipeline::RenderGraph>();
     impl.renderGraph->SetScheduler(sched);
 
@@ -133,6 +149,7 @@ void RenderEngine::Shutdown() {
     RenderEngineImpl& impl = *static_cast<RenderEngineImpl*>(impl_);
     impl.renderGraph.reset();
     impl.resourceManager.reset();
+    impl.stagingMemoryManager.reset();
     impl.entityManager.reset();
     impl.sceneManager.reset();
     impl.scheduler.reset();
@@ -221,6 +238,12 @@ void RenderEngine::Run(IApplication* app) {
 
         inputManager->Update();
         if (inputManager->QuitRequested() || impl.runRequestedQuit) break;
+
+        kale::resource::ResourceManager* resourceManager = impl.resourceManager.get();
+        if (resourceManager) {
+            resourceManager->ProcessHotReload();
+            resourceManager->ProcessLoadedCallbacks();
+        }
 
         if (windowSystem) {
             std::uint32_t w = windowSystem->GetWidth();

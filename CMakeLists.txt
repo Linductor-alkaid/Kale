@@ -102,7 +102,10 @@ set(TINYGLTF_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE BOOL "" FORCE)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/tinygltf/CMakeLists.txt")
     message(STATUS "Using tinygltf from third_party/tinygltf")
+    set(TINYGLTF_HEADER_ONLY OFF CACHE BOOL "" FORCE)
     add_subdirectory(third_party/tinygltf third_party/tinygltf EXCLUDE_FROM_ALL)
+    # 避免 tinygltf 内嵌 stb 与 kale_resource/texture_loader 的 stb 重复定义；ModelLoader 通过 SetImageLoader 使用 kale_resource 的 stb
+    target_compile_definitions(tinygltf PRIVATE TINYGLTF_NO_STB_IMAGE TINYGLTF_NO_STB_IMAGE_WRITE)
 else()
     include(FetchContent)
     FetchContent_Declare(tinygltf

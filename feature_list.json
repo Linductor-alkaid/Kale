@@ -2697,7 +2697,7 @@
         "Run() 中每帧调用 resourceManager_->ProcessHotReload()",
         "可选：ProcessLoadedCallbacks() 处理加载完成回调"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase4-4.3"],
       "hold": null

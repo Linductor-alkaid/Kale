@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.17 资源管理层 RenderEngine 集成
+状态：已完成
+- 实现：RenderEngine 在 ResourceManager 之前创建 StagingMemoryManager，ResourceManager(scheduler, device, stagingMgr) 构造；SetAssetPath(config.assetPath)；注册 ModelLoader、TextureLoader、MaterialLoader；CreatePlaceholders()；Run() 每帧调用 ProcessHotReload() 与 ProcessLoadedCallbacks()。Shutdown 时先释放 resourceManager 再 stagingMemoryManager。修复 tinygltf 与 texture_loader 重复 stb 符号：根 CMake 对 tinygltf 添加 TINYGLTF_NO_STB_IMAGE/NO_STB_IMAGE_WRITE；model_loader 内 #define 同上并 SetImageLoader(LoadImageDataStb) 使用 stb 解码。
+- 验证：编译通过，ctest 79/79 通过（新增 test_resource_manager_render_engine_integration：GetStagingMgr 非空、SetAssetPath/ResolvePath、占位符非空、Run 内热重载/回调不崩溃）。phase13-13.17 status=completed，hold=null。resource_management_layer_todolist RenderEngine 初始化与主循环资源处理已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.12 Mipmap 链上传
 状态：已完成
 - 实现：TextureLoader LoadSTB 有 Staging 时计算 mipLevels（MipLevelCount）、GenerateMipChain 生成 box 下采样链，逐 mip Allocate/SubmitUpload/FlushUploads/Free；LoadKTX 读取所有 mip（imageSize+data 循环），逐级 Staging 上传。无 Staging 时 STB 仍单 mip、KTX 仅 mip0。
