@@ -14,8 +14,10 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <stdexcept>
+#include <optional>
 
 #include <kale_device/render_device.hpp>
 #include <kale_executor/executor_future.hpp>
@@ -126,6 +128,24 @@ public:
      * @brief 创建占位符资源（简单几何体、1x1 默认纹理、默认材质）；需在 SetAssetPath 后、使用 GetPlaceholder* 前调用；无 device 时跳过
      */
     void CreatePlaceholders();
+
+    /**
+     * @brief 检查资源是否就绪（供上层 Draw 时检查）
+     */
+    template <typename T>
+    bool IsReady(ResourceHandle<T> handle) const;
+
+    /**
+     * @brief 获取资源指针；未就绪时返回 nullptr（phase4-4.6）
+     */
+    template <typename T>
+    T* Get(ResourceHandle<T> handle);
+
+    /**
+     * @brief 按路径获取或创建占位条目；返回 (句柄, 是否新创建)。新创建时需由调用方触发 LoadAsync 一次，避免重复触发
+     */
+    template <typename T>
+    std::pair<ResourceHandle<T>, bool> GetOrCreatePlaceholder(const std::string& path);
 
     /**
      * @brief 获取占位符 Mesh（未就绪时 Draw 使用）；CreatePlaceholders 未调用或失败时返回 nullptr
@@ -304,6 +324,34 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         p.set_exception(std::current_exception());
     }
     return f;
+}
+
+// -----------------------------------------------------------------------------
+// IsReady / Get / GetOrCreatePlaceholder（phase4-4.6）
+// -----------------------------------------------------------------------------
+template <typename T>
+bool ResourceManager::IsReady(ResourceHandle<T> handle) const {
+    return cache_.IsReady(handle);
+}
+
+template <typename T>
+T* ResourceManager::Get(ResourceHandle<T> handle) {
+    if (!handle.IsValid()) return nullptr;
+    if (!cache_.IsReady(handle)) return nullptr;
+    return cache_.Get(handle);
+}
+
+template <typename T>
+std::pair<ResourceHandle<T>, bool> ResourceManager::GetOrCreatePlaceholder(
+    const std::string& path) {
+    const std::string resolved = ResolvePath(path);
+    const std::type_index typeId = typeid(T);
+    auto existing = cache_.FindByPath(resolved, typeId);
+    if (existing) {
+        return {ResourceHandle<T>{existing->id}, false};
+    }
+    ResourceHandle<T> handle = cache_.RegisterPlaceholder<T>(resolved);
+    return {handle, true};
 }
 
 }  // namespace kale::resource

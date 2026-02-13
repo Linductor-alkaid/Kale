@@ -1292,7 +1292,7 @@
         "StaticMesh::Draw 中若 mesh/material 未就绪则用占位符并触发 LoadAsync",
         "避免重复触发：LoadAsync 前检查是否已在加载中（占位条目存在即视为已触发）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase4-4.3"],
       "test_verification": "资源未就绪时正确使用占位符并触发加载",

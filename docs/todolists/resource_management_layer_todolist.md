@@ -112,10 +112,10 @@
 
 ### 2.4 Draw 时资源检查与触发加载
 
-- [ ] 实现 `IsReady<T>(handle)` 供上层检查
-- [ ] 实现 `Get<T>(handle)` 未就绪返回 nullptr
-- [ ] 设计文档示例：StaticMesh::Draw 中若 mesh/material 未就绪则用占位符并触发 LoadAsync
-- [ ] 避免重复触发：LoadAsync 前检查是否已在加载中（占位条目存在即视为已触发）
+- [x] 实现 `IsReady<T>(handle)` 供上层检查
+- [x] 实现 `Get<T>(handle)` 未就绪返回 nullptr
+- [x] 设计文档示例：StaticMesh::Draw 中若 mesh/material 未就绪则用占位符并触发 LoadAsync
+- [x] 避免重复触发：LoadAsync 前检查是否已在加载中（占位条目存在即视为已触发）
 
 ---
 

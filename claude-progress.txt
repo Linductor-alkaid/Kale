@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase4-4.6 Draw 时资源检查与触发加载
+状态：已完成
+- 实现：ResourceManager::IsReady<T>(handle)、Get<T>(handle)（未就绪返回 nullptr）、GetOrCreatePlaceholder<T>(path) 返回 (句柄, 是否新创建)；StaticMesh 类（meshPath/materialPath、GetOrCreatePlaceholder + 占位符 + 仅 created 时 LoadAsync）、Draw 中 BindVertexBuffer/BindIndexBuffer/DrawIndexed 或 Draw。
+- 验证：编译通过，ctest 通过（新增 test_draw_resource_check：IsReady/Get、GetOrCreatePlaceholder 首次/二次、StaticMesh Draw 无崩溃、有占位符时绘制）；resource_management_layer_todolist 2.4 已勾选。
+- feature_list.json 中 phase4-4.6 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase4-4.5 占位符系统
 状态：已完成
 - 实现：ResourceManager::CreatePlaceholders() 创建占位符资源（无 device 时跳过）；GetPlaceholderMesh()/GetPlaceholderTexture()/GetPlaceholderMaterial() 返回占位符指针。占位符 Mesh：单三角形（VertexPNT 格式）、RDI CreateBuffer 顶点/索引；占位符 Texture：1x1 灰色 RGBA8；占位符 Material：默认空材质。
