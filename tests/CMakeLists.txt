@@ -621,6 +621,14 @@ target_link_libraries(test_topological_groups
 )
 add_test(NAME test_topological_groups COMMAND test_topological_groups)
 
+add_executable(test_pass_dependency_derivation test_pass_dependency_derivation.cpp)
+target_link_libraries(test_pass_dependency_derivation
+    PRIVATE
+        kale_pipeline
+        kale_device
+)
+add_test(NAME test_pass_dependency_derivation COMMAND test_pass_dependency_derivation)
+
 add_executable(test_frame_pipeline test_frame_pipeline.cpp)
 target_link_libraries(test_frame_pipeline
     PRIVATE

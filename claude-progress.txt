@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.18 Pass 依赖推导完善
+状态：已完成
+- 实现：BuildTopologicalOrder 与 BuildTopologicalGroups 中为同一纹理多写者按 Pass 下标（AddPass 顺序）添加显式顺序边：writers 排序后添加 w_i→w_{i+1}；保留写者→读者边。ReadTexture(A) 且 WriteTexture(A) 时写者先于读者；多写者时前者先于后者。
+- 验证：编译通过，ctest 80/80 通过（新增 test_pass_dependency_derivation：单写单读序 [0,1]、多写同纹理 0→1→2、两资源读者在两写者之后、循环依赖 Compile 失败且 GetLastError 非空）。phase13-13.18 status=completed，hold=null。rendering_pipeline_layer_todolist 3.7 Pass 依赖推导三项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.17 资源管理层 RenderEngine 集成
 状态：已完成
 - 实现：RenderEngine 在 ResourceManager 之前创建 StagingMemoryManager，ResourceManager(scheduler, device, stagingMgr) 构造；SetAssetPath(config.assetPath)；注册 ModelLoader、TextureLoader、MaterialLoader；CreatePlaceholders()；Run() 每帧调用 ProcessHotReload() 与 ProcessLoadedCallbacks()。Shutdown 时先释放 resourceManager 再 stagingMemoryManager。修复 tinygltf 与 texture_loader 重复 stb 符号：根 CMake 对 tinygltf 添加 TINYGLTF_NO_STB_IMAGE/NO_STB_IMAGE_WRITE；model_loader 内 #define 同上并 SetImageLoader(LoadImageDataStb) 使用 stb 解码。

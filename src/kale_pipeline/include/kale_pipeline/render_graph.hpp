@@ -23,6 +23,7 @@
 #include <kale_executor/render_task_scheduler.hpp>
 
 #include <glm/glm.hpp>
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <queue>
@@ -445,15 +446,22 @@ inline std::vector<RenderPassHandle> RenderGraph::BuildTopologicalOrder() const 
         return out;
     };
 
-    // 建图：边 writer -> reader 表示 writer 必须在 reader 前（去重）
+    // 建图：边 writer -> reader 表示 writer 必须在 reader 前；同一纹理多写者按 AddPass 顺序显式排序
     std::set<std::pair<RenderPassHandle, RenderPassHandle>> edges;
     for (size_t i = 0; i < resources_.size(); ++i) {
         RGResourceHandle h = static_cast<RGResourceHandle>(i + 1);
         std::vector<RenderPassHandle> writers = writersOf(h);
         std::vector<RenderPassHandle> readers = readersOf(h);
+        // 写者先于读者
         for (RenderPassHandle w : writers)
             for (RenderPassHandle r : readers)
                 if (w != r) edges.insert({w, r});
+        // 同一纹理多写者：按 Pass 下标（AddPass 顺序）显式顺序，前者先于后者
+        if (writers.size() > 1) {
+            std::sort(writers.begin(), writers.end());
+            for (size_t wi = 0; wi + 1 < writers.size(); ++wi)
+                edges.insert({writers[wi], writers[wi + 1]});
+        }
     }
 
     std::vector<std::vector<RenderPassHandle>> outEdges(n);
@@ -517,6 +525,11 @@ inline std::vector<std::vector<RenderPassHandle>> RenderGraph::BuildTopologicalG
         for (RenderPassHandle w : writers)
             for (RenderPassHandle r : readers)
                 if (w != r) edges.insert({w, r});
+        if (writers.size() > 1) {
+            std::sort(writers.begin(), writers.end());
+            for (size_t wi = 0; wi + 1 < writers.size(); ++wi)
+                edges.insert({writers[wi], writers[wi + 1]});
+        }
     }
 
     std::vector<std::vector<RenderPassHandle>> inEdges(n);

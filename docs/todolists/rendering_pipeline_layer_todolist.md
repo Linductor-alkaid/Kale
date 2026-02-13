@@ -192,9 +192,9 @@
 
 ### 3.7 Pass 依赖推导
 
-- [ ] ReadTexture(A) 且 WriteTexture(A) 的 Pass 之间：写者先于读者
-- [ ] 同一纹理多写者：需显式顺序或合并 Pass
-- [ ] 验证 topologicalOrder_ 正确反映依赖关系
+- [x] ReadTexture(A) 且 WriteTexture(A) 的 Pass 之间：写者先于读者
+- [x] 同一纹理多写者：需显式顺序或合并 Pass
+- [x] 验证 topologicalOrder_ 正确反映依赖关系
 
 ---
 

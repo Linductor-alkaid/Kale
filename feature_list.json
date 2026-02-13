@@ -2714,7 +2714,7 @@
         "同一纹理多写者：需显式顺序或合并 Pass",
         "验证 topologicalOrder_ 正确反映依赖关系"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.6"],
       "hold": null
