@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.3 Executor 可选编译选项
+状态：已完成
+- 实现：根 CMake 增加 KALE_EXECUTOR_ENABLE_CHANNELS / KALE_EXECUTOR_ENABLE_TASK_GRAPH 选项（默认 ON）；kale_executor 通过 target_compile_definitions 传递宏；RenderTaskScheduler 条件包含 task_channel/task_graph 头文件与 GetResourceLoadedChannel/SubmitTaskGraph API；ResourceManager 在 CHANNELS=OFF 时仅用 EnqueueLoaded 与 ProcessLoadedCallbacks，ProcessLoadedResources 仅 CHANNELS=ON 时从 channel try_recv；相关测试与 test_load_async 中 ProcessLoadedResources 用 #if 守卫。新增 test_executor_compile_options 验证选项 ON 时通道与任务图 API 可用。
+- 验证：编译通过，ctest 93/93 通过（含 CHANNELS=OFF,TASK_GRAPH=OFF 配置下 92 项通过）。phase13-13.3 status=completed，hold=null。executor_layer_todolist 可选编译选项两项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.16 资源管理层性能测试与调优
 状态：已完成
 - 实现：新增 test_resource_management_performance_validation：验证 LoadAsync 不阻塞主线程（有 scheduler 时 LoadAsync 返回后主线程可执行再 get()）；Staging Buffer 池化无频繁分配（Allocate/Free/Allocate 复用同一 buffer id，多轮分配不增加 CreateBuffer 次数）；引用计数正确释放（Release + ProcessPendingReleases 后 Get 返回 nullptr）；热重载性能（文件 mtime 变化后一次 ProcessHotReload 内触发回调）。

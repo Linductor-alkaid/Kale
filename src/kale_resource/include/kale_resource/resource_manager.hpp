@@ -392,6 +392,7 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         cache_.SetResource(ToAny(handle), std::any(ptr));
         cache_.SetReady(ToAny(handle));
         RecordPathLastModified(resolved, typeId);
+#if KALE_EXECUTOR_ENABLE_CHANNELS
         kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
             scheduler_ ? scheduler_->GetResourceLoadedChannel() : nullptr;
         if (ch) {
@@ -403,6 +404,9 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         } else {
             EnqueueLoaded(ToAny(handle), resolved);
         }
+#else
+        EnqueueLoaded(ToAny(handle), resolved);
+#endif
         return handle;
     };
 

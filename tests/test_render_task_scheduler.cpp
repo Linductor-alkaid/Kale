@@ -136,6 +136,7 @@ static void test_parallel_record_commands_with_deps() {
     ex.shutdown(true);
 }
 
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
 static void test_submit_task_graph() {
     ::executor::Executor ex;
     ex.initialize(::executor::ExecutorConfig{});
@@ -150,6 +151,7 @@ static void test_submit_task_graph() {
     TEST_CHECK(x == 1);
     ex.shutdown(true);
 }
+#endif
 
 static void test_get_executor() {
     ::executor::Executor ex;
@@ -159,6 +161,7 @@ static void test_get_executor() {
     ex.shutdown(true);
 }
 
+#if KALE_EXECUTOR_ENABLE_CHANNELS
 static void test_get_resource_loaded_channel() {
     ::executor::Executor ex;
     ex.initialize(::executor::ExecutorConfig{});
@@ -179,6 +182,7 @@ static void test_get_resource_loaded_channel() {
     TEST_CHECK(recv.path == "textures/foo.png" && recv.resource_handle_id == 42);
     ex.shutdown(true);
 }
+#endif
 
 static void test_get_visible_objects_frame_data() {
     ::executor::Executor ex;
@@ -209,8 +213,12 @@ int main() {
     test_wait_all_multiple();
     test_parallel_record_commands_no_deps();
     test_parallel_record_commands_with_deps();
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
     test_submit_task_graph();
+#endif
+#if KALE_EXECUTOR_ENABLE_CHANNELS
     test_get_resource_loaded_channel();
+#endif
     test_get_visible_objects_frame_data();
     std::cout << "All RenderTaskScheduler tests passed." << std::endl;
     return 0;

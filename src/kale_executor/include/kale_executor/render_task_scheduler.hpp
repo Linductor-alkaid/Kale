@@ -5,8 +5,12 @@
 
 #include <kale_executor/executor_future.hpp>
 #include <kale_executor/frame_data.hpp>
+#if KALE_EXECUTOR_ENABLE_CHANNELS
 #include <kale_executor/task_channel.hpp>
+#endif
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
 #include <kale_executor/task_graph.hpp>
+#endif
 
 #include <executor/executor.hpp>
 
@@ -80,11 +84,15 @@ public:
         std::vector<std::vector<size_t>> dependencies,
         std::uint32_t maxThreads);
 
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
     /// 提交任务图到底层 executor（等价于 submit_task_graph(*ex_, graph)）
     void SubmitTaskGraph(TaskGraph& graph);
+#endif
 
+#if KALE_EXECUTOR_ENABLE_CHANNELS
     /// 获取资源加载完成通道：加载线程 try_send(ResourceLoadedEvent)，主线程每帧 try_recv
     TaskChannel<ResourceLoadedEvent, 32>* GetResourceLoadedChannel();
+#endif
 
     /// 获取可见物体列表帧数据：写者写入 write_buffer()，读者读 read_buffer()，帧末 end_frame()
     FrameData<VisibleObjectList>* GetVisibleObjectsFrameData();
@@ -93,7 +101,9 @@ private:
     ::executor::Executor* ex_ = nullptr;
     std::vector<std::shared_future<void>> pending_;
     std::mutex pending_mutex_;
+#if KALE_EXECUTOR_ENABLE_CHANNELS
     std::unique_ptr<TaskChannel<ResourceLoadedEvent, 32>> resource_loaded_channel_;
+#endif
     std::unique_ptr<FrameData<VisibleObjectList>> visible_objects_frame_data_;
 };
 
@@ -263,15 +273,19 @@ inline void RenderTaskScheduler::ParallelRecordCommands(
     }
 }
 
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
 inline void RenderTaskScheduler::SubmitTaskGraph(TaskGraph& graph) {
     if (ex_) submit_task_graph(*ex_, graph);
 }
+#endif
 
+#if KALE_EXECUTOR_ENABLE_CHANNELS
 inline TaskChannel<ResourceLoadedEvent, 32>* RenderTaskScheduler::GetResourceLoadedChannel() {
     if (!resource_loaded_channel_)
         resource_loaded_channel_ = std::make_unique<TaskChannel<ResourceLoadedEvent, 32>>();
     return resource_loaded_channel_.get();
 }
+#endif
 
 inline FrameData<VisibleObjectList>* RenderTaskScheduler::GetVisibleObjectsFrameData() {
     if (!visible_objects_frame_data_)

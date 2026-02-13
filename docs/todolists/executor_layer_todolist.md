@@ -177,8 +177,8 @@
 
 ### 可选编译选项
 
-- [ ] `EXECUTOR_ENABLE_CHANNELS` 控制是否编译通道
-- [ ] `EXECUTOR_ENABLE_TASK_GRAPH` 控制任务图扩展
+- [x] `EXECUTOR_ENABLE_CHANNELS` 控制是否编译通道
+- [x] `EXECUTOR_ENABLE_TASK_GRAPH` 控制任务图扩展
 
 ---
 

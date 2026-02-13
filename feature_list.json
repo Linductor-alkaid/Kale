@@ -2459,7 +2459,7 @@
         "EXECUTOR_ENABLE_CHANNELS 控制是否编译通道",
         "EXECUTOR_ENABLE_TASK_GRAPH 控制任务图扩展"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase0-0.1"],
       "hold": null

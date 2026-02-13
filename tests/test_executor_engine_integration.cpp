@@ -59,6 +59,7 @@ int main() {
     TEST_CHECK(engine.GetResourceManager() != nullptr);
     TEST_CHECK(engine.GetRenderGraph() != nullptr);
 
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
     // TaskGraph::submit 经 Scheduler 提交到底层 Executor 执行
     kale::executor::TaskGraph graph;
     std::atomic<int> ran{0};
@@ -66,6 +67,7 @@ int main() {
     sched->SubmitTaskGraph(graph);
     graph.wait();
     TEST_CHECK(ran.load() == 1);
+#endif
 
     engine.Shutdown();
 

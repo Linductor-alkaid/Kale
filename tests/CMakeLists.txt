@@ -67,6 +67,13 @@ target_link_libraries(test_executor_performance_validation
 )
 add_test(NAME test_executor_performance_validation COMMAND test_executor_performance_validation)
 
+add_executable(test_executor_compile_options test_executor_compile_options.cpp)
+target_link_libraries(test_executor_compile_options
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_executor_compile_options COMMAND test_executor_compile_options)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE

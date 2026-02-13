@@ -120,6 +120,7 @@ static void test_parallel_record_commands_stress() {
     ex.shutdown(true);
 }
 
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
 // SubmitTaskGraph + WaitAll 多轮，验证无死锁
 static void test_submit_task_graph_stress() {
     ::executor::Executor ex;
@@ -138,13 +139,16 @@ static void test_submit_task_graph_stress() {
     TEST_CHECK(total == rounds);
     ex.shutdown(true);
 }
+#endif
 
 int main() {
     test_scheduler_stress_no_deadlock();
     test_task_graph_large_dag_no_deadlock();
     test_task_graph_multiple_rounds_no_deadlock();
     test_parallel_record_commands_stress();
+#if KALE_EXECUTOR_ENABLE_TASK_GRAPH
     test_submit_task_graph_stress();
+#endif
     std::cout << "All Executor performance/validation tests passed (no deadlock, correct counts)." << std::endl;
     return 0;
 }

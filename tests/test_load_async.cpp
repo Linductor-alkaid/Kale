@@ -143,7 +143,7 @@ static void test_load_async_failure_propagates_exception() {
     TEST_CHECK(caught);
 }
 
-/// phase9-9.8: ProcessLoadedResources 从 channel try_recv 并派发回调（LoadAsync 成功后 try_send 到 resource_loaded_channel）
+/// phase9-9.8: ProcessLoadedResources 从 channel try_recv 并派发回调（CHANNELS=ON 时）；CHANNELS=OFF 时走 pendingLoaded_，需 ProcessLoadedCallbacks
 static void test_process_loaded_resources() {
     ::executor::Executor ex;
     ex.initialize(::executor::ExecutorConfig{});
@@ -164,7 +164,11 @@ static void test_process_loaded_resources() {
     TEST_CHECK(h.IsValid());
 
     TEST_CHECK(received.empty());
+#if KALE_EXECUTOR_ENABLE_CHANNELS
     rm.ProcessLoadedResources();
+#else
+    rm.ProcessLoadedCallbacks();
+#endif
     TEST_CHECK(received.size() == 1u);
     TEST_CHECK(received[0].first.id == h.id);
     TEST_CHECK(received[0].first.typeId == typeid(DummyResource));

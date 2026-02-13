@@ -130,6 +130,7 @@ void ResourceManager::RegisterLoadedCallback(LoadedCallback cb) {
 }
 
 void ResourceManager::ProcessLoadedResources() {
+#if KALE_EXECUTOR_ENABLE_CHANNELS
     if (!scheduler_) return;
     kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
         scheduler_->GetResourceLoadedChannel();
@@ -146,6 +147,7 @@ void ResourceManager::ProcessLoadedResources() {
             if (cb) cb(handle, ev.path);
         }
     }
+#endif
 }
 
 void ResourceManager::ProcessLoadedCallbacks() {
