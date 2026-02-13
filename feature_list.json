@@ -416,7 +416,7 @@
         "实现 ToAny(ResourceHandle<T>) 转换为 ResourceHandleAny",
         "定义 Mesh、Texture、Material 等资源句柄类型别名"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.1"
