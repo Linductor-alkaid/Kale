@@ -1,3 +1,9 @@
+=== 2026-02-13 (session) ===
+功能：phase2-2.4 Vulkan Backend 资源（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，hello_kale 启动正常（Vulkan 资源创建与管理用于 RenderGraph/ForwardPass）
+- feature_list.json 中 phase2-2.4 的 status 更新为 completed
+
 === 2026-02-13 10:17:43 ===
 功能：phase2-2.3 CommandList 接口（验证）
 状态：已完成
