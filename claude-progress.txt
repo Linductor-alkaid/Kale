@@ -1,3 +1,10 @@
+=== 2026-02-13 11:02:24 ===
+功能：phase2-2.10 FrameData 与 SwapBuffer
+状态：已完成
+- 实现：FrameData<T>（write_buffer/read_buffer/end_frame）、SwapBuffer<T,N>（current_for_writer/current_for_reader/swap）、FrameDataTriple<T>
+- 验证：编译通过，ctest 通过（新增 test_frame_data_swap_buffer 覆盖双缓冲、三缓冲、FrameData 多帧、FrameDataTriple）
+- feature_list.json 中 phase2-2.10 的 status 更新为 completed，hold=null；executor_layer_todolist 4.1/4.2 已勾选
+
 === 2026-02-13 (session) ===
 功能：phase2-2.9 submit_task_graph
 状态：已完成

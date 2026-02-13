@@ -39,6 +39,13 @@ target_link_libraries(test_submit_task_graph
 )
 add_test(NAME test_submit_task_graph COMMAND test_submit_task_graph)
 
+add_executable(test_frame_data_swap_buffer test_frame_data_swap_buffer.cpp)
+target_link_libraries(test_frame_data_swap_buffer
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_frame_data_swap_buffer COMMAND test_frame_data_swap_buffer)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE

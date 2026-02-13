@@ -1175,7 +1175,7 @@
         "实现 current_for_writer() 和 current_for_reader()",
         "实现 swap() 由单一协调者调用"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.5"],
       "test_verification": "帧数据双缓冲正常工作",

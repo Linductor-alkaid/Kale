@@ -99,18 +99,18 @@
 
 ### 4.1 FrameData
 
-- [ ] 实现 `FrameData<T>` 模板类
-- [ ] 实现 `write_buffer()` 获取当前写入缓冲区
-- [ ] 实现 `read_buffer()` 获取当前只读快照（上一帧或已提交）
-- [ ] 实现 `end_frame()` 帧末交换缓冲区
-- [ ] 双缓冲或三缓冲：当前帧写入，上一帧只读
+- [x] 实现 `FrameData<T>` 模板类
+- [x] 实现 `write_buffer()` 获取当前写入缓冲区
+- [x] 实现 `read_buffer()` 获取当前只读快照（上一帧或已提交）
+- [x] 实现 `end_frame()` 帧末交换缓冲区
+- [x] 双缓冲或三缓冲：当前帧写入，上一帧只读
 
 ### 4.2 SwapBuffer
 
-- [ ] 实现 `SwapBuffer<T, N>` 模板（N=2 为双缓冲，N=3 为三缓冲）
-- [ ] 实现 `current_for_writer()` 和 `current_for_reader()`
-- [ ] 实现 `swap()` 由单一协调者调用
-- [ ] `end_frame` 使用原子或简短临界区交换指针
+- [x] 实现 `SwapBuffer<T, N>` 模板（N=2 为双缓冲，N=3 为三缓冲）
+- [x] 实现 `current_for_writer()` 和 `current_for_reader()`
+- [x] 实现 `swap()` 由单一协调者调用
+- [x] `end_frame` 使用原子或简短临界区交换指针
 
 ### 4.3 引擎集成
 
