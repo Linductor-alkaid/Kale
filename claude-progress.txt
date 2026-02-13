@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.4 ResourceManager 接口与 Loader 注册（验证）
+状态：已完成
+- 验证：编译通过，ctest 46/46 通过；ResourceManager 接口与 Loader 注册（构造函数、RegisterLoader、FindLoader、SetAssetPath、AddPathAlias、ResolvePath）已由前期实现，本会话将 phase3-3.4 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.4 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.4 输入事件回调
 状态：已完成
 - 实现：InputEventType 枚举（KeyDown/KeyUp、MouseButtonDown/MouseButtonUp、MouseMotion、MouseWheel、Quit、WindowCloseRequested、GamepadAdded/GamepadRemoved）；InputEvent 结构（type、key、mouseButton、mousePosition、mouseDelta、wheelDelta、windowId、gamepadInstanceId）；RegisterCallback(type, callback)、ClearCallbacks(type)、ClearAllCallbacks()；Update() 中在 SDL_PollEvent 循环内按事件类型构建 InputEvent 并派发对应回调。
