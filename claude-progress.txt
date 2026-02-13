@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.1 资源句柄类型（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，hello_kale 启动正常（ResourceHandle/ResourceHandleAny/ToAny、句柄类型别名全项目引用正常）
+- feature_list.json 中 phase3-3.1 的 status 更新为 completed
+
+=== 2026-02-13 (session) ===
 功能：phase2-2.6 Vulkan Swapchain 与呈现（验证）
 状态：已完成
 - 验证：编译通过，ctest 通过，hello_kale 启动并运行正常（Swapchain 与呈现、OUT_OF_DATE 重建已实现）
