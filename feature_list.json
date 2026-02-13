@@ -1253,7 +1253,7 @@
         "实现 ProcessLoadedCallbacks()（可选，供主循环调用）",
         "加载失败时 Future 传递错误（异常或错误状态）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase4-4.3"],
       "test_verification": "Future 正确传递加载结果",

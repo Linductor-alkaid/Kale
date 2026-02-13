@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase4-4.4 Future 返回与回调
+状态：已完成
+- 实现：确保 LoadAsync 返回的 ExecutorFuture 与 executor 兼容（已有）；实现 RegisterLoadedCallback(LoadedCallback)、ProcessLoadedCallbacks()（主循环每帧调用派发已完成加载）；加载失败时 load_task 内 throw std::runtime_error(err)，无 scheduler 时 catch 后 p.set_exception(std::current_exception())，保证 get() 统一传播异常；成功路径 EnqueueLoaded(ToAny(handle), path) 供 ProcessLoadedCallbacks 派发
+- 验证：编译通过，ctest 通过（test_load_async 新增 test_load_async_failure_propagates_exception、test_process_loaded_callbacks；原 test_load_async_no_loader_returns_invalid_handle 改为期望 get() 抛异常）
+- feature_list.json 中 phase4-4.4 的 status 更新为 completed，hold=null；resource_management_layer_todolist 2.2 已勾选
+
+=== 2026-02-13 (session) ===
 功能：phase4-4.3 LoadAsync 与 executor 集成
 状态：已完成
 - 实现：ResourceManager::LoadAsync<T>(path) 模板方法；检查缓存已就绪则 AddRef 并返回 ExecutorPromise 就绪 Future；预注册 RegisterPlaceholder<T>；通过 scheduler_->LoadResourceAsync<ResourceHandle<T>>(load_task) 提交；任务内 FindLoader → Load → SetResource/SetReady，失败时 Release 占位符并返回空句柄；无 scheduler 时同步执行后返回就绪 Future

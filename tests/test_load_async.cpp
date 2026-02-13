@@ -1,9 +1,10 @@
 /**
  * @file test_load_async.cpp
- * @brief ResourceManager::LoadAsync 与 executor 集成单元测试（phase4-4.3）
+ * @brief ResourceManager::LoadAsync 与 executor 集成单元测试（phase4-4.3 / phase4-4.4）
  *
  * 覆盖：无 scheduler 同步路径、有 scheduler 异步路径、已缓存返回就绪 Future、
- * 占位符与 SetResource/SetReady、失败路径（无 loader）。
+ * 占位符与 SetResource/SetReady、失败路径（无 loader）；
+ * phase4-4.4：失败时 Future 传递异常、ProcessLoadedCallbacks 派发回调。
  */
 
 #include <kale_resource/resource_manager.hpp>
@@ -113,9 +114,62 @@ static void test_load_async_no_loader_returns_invalid_handle() {
 
     auto fut = rm.LoadAsync<DummyResource>("nonexistent.xyz");
     TEST_CHECK(fut.valid());
-    kale::resource::ResourceHandle<DummyResource> h = fut.get();
-    TEST_CHECK(!h.IsValid());
+    bool got_exception = false;
+    try {
+        kale::resource::ResourceHandle<DummyResource> h = fut.get();
+        (void)h;
+    } catch (const std::runtime_error&) {
+        got_exception = true;
+    }
+    TEST_CHECK(got_exception);
     TEST_CHECK(!rm.GetLastError().empty());
+}
+
+/// phase4-4.4: 加载失败时 Future.get() 应传播异常
+static void test_load_async_failure_propagates_exception() {
+    kale::resource::ResourceManager rm(nullptr, nullptr, nullptr);
+    rm.SetAssetPath("");
+
+    auto fut = rm.LoadAsync<DummyResource>("nonexistent.xyz");
+    TEST_CHECK(fut.valid());
+    bool caught = false;
+    try {
+        (void)fut.get();
+    } catch (const std::runtime_error& e) {
+        caught = true;
+        TEST_CHECK(std::string(e.what()).find("No loader") != std::string::npos ||
+                   std::string(e.what()).find("nonexistent") != std::string::npos);
+    }
+    TEST_CHECK(caught);
+}
+
+/// phase4-4.4: ProcessLoadedCallbacks 在成功加载后被调用
+static void test_process_loaded_callbacks() {
+    ::executor::Executor ex;
+    ex.initialize(::executor::ExecutorConfig{});
+    kale::executor::RenderTaskScheduler sched(&ex);
+
+    kale::resource::ResourceManager rm(&sched, nullptr, nullptr);
+    rm.RegisterLoader(std::make_unique<DummyLoader>());
+    rm.SetAssetPath("");
+
+    std::vector<std::pair<kale::resource::ResourceHandleAny, std::string>> received;
+    rm.RegisterLoadedCallback([&received](kale::resource::ResourceHandleAny h, const std::string& path) {
+        received.emplace_back(h, path);
+    });
+
+    auto fut = rm.LoadAsync<DummyResource>("cb/dummy.foo");
+    TEST_CHECK(fut.valid());
+    kale::resource::ResourceHandle<DummyResource> h = fut.get();
+    TEST_CHECK(h.IsValid());
+
+    rm.ProcessLoadedCallbacks();
+    TEST_CHECK(received.size() == 1u);
+    TEST_CHECK(received[0].first.id == h.id);
+    TEST_CHECK(received[0].second.find("cb") != std::string::npos || received[0].second.find("dummy") != std::string::npos);
+
+    sched.WaitAll();
+    ex.shutdown(true);
 }
 
 static void test_load_async_placeholder_then_async_fill() {
@@ -145,5 +199,7 @@ int main() {
     test_load_async_already_cached_returns_ready_future();
     test_load_async_no_loader_returns_invalid_handle();
     test_load_async_placeholder_then_async_fill();
+    test_load_async_failure_propagates_exception();
+    test_process_loaded_callbacks();
     return 0;
 }

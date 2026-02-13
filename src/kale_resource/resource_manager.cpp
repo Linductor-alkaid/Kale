@@ -95,4 +95,32 @@ void ResourceManager::SetLastError(const std::string& message) {
     lastError_ = message;
 }
 
+void ResourceManager::RegisterLoadedCallback(LoadedCallback cb) {
+    if (cb) {
+        std::lock_guard<std::mutex> lock(loadedMutex_);
+        loadedCallbacks_.push_back(std::move(cb));
+    }
+}
+
+void ResourceManager::ProcessLoadedCallbacks() {
+    std::vector<std::pair<ResourceHandleAny, std::string>> local;
+    std::vector<LoadedCallback> callbacks;
+    {
+        std::lock_guard<std::mutex> lock(loadedMutex_);
+        local = std::move(pendingLoaded_);
+        pendingLoaded_.clear();
+        callbacks = loadedCallbacks_;
+    }
+    for (const auto& [handle, path] : local) {
+        for (const auto& cb : callbacks) {
+            if (cb) cb(handle, path);
+        }
+    }
+}
+
+void ResourceManager::EnqueueLoaded(ResourceHandleAny handle, const std::string& path) {
+    std::lock_guard<std::mutex> lock(loadedMutex_);
+    pendingLoaded_.emplace_back(handle, path);
+}
+
 }  // namespace kale::resource

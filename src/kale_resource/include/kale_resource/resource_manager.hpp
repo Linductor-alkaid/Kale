@@ -8,11 +8,14 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
+#include <stdexcept>
 
 #include <kale_device/render_device.hpp>
 #include <kale_executor/executor_future.hpp>
@@ -103,6 +106,22 @@ public:
     void SetLastError(const std::string& message);
 
     /**
+     * @brief 加载完成回调类型：void(ResourceHandleAny handle, const std::string& path)
+     * 供主循环在 ProcessLoadedCallbacks() 中派发。
+     */
+    using LoadedCallback = std::function<void(ResourceHandleAny, const std::string&)>;
+
+    /**
+     * @brief 注册加载完成回调（可选）；ProcessLoadedCallbacks() 会按注册顺序调用
+     */
+    void RegisterLoadedCallback(LoadedCallback cb);
+
+    /**
+     * @brief 处理本帧已完成的加载，派发所有已注册的 LoadedCallback（供主循环每帧调用）
+     */
+    void ProcessLoadedCallbacks();
+
+    /**
      * @brief 访问内部缓存（供 Load/LoadAsync/Get 等使用）
      */
     ResourceCache& GetCache() { return cache_; }
@@ -113,6 +132,9 @@ public:
     kale::executor::RenderTaskScheduler* GetScheduler() const { return scheduler_; }
 
 private:
+    /// 供 LoadAsync 任务内成功完成时入队，由 ProcessLoadedCallbacks 派发
+    void EnqueueLoaded(ResourceHandleAny handle, const std::string& path);
+
     ResourceCache cache_;
     std::vector<std::unique_ptr<IResourceLoader>> loaders_;
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
@@ -121,6 +143,10 @@ private:
     std::string assetPath_;
     std::unordered_map<std::string, std::string> pathAliases_;
     mutable std::string lastError_;
+
+    std::mutex loadedMutex_;
+    std::vector<std::pair<ResourceHandleAny, std::string>> pendingLoaded_;
+    std::vector<LoadedCallback> loadedCallbacks_;
 };
 
 // -----------------------------------------------------------------------------
@@ -205,17 +231,18 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
             return handle;
         IResourceLoader* loader = FindLoader(resolved, typeId);
         if (!loader) {
-            SetLastError("No loader found for path: " + resolved);
+            std::string err("No loader found for path: " + resolved);
+            SetLastError(err);
             cache_.Release(ToAny(handle));
-            return ResourceHandle<T>{};
+            throw std::runtime_error(err);
         }
         ResourceLoadContext ctx{device_, stagingMgr_, this};
         std::any result = loader->Load(resolved, ctx);
         if (!result.has_value()) {
-            if (GetLastError().empty())
-                SetLastError("Load failed: " + resolved);
+            std::string err(GetLastError().empty() ? "Load failed: " + resolved : GetLastError());
+            SetLastError(err);
             cache_.Release(ToAny(handle));
-            return ResourceHandle<T>{};
+            throw std::runtime_error(err);
         }
         T* ptr = nullptr;
         try {
@@ -224,28 +251,36 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
             else if (auto* p = std::any_cast<T*>(&result))
                 ptr = *p;
         } catch (const std::bad_any_cast&) {
-            SetLastError("Loader returned invalid type for: " + resolved);
+            std::string err("Loader returned invalid type for: " + resolved);
+            SetLastError(err);
             cache_.Release(ToAny(handle));
-            return ResourceHandle<T>{};
+            throw std::runtime_error(err);
         }
         if (!ptr) {
-            SetLastError("Loader returned null for: " + resolved);
+            std::string err("Loader returned null for: " + resolved);
+            SetLastError(err);
             cache_.Release(ToAny(handle));
-            return ResourceHandle<T>{};
+            throw std::runtime_error(err);
         }
         cache_.SetResource(ToAny(handle), std::any(ptr));
         cache_.SetReady(ToAny(handle));
+        EnqueueLoaded(ToAny(handle), resolved);
         return handle;
     };
 
     if (scheduler_) {
         return scheduler_->LoadResourceAsync<ResourceHandle<T>>(std::move(load_task));
     }
-    // 无 scheduler：同步执行后返回就绪 Future
-    ResourceHandle<T> result = load_task();
+    // 无 scheduler：同步执行后返回就绪 Future；失败时通过 promise 传递异常
     kale::executor::ExecutorPromise<ResourceHandle<T>> p;
-    p.set_value(result);
-    return p.get_future();
+    kale::executor::ExecutorFuture<ResourceHandle<T>> f = p.get_future();
+    try {
+        ResourceHandle<T> result = load_task();
+        p.set_value(result);
+    } catch (...) {
+        p.set_exception(std::current_exception());
+    }
+    return f;
 }
 
 }  // namespace kale::resource

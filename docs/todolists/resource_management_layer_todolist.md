@@ -98,9 +98,9 @@
 
 ### 2.2 Future 返回与回调
 
-- [ ] 确保 Future 与 executor 的 submit 兼容
-- [ ] 实现 `ProcessLoadedCallbacks()`（可选，供主循环调用）
-- [ ] 加载失败时 Future 传递错误（异常或错误状态）
+- [x] 确保 Future 与 executor 的 submit 兼容
+- [x] 实现 `ProcessLoadedCallbacks()`（可选，供主循环调用）
+- [x] 加载失败时 Future 传递错误（异常或错误状态）
 
 ### 2.3 占位符系统
 
