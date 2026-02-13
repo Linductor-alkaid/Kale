@@ -322,7 +322,7 @@
         "实现 Barrier（纹理资源屏障）",
         "实现 Clear / Viewport / Scissor：ClearColor、ClearDepth、SetViewport、SetScissor"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.2"
