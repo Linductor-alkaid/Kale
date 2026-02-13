@@ -138,10 +138,10 @@
 
 ### 3.3 Upload Queue 与 Copy 命令
 
-- [ ] 实现 `SubmitUpload(cmd, src, dstTexture, mipLevel)` Buffer→Texture
-- [ ] 实现 `SubmitUpload(cmd, src, dstBuffer, dstOffset)` Buffer→Buffer
-- [ ] 收集 `pendingUploads_` 待执行上传
-- [ ] 实现 `FlushUploads(device)` 在 Execute 前提交 Copy 命令
+- [x] 实现 `SubmitUpload(cmd, src, dstTexture, mipLevel)` Buffer→Texture
+- [x] 实现 `SubmitUpload(cmd, src, dstBuffer, dstOffset)` Buffer→Buffer
+- [x] 收集 `pendingUploads_` 待执行上传
+- [x] 实现 `FlushUploads(device)` 在 Execute 前提交 Copy 命令
 
 ### 3.4 TextureLoader 集成 Staging 上传
 

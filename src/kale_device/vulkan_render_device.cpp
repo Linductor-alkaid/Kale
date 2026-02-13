@@ -1338,6 +1338,75 @@ void VulkanCommandList::Dispatch(std::uint32_t groupCountX, std::uint32_t groupC
         vkCmdDispatch(commandBuffer_, groupCountX, groupCountY, groupCountZ);
 }
 
+void VulkanCommandList::CopyBufferToBuffer(BufferHandle srcBuffer, std::size_t srcOffset,
+                                           BufferHandle dstBuffer, std::size_t dstOffset,
+                                           std::size_t size) {
+    if (!device_ || !commandBuffer_ || size == 0) return;
+    auto sit = device_->buffers_.find(srcBuffer.id);
+    auto dit = device_->buffers_.find(dstBuffer.id);
+    if (sit == device_->buffers_.end() || dit == device_->buffers_.end()) return;
+    VkBufferCopy copy = {};
+    copy.srcOffset = srcOffset;
+    copy.dstOffset = dstOffset;
+    copy.size = size;
+    vkCmdCopyBuffer(commandBuffer_, sit->second.buffer, dit->second.buffer, 1, &copy);
+}
+
+void VulkanCommandList::CopyBufferToTexture(BufferHandle srcBuffer, std::size_t srcOffset,
+                                            TextureHandle dstTexture, std::uint32_t mipLevel,
+                                            std::uint32_t width, std::uint32_t height,
+                                            std::uint32_t depth) {
+    if (!device_ || !commandBuffer_ || width == 0 || height == 0 || depth == 0) return;
+    auto bit = device_->buffers_.find(srcBuffer.id);
+    auto tit = device_->textures_.find(dstTexture.id);
+    if (bit == device_->buffers_.end() || tit == device_->textures_.end()) return;
+    const VulkanTextureRes& res = tit->second;
+    VkImage image = res.image;
+    const TextureDesc& desc = res.desc;
+    if (mipLevel >= desc.mipLevels) return;
+
+    VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    if (desc.format == Format::D16 || desc.format == Format::D24 || desc.format == Format::D32)
+        aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+    else if (desc.format == Format::D24S8 || desc.format == Format::D32S8)
+        aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
+    VkImageMemoryBarrier barrier = {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = aspect;
+    barrier.subresourceRange.baseMipLevel = mipLevel;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = desc.arrayLayers;
+    vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                         0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+    VkBufferImageCopy region = {};
+    region.bufferOffset = srcOffset;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = aspect;
+    region.imageSubresource.mipLevel = mipLevel;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = desc.arrayLayers;
+    region.imageOffset = {0, 0, 0};
+    region.imageExtent = {width, height, depth};
+    vkCmdCopyBufferToImage(commandBuffer_, bit->second.buffer, image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(commandBuffer_, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                         0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
 void VulkanCommandList::Barrier(const std::vector<TextureHandle>& textures) {
     if (!device_ || !commandBuffer_ || textures.empty()) return;
     std::vector<VkImageMemoryBarrier> barriers;

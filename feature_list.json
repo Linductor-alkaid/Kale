@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Vulkan + SDL3 rendering engine with modular layered architecture",
   "last_updated": "2026-02-12",
+  "status_enum": ["pending", "inprogress", "verifying", "completed"],
+  "status_hold_format": "<status> hold by <agent_id>",
+  "status_flow": "pending -> inprogress -> verifying -> completed (或 verifying -> inprogress 若测试失败)",
   "features": [
     {
       "id": "phase0-0.1",
@@ -114,7 +117,7 @@
         "实现鼠标：GetMousePosition() / GetMouseDelta() / IsMouseButtonPressed() / GetMouseWheelDelta()",
         "定义 KeyCode、MouseButton 枚举（与 SDL 映射）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase1-1.1"],
       "test_verification": "键盘和鼠标输入正常响应，按键状态和鼠标位置准确"
@@ -136,7 +139,7 @@
         "基于 std::atomic 和 CAS 实现无锁环形缓冲区",
         "使用固定容量，避免动态分配"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase0-0.1"],
       "test_verification": "多线程 send/recv 无数据竞争，高并发压力测试通过"
@@ -154,7 +157,7 @@
         "单元测试：高并发压力测试",
         "保持与 executor 解耦，可独立使用"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "medium",
       "dependencies": ["phase1-1.5"],
       "test_verification": "单元测试通过，验证无数据竞争"
@@ -173,7 +176,7 @@
         "实现 ExecutorFuture<T>::get() 阻塞直到就绪",
         "实现 ExecutorFuture<T>::valid() 有效性检查"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase0-0.1"],
       "test_verification": "Promise/Future 异步结果传递正常工作"
@@ -190,7 +193,7 @@
         "返回 ExecutorFuture<std::invoke_result_t<F, T>>",
         "避免阻塞当前线程，由 executor 调度续接任务"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase1-1.7"],
       "test_verification": "链式异步操作正确执行，不阻塞主线程"
@@ -207,7 +210,7 @@
         "集成到 LoadResourceAsync 等上层 API",
         "确保 promise::set_value 仅调用一次，标准库保证线程安全"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase1-1.7"],
       "test_verification": "异步加载不阻塞主线程，返回正确的 Future"
@@ -230,7 +233,7 @@
         "定义 BlendState、DepthStencilState、RasterizationState",
         "定义 PipelineDesc（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase1-1.3"],
       "test_verification": "句柄和描述符类型定义完整，编译通过"
@@ -256,7 +259,7 @@
         "实现 GetLastError() 错误信息（初始化失败时）",
         "实现 CreateRenderDevice(Backend backend) 工厂函数"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.1"],
       "test_verification": "接口定义完整，编译通过，Vulkan 实现可以初始化"
@@ -279,7 +282,7 @@
         "实现 Barrier（纹理资源屏障）",
         "实现 Clear / Viewport / Scissor：ClearColor、ClearDepth、SetViewport、SetScissor"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "接口定义完整，可以用于录制渲染命令"
@@ -301,7 +304,7 @@
         "实现 Destroy* 系列接口",
         "实现 UpdateBuffer / UpdateTexture（含 Staging Buffer 上传路径）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "成功创建和管理 Vulkan 资源，无内存泄漏"
@@ -323,7 +326,7 @@
         "实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal",
         "集成 VMA (Vulkan Memory Allocator)"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.3", "phase2-2.4"],
       "test_verification": "命令录制和同步正常工作，帧流水线无死锁"
@@ -342,7 +345,7 @@
         "实现 GetCurrentFrameIndex 帧索引",
         "处理 VK_ERROR_OUT_OF_DATE_KHR（resize 时重建 Swapchain）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.5"],
       "test_verification": "Swapchain 正常工作，支持窗口调整大小"
@@ -360,7 +363,7 @@
         "实现 ToAny(ResourceHandle<T>) 转换为 ResourceHandleAny",
         "定义 Mesh、Texture、Material 等资源句柄类型别名"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.1"],
       "test_verification": "句柄类型定义完整，类型擦除正常工作"
@@ -383,7 +386,7 @@
         "实现 AddRef / Release 引用计数",
         "线程安全：entries_、pathToId_ 的 mutex 保护"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.1"],
       "test_verification": "资源缓存正常工作，引用计数正确，线程安全"
@@ -402,7 +405,7 @@
         "实现 GetResourceType() 返回 type_index",
         "定义 ResourceLoadContext 结构（device, stagingMgr, resourceManager）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "接口定义完整，可以实现自定义加载器"
@@ -422,7 +425,7 @@
         "实现 AddPathAlias(alias, path) 路径别名",
         "实现 ResolvePath(path) 解析完整路径"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.2", "phase3-3.2"],
       "test_verification": "资源管理器可以注册和查找加载器"
@@ -442,7 +445,7 @@
         "加载失败时 GetLastError() 返回原因",
         "失败不缓存，避免重复加载失败路径"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.4"],
       "test_verification": "同步加载正常工作，缓存正确，失败处理合理"
@@ -460,7 +463,7 @@
         "定义 Texture 结构（handle, width, height, format, mipLevels）",
         "定义 BoundingBox 结构"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase2-2.1"],
       "test_verification": "数据结构定义完整，可以表示各种资源"
@@ -479,7 +482,7 @@
         "创建 RDI Texture，直接传入数据（暂不通过 Staging）",
         "返回 std::unique_ptr<Texture> 或等价的 std::any"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.3", "phase2-2.4"],
       "test_verification": "成功加载 PNG/JPG 纹理，正确显示"
@@ -499,7 +502,7 @@
         "生成 Mesh 结构（vertexBuffer, indexBuffer, indexCount, vertexCount, bounds, subMeshes）",
         "可选：支持 .obj（使用 assimp 或简易解析）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.3", "phase2-2.4", "phase3-3.6"],
       "test_verification": "成功加载 glTF 模型，正确渲染"
@@ -519,7 +522,7 @@
         "实现 handleRegistry_（std::unordered_map<SceneNodeHandle, SceneNode*>）",
         "节点创建时分配 handle 并注册，销毁时从注册表移除"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": [],
       "test_verification": "句柄分配和解析正常工作"
@@ -542,7 +545,7 @@
         "实现 GetHandle() 返回 SceneNodeHandle",
         "实现 handle_ 成员，由 SceneManager 在 CreateScene/AddChild 时设置"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase5-5.1"],
       "test_verification": "场景节点层级正确，变换计算准确"
@@ -563,7 +566,7 @@
       ],
       "priority": "high",
       "dependencies": ["phase5-5.2"],
-      "status": "completed",
+      "status": "verifying",
       "test_verification": "场景创建和切换正常，无内存泄漏"
     },
     {
@@ -579,7 +582,7 @@
         "世界矩阵计算：world = parentWorld * node->GetLocalTransform()",
         "递归更新所有子节点"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase5-5.3"],
       "test_verification": "世界矩阵计算正确，层级变换正确传播"
@@ -596,7 +599,7 @@
         "SceneNode 实现 SetPassFlags(PassFlags f) / GetPassFlags()",
         "默认 PassFlags::All"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "medium",
       "dependencies": ["phase5-5.2"],
       "test_verification": "Pass 标志正确设置和查询"
@@ -612,7 +615,7 @@
         "SceneNode 实现 SetRenderable(Renderable* r) / GetRenderable()",
         "SceneNode 持有 Renderable 非占有指针（Renderable* renderable）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase5-5.2"],
       "test_verification": "Renderable 正确挂载到节点"
@@ -629,7 +632,7 @@
         "实现 BoundingBox::Transform(const glm::mat4& m) 变换包围体",
         "实现 TransformBounds(const BoundingBox& box, const glm::mat4& m) 自由函数"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.6"],
       "test_verification": "包围盒变换正确"
@@ -646,7 +649,7 @@
         "实现 ExtractFrustumPlanes(const glm::mat4& viewProj) 从 VP 矩阵提取",
         "实现 IsBoundsInFrustum(const BoundingBox& bounds, const FrustumPlanes& frustum)"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase5-5.7"],
       "test_verification": "视锥剔除正确识别可视对象"
@@ -666,7 +669,7 @@
         "通过视锥测试的节点加入 visibleNodes",
         "需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase5-5.4", "phase5-5.8"],
       "test_verification": "剔除返回正确的可见节点列表"
@@ -685,7 +688,7 @@
         "实现 Draw(CommandList& cmd, const glm::mat4& worldTransform) 虚函数",
         "定义 bounds 成员供 CullScene 使用"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
       "dependencies": ["phase3-3.6", "phase5-5.6"],
       "test_verification": "Renderable 可以正确渲染"
@@ -740,7 +743,7 @@
         "收集 pendingUploads_ 待执行上传",
         "实现 FlushUploads(device) 在 Execute 前提交 Copy 命令"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.2"],
       "test_verification": "数据正确上传到 GPU"

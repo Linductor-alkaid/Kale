@@ -5,14 +5,17 @@
  * 与 resource_management_layer_design.md 5.9 对齐。
  * Phase 6.1：StagingAllocation、Allocate、Free、默认 64MB 池初始化。
  * Phase 6.2：与 Fence 关联的延迟回收，ReclaimCompleted，分配不足时先回收再扩展池。
+ * Phase 6.3：SubmitUpload Buffer→Texture / Buffer→Buffer，pendingUploads_，FlushUploads。
  */
 
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <utility>
 #include <vector>
 
+#include <kale_device/command_list.hpp>
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/render_device.hpp>
 
@@ -71,6 +74,26 @@ public:
      */
     void ReclaimCompleted();
 
+    /**
+     * @brief 提交 Buffer→Texture 上传：若 cmd 非空则立即录制到 cmd，否则加入 pendingUploads_ 待 FlushUploads 执行
+     * @param width, height, depth 目标 mip 的 extent（2D 纹理通常 depth=1）
+     */
+    void SubmitUpload(kale_device::CommandList* cmd, const StagingAllocation& src,
+                      kale_device::TextureHandle dstTexture, std::uint32_t mipLevel = 0,
+                      std::uint32_t width = 0, std::uint32_t height = 0, std::uint32_t depth = 1);
+
+    /**
+     * @brief 提交 Buffer→Buffer 上传：若 cmd 非空则立即录制到 cmd，否则加入 pendingUploads_
+     */
+    void SubmitUpload(kale_device::CommandList* cmd, const StagingAllocation& src,
+                      kale_device::BufferHandle dstBuffer, std::size_t dstOffset = 0);
+
+    /**
+     * @brief 在 Execute 前提交所有待执行上传：取 CommandList 执行 pendingUploads_ 后 Submit，返回本批 Fence 供 Free(alloc, fence) 使用
+     * @return 本批提交使用的 FenceHandle；若无待上传则返回无效句柄
+     */
+    kale_device::FenceHandle FlushUploads(kale_device::IRenderDevice* device);
+
     /** @brief 设置池总容量（字节），仅影响后续新创建的池块，默认 64MB */
     void SetPoolSize(std::size_t bytes) { poolSize_ = bytes; }
     std::size_t GetPoolSize() const { return poolSize_; }
@@ -94,6 +117,7 @@ private:
     std::vector<PoolBuffer> poolBuffers_;
     std::vector<std::vector<FreeBlock>> freeLists_;  /* 与 poolBuffers_ 一一对应 */
     std::vector<std::pair<StagingAllocation, kale_device::FenceHandle>> pendingFrees_;
+    std::vector<std::function<void(kale_device::CommandList*)>> pendingUploads_;
 };
 
 }  // namespace kale::resource

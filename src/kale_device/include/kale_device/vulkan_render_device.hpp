@@ -60,6 +60,13 @@ public:
                     std::uint32_t firstInstance = 0) override;
     void Dispatch(std::uint32_t groupCountX, std::uint32_t groupCountY,
                   std::uint32_t groupCountZ) override;
+    void CopyBufferToBuffer(BufferHandle srcBuffer, std::size_t srcOffset,
+                            BufferHandle dstBuffer, std::size_t dstOffset,
+                            std::size_t size) override;
+    void CopyBufferToTexture(BufferHandle srcBuffer, std::size_t srcOffset,
+                             TextureHandle dstTexture, std::uint32_t mipLevel,
+                             std::uint32_t width, std::uint32_t height,
+                             std::uint32_t depth = 1) override;
     void Barrier(const std::vector<TextureHandle>& textures) override;
     void ClearColor(TextureHandle texture, const float color[4]) override;
     void ClearDepth(TextureHandle texture, float depth,

@@ -124,4 +124,44 @@ void StagingMemoryManager::ReclaimCompleted() {
     }
 }
 
+void StagingMemoryManager::SubmitUpload(kale_device::CommandList* cmd, const StagingAllocation& src,
+                                        kale_device::TextureHandle dstTexture, std::uint32_t mipLevel,
+                                        std::uint32_t width, std::uint32_t height, std::uint32_t depth) {
+    if (!src.IsValid() || !dstTexture.IsValid() || width == 0 || height == 0) return;
+    auto record = [src, dstTexture, mipLevel, width, height, depth](kale_device::CommandList* c) {
+        c->CopyBufferToTexture(src.buffer, src.offset, dstTexture, mipLevel, width, height, depth);
+    };
+    if (cmd) {
+        record(cmd);
+    } else {
+        pendingUploads_.push_back(record);
+    }
+}
+
+void StagingMemoryManager::SubmitUpload(kale_device::CommandList* cmd, const StagingAllocation& src,
+                                        kale_device::BufferHandle dstBuffer, std::size_t dstOffset) {
+    if (!src.IsValid() || !dstBuffer.IsValid() || src.size == 0) return;
+    auto record = [src, dstBuffer, dstOffset](kale_device::CommandList* c) {
+        c->CopyBufferToBuffer(src.buffer, src.offset, dstBuffer, dstOffset, src.size);
+    };
+    if (cmd) {
+        record(cmd);
+    } else {
+        pendingUploads_.push_back(record);
+    }
+}
+
+kale_device::FenceHandle StagingMemoryManager::FlushUploads(kale_device::IRenderDevice* device) {
+    if (!device || pendingUploads_.empty()) return kale_device::FenceHandle{};
+    kale_device::CommandList* cmd = device->BeginCommandList(0);
+    if (!cmd) return kale_device::FenceHandle{};
+    for (const auto& fn : pendingUploads_)
+        fn(cmd);
+    device->EndCommandList(cmd);
+    kale_device::FenceHandle fence = device->CreateFence(false);
+    device->Submit({cmd}, {}, {}, fence);
+    pendingUploads_.clear();
+    return fence;
+}
+
 }  // namespace kale::resource

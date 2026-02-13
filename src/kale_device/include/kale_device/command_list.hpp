@@ -75,6 +75,21 @@ public:
                           std::uint32_t groupCountZ) = 0;
 
     // -------------------------------------------------------------------------
+    // Copy (Staging / Upload)
+    // -------------------------------------------------------------------------
+
+    /** Buffer → Buffer 拷贝（用于 Staging 上传到 GPU Buffer） */
+    virtual void CopyBufferToBuffer(BufferHandle srcBuffer, std::size_t srcOffset,
+                                    BufferHandle dstBuffer, std::size_t dstOffset,
+                                    std::size_t size) = 0;
+
+    /** Buffer → Texture 拷贝（用于 Staging 上传到 GPU Texture，需指定 mip 的 extent） */
+    virtual void CopyBufferToTexture(BufferHandle srcBuffer, std::size_t srcOffset,
+                                     TextureHandle dstTexture, std::uint32_t mipLevel,
+                                     std::uint32_t width, std::uint32_t height,
+                                     std::uint32_t depth = 1) = 0;
+
+    // -------------------------------------------------------------------------
     // Resource Barriers
     // -------------------------------------------------------------------------
 

@@ -128,7 +128,7 @@ ${GREEN}工作流程${NC}:
     1. 📖 读取状态文件了解当前进度
     2. 📋 选择并阅读相关文档
     3. 🔨 实现功能
-    4. ✅ 运行测试验证（完整权限）
+    4. ✅ 运行测试验证（编译、单元测试、功能验证、生产安全，完整权限）
     5. 📝 更新状态文件（完整权限）
     6. 💾 提交 git commit（完整权限）
 
@@ -338,6 +338,8 @@ generate_prompt() {
     cat << 'EOF'
 你是 Kale 渲染引擎项目的开发 Agent。请按照以下工作流程完成一次开发会话。
 
+**你的 Agent ID：{{AGENT_ID}}**（在多智能体场景下用于任务锁定，仅可选用自己 hold 的任务）
+
 ## 重要：你拥有完整的执行权限
 
 你被授予完整权限执行以下所有操作，不要只是建议或说明，而是实际执行：
@@ -350,6 +352,27 @@ generate_prompt() {
 
 **必须实际执行这些操作，不要留给用户手动完成！**
 
+## feature_list.json 状态与 Hold 机制
+
+**四态**：pending → inprogress → verifying → completed
+
+| 状态 | 含义 |
+|------|------|
+| pending | 待开始 |
+| inprogress | 开发中 |
+| verifying | 功能完成，测试验证中 |
+| completed | 测试通过，已完成 |
+
+**Hold 格式**：选中任务后，将 status 设为 "inprogress hold by {{AGENT_ID}}" 或 "verifying hold by {{AGENT_ID}}"
+- 只有 status 中 hold by 的 agent 与你的 Agent ID 一致时，你才能选择该任务
+- 非自己 hold 的任务不可选
+
+**状态流转**：
+- 选中 pending 任务 → 改为 "inprogress hold by {{AGENT_ID}}"
+- 功能实现完成 → 改为 "verifying hold by {{AGENT_ID}}"
+- 测试通过 → 改为 "completed"（无 hold）
+- 测试失败需修复 → 改回 "inprogress hold by {{AGENT_ID}}"
+
 ## 工作流程
 
 ### 1. **了解当前状态**
@@ -357,9 +380,11 @@ generate_prompt() {
    - 验证 feature_list.json 格式正确（如果损坏则修复）
 
 ### 2. **选择下一个功能**
-   - 找一个 status 为 "pending" 的功能
-   - 确保依赖已完成
-   - 优先级：critical > high > medium
+   - **优先**：status 为 "verifying hold by {{AGENT_ID}}" 的任务（自己已实现待验证的）
+   - **其次**：status 为 "verifying" 的任务（无agent认领的验证任务）
+   - **再次**：status 为 "pending" 的任务（选中后立即改为 "inprogress hold by {{AGENT_ID}}"）
+   - 确保依赖已完成，优先级：critical > high > medium
+   - **禁止**选择其他agent hold 的 inprogress/verifying 任务
 
 ### 3. **阅读相关文档**
    - docs/design/rendering_engine_design.md (总设计)
@@ -370,8 +395,11 @@ generate_prompt() {
    - 按步骤逐一实现
    - 遵循设计文档
    - 确保代码质量
+   - **实现完成后**：将 status 改为 "verifying hold by {{AGENT_ID}}"
 
 ### 5. **测试验证**（必须实际执行）
+
+   **a) 编译构建**
    ```bash
    cd build
    cmake --build . -j$(nproc)
@@ -379,16 +407,39 @@ generate_prompt() {
    - 必须实际运行构建命令
    - 检查编译输出，确保无错误
    - 如有错误，立即修复并重新构建
-   - 如果需要，运行可执行文件验证功能
+
+   **b) 单元测试**
+   ```bash
+   ctest --output-on-failure
+   # 或：./build/test_task_channel 等具体测试
+   ```
+   - 若项目有 tests/ 目录或 CTest，必须运行单元测试
+   - 确保所有相关测试通过
+
+   **c) 功能验证**
+   - 运行可执行文件（如 hello_kale 或相关 demo）验证实现的功能
+   - 确认功能按预期工作：输入正确、输出正确、无崩溃
+   - 可手动执行一次典型使用流程
+
+   **d) 生产场景安全**
+   - 检查空指针/未初始化访问、资源泄漏、异常路径处理
+   - 对涉及多线程/并发或资源管理的代码，核对线程安全与正确释放
+   - 如有 KALE_ENABLE_TSAN，可启用 ThreadSanitizer 复测
+   - 确认无明显的生产环境风险（如断言滥用、未处理错误码）
+
+   **测试结果处理**：
+   - 测试通过 → 将 status 改为 "completed"
+   - 测试失败需修复 → 将 status 改回 "inprogress hold by {{AGENT_ID}}"，修复后重新验证
 
 ### 6. **更新文档**（必须实际执行）
    你必须实际修改以下文件：
    
-   a) **feature_list.json**：
-   ```bash
-   # 使用文本编辑工具或脚本将对应功能的 status 改为 "completed"
-   # 确保 JSON 格式正确
-   ```
+   a) **feature_list.json**（按实际情况更新 status）：
+   - 选任务时：pending → "inprogress hold by {{AGENT_ID}}"
+   - 实现完成：inprogress → "verifying hold by {{AGENT_ID}}"
+   - 测试通过：verifying → "completed"
+   - 测试失败：verifying → "inprogress hold by {{AGENT_ID}}"
+   - 确保 JSON 格式正确
    
    b) **claude-progress.txt**：
    ```bash
@@ -421,6 +472,8 @@ generate_prompt() {
 ## 严格要求
 
 - ✅ **必须实际执行**测试构建，不能只输出建议
+- ✅ **必须实际运行**单元测试（若有）和功能验证
+- ✅ **必须验证**功能可用且在生产场景下安全
 - ✅ **必须实际修改**文档文件，不能只说明需要修改
 - ✅ **必须实际执行** git add 和 git commit
 - ❌ **不要在项目根目录创建** test_* 文件
@@ -431,11 +484,13 @@ generate_prompt() {
 
 本次会话被视为成功完成，当且仅当：
 1. ✅ 功能已实际实现并通过编译
-2. ✅ feature_list.json 已被实际修改（status → "completed"）
-3. ✅ claude-progress.txt 已被实际更新
-4. ✅ todolist.md 已被实际更新
-5. ✅ 已执行 git commit
-6. ✅ 所有临时文件已清理
+2. ✅ 单元测试通过（若有相关测试）
+3. ✅ 功能已验证可用，且无明显生产场景风险
+4. ✅ feature_list.json 已被实际修改（status → "completed"）
+5. ✅ claude-progress.txt 已被实际更新
+6. ✅ todolist.md 已被实际更新
+7. ✅ 已执行 git commit
+8. ✅ 所有临时文件已清理
 
 **不要将任何步骤留给用户手动完成，你有完整权限执行所有操作！**
 
@@ -447,6 +502,7 @@ EOF
 run_claude_session() {
     local session_num=$1
     local total_sessions=$2  # 修复：使用明确的变量名表示总会话数
+    local agent_id="${3:-$AGENT_ID}"
 
     print_session_header $session_num $total_sessions
 
@@ -471,13 +527,15 @@ run_claude_session() {
         fi
     fi
 
-    # 生成 prompt
+    # 生成 prompt，并注入 Agent ID
     generate_prompt > "$prompt_file"
+    sed -i "s/{{AGENT_ID}}/$agent_id/g" "$prompt_file"
 
     # 记录会话开始到日志文件
     {
         echo "=========================================="
         echo "开发会话 #${session_num}/${total_sessions}"
+        echo "Agent ID: $agent_id"
         echo "开始时间: $(date '+%Y-%m-%d %H:%M:%S')"
         echo "CLI 工具: $AGENT_MODE"
         echo "模型: $MODEL"
@@ -625,10 +683,13 @@ show_summary() {
         local total_features=$(grep -c '"id":' "$KALE_ROOT/feature_list.json" 2>/dev/null || echo 0)
         local completed=$(grep -c '"status": "completed"' "$KALE_ROOT/feature_list.json" 2>/dev/null || echo 0)
         local pending=$(grep -c '"status": "pending"' "$KALE_ROOT/feature_list.json" 2>/dev/null || echo 0)
+        local inprogress=$(grep -c '"status": "inprogress' "$KALE_ROOT/feature_list.json" 2>/dev/null || echo 0)
+        local verifying=$(grep -c '"status": "verifying' "$KALE_ROOT/feature_list.json" 2>/dev/null || echo 0)
 
         echo "  总功能数: $total_features"
         echo -e "  ${GREEN}已完成: $completed${NC}"
         echo -e "  ${YELLOW}待完成: $pending${NC}"
+        echo -e "  开发中: $inprogress  验证中: $verifying"
 
         if [ $total_features -gt 0 ]; then
             local percentage=$((completed * 100 / total_features))
@@ -653,6 +714,10 @@ main() {
     # 解析参数
     parse_args "$@"
 
+    # 本次运行创建唯一 Agent ID（避免多智能体争抢工作）
+    AGENT_ID="agent_$(date +%s)_$$"
+    export AGENT_ID
+
     # 打印标题
     print_separator
     echo -e "${MAGENTA}🤖 Kale 渲染引擎 - 自动化开发系统 (完全修复版 v2)${NC}"
@@ -661,6 +726,7 @@ main() {
 
     echo "配置:"
     echo "  项目目录: $KALE_ROOT"
+    echo "  Agent ID: $AGENT_ID"
     echo "  运行次数: $NUM_RUNS"
     echo "  CLI 工具: $AGENT_MODE"
     echo "  使用模型: $MODEL"
@@ -682,9 +748,9 @@ main() {
     log_msg INFO "开始运行 $NUM_RUNS 次开发会话（从 #$START_SESSION 到 #$end_session）..."
     echo ""
 
-    # 修复：正确传递总会话数
+    # 修复：正确传递总会话数，传入 AGENT_ID
     for ((i=START_SESSION; i<=end_session; i++)); do
-        if run_claude_session $i $end_session; then
+        if run_claude_session $i $end_session "$AGENT_ID"; then
             ((successful++))
         else
             log_msg WARNING "会话 #$i 失败，继续下一个会话..."
