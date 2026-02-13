@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.9 实例级 DescriptorSet 池化
+状态：已完成
+- 实现：RDI 新增 WriteDescriptorSetBuffer(set, binding, buffer, offset, range)；Material 继承 resource::Material，实现 AcquireInstanceDescriptorSet(device, instanceData, size) 从池取或新建 (DescriptorSet+UniformBuffer)，UpdateBuffer 写入实例数据并返回 set；ReleaseAllInstanceDescriptorSets() 将 inUse 回收到池。resource::Material 增加 ReleaseFrameResources() 虚函数；Renderable/StaticMesh 增加 ReleaseFrameResources() 并调用 material->ReleaseFrameResources()；RenderGraph::ReleaseFrameResources() 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()。
+- 验证：编译通过，ctest 20/20 通过（新增 test_instance_descriptor_set：null device 返回无效、Acquire 返回有效、Release 后再 Acquire 复用池、多 Acquire/Release 复用、零 size Acquire 正常）。Mock 设备补充 WriteDescriptorSetBuffer（test_placeholders、test_draw_resource_check、test_material_descriptor_set）。rendering_pipeline_layer_todolist 2.3 已勾选。
+- feature_list.json 中 phase7-7.9 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.8 材质级 DescriptorSet
 状态：已完成
 - 实现：GetMaterialDescriptorSet() 返回材质级共享 DescriptorSetHandle；EnsureMaterialDescriptorSet(IRenderDevice*) 根据当前 textures_ 创建 layout（CombinedImageSampler）、CreateDescriptorSet、WriteDescriptorSetTexture 绑定纹理。RDI 新增 DescriptorType::CombinedImageSampler、WriteDescriptorSetTexture(set, binding, texture)；Vulkan 默认采样器 + vkUpdateDescriptorSets 实现写入。

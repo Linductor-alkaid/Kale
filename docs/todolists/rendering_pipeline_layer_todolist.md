@@ -106,11 +106,11 @@
 
 ### 2.3 实例级 DescriptorSet 池化
 
-- [ ] 实现 `AcquireInstanceDescriptorSet(const void* instanceData, size_t size)` 返回 DescriptorSetHandle
-- [ ] 实例级 DescriptorSet 用于 per-instance 数据（如 worldTransform）
-- [ ] 实现池化复用，避免每帧大量分配
-- [ ] 实现 `instanceDescriptorPool_` 或类似池化结构
-- [ ] Acquire 在 Draw 时调用；Release 由 RenderGraph::ReleaseFrameResources 统一回收
+- [x] 实现 `AcquireInstanceDescriptorSet(const void* instanceData, size_t size)` 返回 DescriptorSetHandle
+- [x] 实例级 DescriptorSet 用于 per-instance 数据（如 worldTransform）
+- [x] 实现池化复用，避免每帧大量分配
+- [x] 实现 `instanceDescriptorPool_` 或类似池化结构
+- [x] Acquire 在 Draw 时调用；Release 由 RenderGraph::ReleaseFrameResources 统一回收
 
 ### 2.4 ReleaseFrameResources
 

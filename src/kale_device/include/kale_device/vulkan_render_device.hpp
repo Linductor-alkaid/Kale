@@ -103,6 +103,9 @@ public:
     DescriptorSetHandle CreateDescriptorSet(const DescriptorSetLayoutDesc& layout) override;
     void WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,
                                     TextureHandle texture) override;
+    void WriteDescriptorSetBuffer(DescriptorSetHandle set, std::uint32_t binding,
+                                 BufferHandle buffer, std::size_t offset = 0,
+                                 std::size_t range = 0) override;
 
     void DestroyBuffer(BufferHandle handle) override;
     void DestroyTexture(TextureHandle handle) override;

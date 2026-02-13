@@ -138,6 +138,8 @@ void test_static_mesh_draw_with_placeholder_mesh() {
         kale_device::PipelineHandle CreatePipeline(const kale_device::PipelineDesc&) override { return {}; }
         kale_device::DescriptorSetHandle CreateDescriptorSet(const kale_device::DescriptorSetLayoutDesc&) override { return {}; }
         void WriteDescriptorSetTexture(kale_device::DescriptorSetHandle, std::uint32_t, kale_device::TextureHandle) override {}
+        void WriteDescriptorSetBuffer(kale_device::DescriptorSetHandle, std::uint32_t,
+                                     kale_device::BufferHandle, std::size_t, std::size_t) override {}
         void DestroyBuffer(kale_device::BufferHandle) override {}
         void DestroyTexture(kale_device::TextureHandle) override {}
         void DestroyShader(kale_device::ShaderHandle) override {}

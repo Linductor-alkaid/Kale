@@ -35,6 +35,9 @@ public:
     /** 向命令列表录制绘制命令，worldTransform 为节点世界矩阵 */
     virtual void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform) = 0;
 
+    /** 帧末由 RenderGraph::ReleaseFrameResources 调用，用于回收实例级 DescriptorSet 等；默认空实现。 */
+    virtual void ReleaseFrameResources() {}
+
 protected:
     /** 局部空间包围盒，子类可设置后由 GetBounds() 返回，供 CullScene 使用 */
     kale::resource::BoundingBox bounds_{};

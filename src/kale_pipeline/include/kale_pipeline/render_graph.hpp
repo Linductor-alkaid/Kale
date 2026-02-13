@@ -415,7 +415,10 @@ inline void RenderGraph::BuildFrameDrawList() {
 }
 
 inline void RenderGraph::ReleaseFrameResources() {
-    // 帧末回收实例级 DescriptorSet 等，待材质系统实现后扩展。
+    for (const auto& draw : submittedDraws_) {
+        if (draw.renderable)
+            draw.renderable->ReleaseFrameResources();
+    }
 }
 
 inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_device::IRenderDevice* device) {

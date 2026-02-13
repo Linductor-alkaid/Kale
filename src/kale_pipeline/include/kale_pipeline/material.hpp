@@ -20,16 +20,19 @@
 
 namespace kale::pipeline {
 
+/** 实例数据 UBO 最大字节数（满足 Vulkan minUniformBufferOffsetAlignment 常见值 256） */
+constexpr std::size_t kInstanceDescriptorDataSize = 256;
+
 /**
- * 材质基类。
+ * 材质基类（继承 resource::Material 以支持 ReleaseFrameResources 多态）。
  * - SetTexture / SetParameter：按名称绑定纹理与原始参数。
  * - GetShader() / GetPipeline()：供 Draw 时 BindPipeline / BindDescriptorSet 使用。
  * - parameters_ 存储按名称的原始字节参数（如 float、mat4 等）。
  */
-class Material {
+class Material : public kale::resource::Material {
 public:
     Material() = default;
-    virtual ~Material() = default;
+    ~Material() override = default;
 
     /** 按名称设置纹理（非占有，由外部管理生命周期） */
     void SetTexture(const std::string& name, kale::resource::Texture* texture) {
@@ -108,12 +111,75 @@ public:
         }
     }
 
+    /**
+     * 从池中取得一个实例级 DescriptorSet，写入 instanceData（如 worldTransform），返回 set 句柄。
+     * 用于 per-instance UBO；Draw 时调用，帧末由 ReleaseAllInstanceDescriptorSets 回收。
+     * @param device 用于创建 set/buffer（池为空时）
+     * @param instanceData 实例数据指针，可为 nullptr（仅分配 set，不写入）
+     * @param size 实例数据字节数，不超过 kInstanceDescriptorDataSize
+     * @return 有效句柄供 BindDescriptorSet 使用；无效表示 device 为空或分配失败
+     */
+    kale_device::DescriptorSetHandle AcquireInstanceDescriptorSet(
+        kale_device::IRenderDevice* device,
+        const void* instanceData,
+        std::size_t size) {
+        if (!device) return kale_device::DescriptorSetHandle{};
+        if (size > kInstanceDescriptorDataSize) size = kInstanceDescriptorDataSize;
+        InstanceSetEntry entry;
+        if (!instancePool_.empty()) {
+            entry = instancePool_.back();
+            instancePool_.pop_back();
+        } else {
+            kale_device::DescriptorSetLayoutDesc layout;
+            layout.bindings.push_back({
+                0u,
+                kale_device::DescriptorType::UniformBuffer,
+                kale_device::ShaderStage::Vertex,
+                1u
+            });
+            entry.set = device->CreateDescriptorSet(layout);
+            if (!entry.set.IsValid()) return kale_device::DescriptorSetHandle{};
+            kale_device::BufferDesc bufDesc;
+            bufDesc.size = kInstanceDescriptorDataSize;
+            bufDesc.usage = kale_device::BufferUsage::Uniform;
+            bufDesc.cpuVisible = true;
+            entry.buffer = device->CreateBuffer(bufDesc, nullptr);
+            if (!entry.buffer.IsValid()) {
+                device->DestroyDescriptorSet(entry.set);
+                return kale_device::DescriptorSetHandle{};
+            }
+            device->WriteDescriptorSetBuffer(entry.set, 0, entry.buffer, 0, kInstanceDescriptorDataSize);
+        }
+        if (instanceData && size > 0)
+            device->UpdateBuffer(entry.buffer, instanceData, size, 0);
+        instanceInUse_.push_back(entry);
+        return entry.set;
+    }
+
+    /** 将本帧通过 AcquireInstanceDescriptorSet 分配的所有 set 回收到池，供下一帧复用。 */
+    void ReleaseAllInstanceDescriptorSets() {
+        for (auto& e : instanceInUse_)
+            instancePool_.push_back(e);
+        instanceInUse_.clear();
+    }
+
+    /** 帧末由 RenderGraph::ReleaseFrameResources 通过 Renderable 调用。 */
+    void ReleaseFrameResources() override { ReleaseAllInstanceDescriptorSets(); }
+
 protected:
     kale::resource::Shader* shader_ = nullptr;
     kale_device::PipelineHandle pipeline_{};
     kale_device::DescriptorSetHandle materialDescriptorSet_{};  // 材质级共享 set，EnsureMaterialDescriptorSet 构建
     std::unordered_map<std::string, kale::resource::Texture*> textures_;
     std::unordered_map<std::string, std::vector<std::byte>> parameters_;
+
+    /** 实例级 DescriptorSet 池：每个条目为 (DescriptorSet, UniformBuffer)。 */
+    struct InstanceSetEntry {
+        kale_device::DescriptorSetHandle set{};
+        kale_device::BufferHandle buffer{};
+    };
+    std::vector<InstanceSetEntry> instancePool_;
+    std::vector<InstanceSetEntry> instanceInUse_;
 };
 
 }  // namespace kale::pipeline

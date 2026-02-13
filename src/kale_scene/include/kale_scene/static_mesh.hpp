@@ -38,6 +38,7 @@ public:
     const kale::resource::Mesh* GetMesh() const override;
     const kale::resource::Material* GetMaterial() const override;
     void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform) override;
+    void ReleaseFrameResources() override;
 
 private:
     kale::resource::ResourceManager* resourceManager_ = nullptr;

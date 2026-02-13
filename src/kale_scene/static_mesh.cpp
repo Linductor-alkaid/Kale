@@ -75,4 +75,10 @@ void StaticMesh::Draw(kale_device::CommandList& cmd, const glm::mat4& worldTrans
     }
 }
 
+void StaticMesh::ReleaseFrameResources() {
+    const kale::resource::Material* mat = GetMaterial();
+    if (mat)
+        const_cast<kale::resource::Material*>(mat)->ReleaseFrameResources();
+}
+
 }  // namespace kale::scene

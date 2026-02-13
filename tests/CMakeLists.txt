@@ -145,3 +145,11 @@ target_link_libraries(test_material_descriptor_set
         kale_device
 )
 add_test(NAME test_material_descriptor_set COMMAND test_material_descriptor_set)
+
+add_executable(test_instance_descriptor_set test_instance_descriptor_set.cpp)
+target_link_libraries(test_instance_descriptor_set
+    PRIVATE
+        kale_pipeline
+        kale_device
+)
+add_test(NAME test_instance_descriptor_set COMMAND test_instance_descriptor_set)

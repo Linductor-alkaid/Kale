@@ -802,6 +802,35 @@ void VulkanRenderDevice::WriteDescriptorSetTexture(DescriptorSetHandle set, std:
     vkUpdateDescriptorSets(context_.GetDevice(), 1, &write, 0, nullptr);
 }
 
+void VulkanRenderDevice::WriteDescriptorSetBuffer(DescriptorSetHandle set, std::uint32_t binding,
+                                                  BufferHandle buffer, std::size_t offset,
+                                                  std::size_t range) {
+    if (!set.IsValid() || !buffer.IsValid()) return;
+    auto dsIt = descriptorSets_.find(set.id);
+    auto bufIt = buffers_.find(buffer.id);
+    if (dsIt == descriptorSets_.end() || bufIt == buffers_.end()) return;
+    VkDeviceSize bufSize = static_cast<VkDeviceSize>(bufIt->second.size);
+    VkDeviceSize vkOffset = static_cast<VkDeviceSize>(offset);
+    VkDeviceSize vkRange = range > 0 ? static_cast<VkDeviceSize>(range) : (bufSize - vkOffset);
+    if (vkOffset + vkRange > bufSize) return;
+
+    VkDescriptorBufferInfo bufferInfo = {};
+    bufferInfo.buffer = bufIt->second.buffer;
+    bufferInfo.offset = vkOffset;
+    bufferInfo.range = vkRange;
+
+    VkWriteDescriptorSet write = {};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = dsIt->second.set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    write.pBufferInfo = &bufferInfo;
+
+    vkUpdateDescriptorSets(context_.GetDevice(), 1, &write, 0, nullptr);
+}
+
 // =============================================================================
 // UpdateBuffer / UpdateTexture
 // =============================================================================

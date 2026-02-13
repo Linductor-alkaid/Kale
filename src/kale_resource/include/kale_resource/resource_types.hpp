@@ -101,6 +101,10 @@ struct Shader {
 // Material（占位：资源层句柄负载，渲染管线层使用 kale_pipeline/material.hpp 的 Material 类）
 // =============================================================================
 
-struct Material {};
+struct Material {
+    virtual ~Material() = default;
+    /** 帧末回收：由 RenderGraph::ReleaseFrameResources 通过 Renderable 调用；默认空实现。 */
+    virtual void ReleaseFrameResources() {}
+};
 
 }  // namespace kale::resource

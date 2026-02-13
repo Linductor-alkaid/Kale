@@ -1472,7 +1472,7 @@
         "实现 instanceDescriptorPool_ 或类似池化结构",
         "Acquire 在 Draw 时调用；Release 由 RenderGraph::ReleaseFrameResources 统一回收"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.8"],
       "test_verification": "实例级 DescriptorSet 池化正常工作",

@@ -75,6 +75,11 @@ public:
     virtual void WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,
                                            TextureHandle texture) = 0;
 
+    /** 向 DescriptorSet 的 binding 写入 UniformBuffer（供实例级 UBO 等使用） */
+    virtual void WriteDescriptorSetBuffer(DescriptorSetHandle set, std::uint32_t binding,
+                                         BufferHandle buffer, std::size_t offset = 0,
+                                         std::size_t range = 0) = 0;
+
     // --- 资源销毁 ---
     virtual void DestroyBuffer(BufferHandle handle) = 0;
     virtual void DestroyTexture(TextureHandle handle) = 0;
