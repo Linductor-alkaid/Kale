@@ -2540,7 +2540,7 @@
       "steps": [
         "OpenGL：从 GL 扩展查询 DeviceCapabilities"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase2-2.9"],
       "hold": null

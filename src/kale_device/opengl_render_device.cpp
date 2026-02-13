@@ -58,6 +58,22 @@ GL_PFN(void, BindFramebuffer, (GLenum target, GLuint framebuffer))
 GL_PFN(void, CopyBufferSubData, (GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size))
 GL_PFN(void, DrawArraysInstanced, (GLenum mode, GLint first, GLsizei count, GLsizei instancecount))
 GL_PFN(void, DrawElementsInstanced, (GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount))
+GL_PFN(void, GetIntegerv, (GLenum pname, GLint* data))
+GL_PFN(const GLubyte*, GetString, (GLenum name))
+
+// 能力查询用常量（gl.h 仅 1.1，部分在 glext 或 3.0+）
+#ifndef GL_MAX_TEXTURE_SIZE
+#define GL_MAX_TEXTURE_SIZE 0x0D33
+#endif
+#ifndef GL_MAJOR_VERSION
+#define GL_MAJOR_VERSION 0x821B
+#endif
+#ifndef GL_MINOR_VERSION
+#define GL_MINOR_VERSION 0x821C
+#endif
+#ifndef GL_MAX_COMPUTE_WORK_GROUP_SIZE
+#define GL_MAX_COMPUTE_WORK_GROUP_SIZE 0x8267
+#endif
 
 bool LoadGLFunctions() {
 #define LOAD(name) do { pfn_##name = (PFN_##name)SDL_GL_GetProcAddress(#name); if (!pfn_##name) return false; } while(0)
@@ -91,9 +107,40 @@ bool LoadGLFunctions() {
     LOAD(CopyBufferSubData);
     LOAD(DrawArraysInstanced);
     LOAD(DrawElementsInstanced);
+    LOAD(GetIntegerv);
+    LOAD(GetString);
 #undef LOAD
     return true;
 }
+
+/** 从当前 GL 上下文查询能力并写入 out（phase13-13.8 OpenGL 设备能力查询） */
+void QueryGLCapabilities(kale_device::DeviceCapabilities& out) {
+    out = kale_device::DeviceCapabilities{};
+    GLint val = 0;
+    pfn_GetIntegerv(GL_MAX_TEXTURE_SIZE, &val);
+    out.maxTextureSize = (val > 0) ? static_cast<std::uint32_t>(val) : 4096u;
+    out.maxComputeWorkGroupSize[0] = out.maxComputeWorkGroupSize[1] = out.maxComputeWorkGroupSize[2] = 1;
+    out.supportsGeometryShader = false;
+    out.supportsTessellation = false;
+    out.supportsComputeShader = false;
+    out.supportsRayTracing = false;
+    out.maxRecordingThreads = 1;
+
+    GLint major = 0, minor = 0;
+    pfn_GetIntegerv(GL_MAJOR_VERSION, &major);
+    pfn_GetIntegerv(GL_MINOR_VERSION, &minor);
+    if (major >= 3 && minor >= 2) out.supportsGeometryShader = true;
+    if (major >= 4) out.supportsTessellation = true;
+    if (major >= 4 && minor >= 3) {
+        out.supportsComputeShader = true;
+        GLint size[3] = {1, 1, 1};
+        pfn_GetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_SIZE, size);
+        out.maxComputeWorkGroupSize[0] = (size[0] > 0) ? static_cast<std::uint32_t>(size[0]) : 1u;
+        out.maxComputeWorkGroupSize[1] = (size[1] > 0) ? static_cast<std::uint32_t>(size[1]) : 1u;
+        out.maxComputeWorkGroupSize[2] = (size[2] > 0) ? static_cast<std::uint32_t>(size[2]) : 1u;
+    }
+}
+
 #undef GL_PFN
 }  // namespace
 
@@ -444,13 +491,7 @@ bool OpenGLRenderDevice::Initialize(const DeviceConfig& config) {
     }
     SDL_GL_SetSwapInterval(config.vsync ? 1 : 0);
 
-    capabilities_.maxTextureSize = 4096;
-    capabilities_.maxComputeWorkGroupSize[0] = capabilities_.maxComputeWorkGroupSize[1] = capabilities_.maxComputeWorkGroupSize[2] = 1;
-    capabilities_.supportsGeometryShader = false;
-    capabilities_.supportsTessellation = false;
-    capabilities_.supportsComputeShader = false;
-    capabilities_.supportsRayTracing = false;
-    capabilities_.maxRecordingThreads = 1;
+    QueryGLCapabilities(capabilities_);
 
     return true;
 }

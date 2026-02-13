@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.8 OpenGL 设备能力查询
+状态：已完成
+- 实现：OpenGLRenderDevice::Initialize 中通过 QueryGLCapabilities 从当前 GL 上下文填充 DeviceCapabilities；加载 glGetIntegerv/glGetString；GL_MAX_TEXTURE_SIZE 填 maxTextureSize，GL_MAJOR_VERSION/MINOR_VERSION 判 3.2+ 几何着色器、4.0+ 曲面细分、4.3+ 计算着色器与 GL_MAX_COMPUTE_WORK_GROUP_SIZE；maxRecordingThreads=1。新增 test_opengl_device_capabilities 验证 maxTextureSize>0、maxComputeWorkGroupSize>=1、maxRecordingThreads==1。
+- 验证：编译通过，ctest 94/94 通过。phase13-13.8 status=completed，hold=null。device_abstraction_layer_todolist 5.4 OpenGL 从 GL 扩展查询已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.3 Executor 可选编译选项
 状态：已完成
 - 实现：根 CMake 增加 KALE_EXECUTOR_ENABLE_CHANNELS / KALE_EXECUTOR_ENABLE_TASK_GRAPH 选项（默认 ON）；kale_executor 通过 target_compile_definitions 传递宏；RenderTaskScheduler 条件包含 task_channel/task_graph 头文件与 GetResourceLoadedChannel/SubmitTaskGraph API；ResourceManager 在 CHANNELS=OFF 时仅用 EnqueueLoaded 与 ProcessLoadedCallbacks，ProcessLoadedResources 仅 CHANNELS=ON 时从 channel try_recv；相关测试与 test_load_async 中 ProcessLoadedResources 用 #if 守卫。新增 test_executor_compile_options 验证选项 ON 时通道与任务图 API 可用。
