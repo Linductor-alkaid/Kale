@@ -454,7 +454,8 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
             }
         }
 
-        if (!colorAttachments.empty()) {
+        const bool hasRenderTarget = !colorAttachments.empty() || depthAttachment.IsValid();
+        if (hasRenderTarget) {
             cmd->BeginRenderPass(colorAttachments, depthAttachment);
             if (pass.execute) pass.execute(ctx, *cmd);
             cmd->EndRenderPass();

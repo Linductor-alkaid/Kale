@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase8-8.4 Shadow Pass
+状态：已完成
+- 实现：shadow_pass.hpp：SetupShadowPass(rg, shadowMapSize) 声明 ShadowMap（TextureDesc D32 + DepthAttachment）、AddPass("ShadowPass", WriteDepth(shadowMap), ExecuteShadowPass)；ExecuteShadowPass 遍历 GetDrawsForPass(PassFlags::ShadowCaster) 调用 renderable->Draw；ShadowOrthoProjectionMatrix 提供正交投影矩阵。RenderGraph::RecordPasses 支持深度仅 Pass（hasRenderTarget = color 非空或 depth 有效时 BeginRenderPass）。Vulkan：GetOrCreateDepthOnlyRenderPass(VkFormat)、GetOrCreateDepthFramebuffer(TextureHandle)，VulkanCommandList::BeginRenderPass 在仅 depth 时使用上述 RP/FB 并 clear depth；DestroyTexture/Shutdown 释放 depth 缓存。
+- 验证：编译通过，ctest 29/29 通过（新增 test_shadow_pass：SetupShadowPass+Compile、GetHandleByName("ShadowMap")、拓扑序单 Pass、depthOutput 有效无 color、Execute 不崩溃、ShadowOrthoProjectionMatrix）。rendering_pipeline_layer_todolist 3.1 已勾选。
+- feature_list.json 中 phase8-8.4 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.2 手柄支持
 状态：已完成
 - 实现：InputManager 增加 GamepadAxis/GamepadButton 枚举（与 SDL_GamepadAxis/Button 语义一致）；IsGamepadConnected(int index)、GetGamepadAxis(int index, GamepadAxis axis)（摇杆 [-1,1]、扳机 [0,1]）、IsGamepadButtonPressed(int index, GamepadButton button)。index 为当前连接列表序号；内部维护 gamepadCache_（map instance_id -> SDL_Gamepad*），首次查询时 Open 并缓存；Update() 中处理 SDL_EVENT_GAMEPAD_REMOVED 关闭并移除缓存，GAMEPAD_ADDED 首次使用时再 Open。

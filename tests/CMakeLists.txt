@@ -222,4 +222,13 @@ target_link_libraries(test_gamepad_support
         kale_device
 )
 add_test(NAME test_gamepad_support COMMAND test_gamepad_support)
+
+add_executable(test_shadow_pass test_shadow_pass.cpp)
+target_link_libraries(test_shadow_pass
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_shadow_pass COMMAND test_shadow_pass)
 set_tests_properties(test_gamepad_support PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")

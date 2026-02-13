@@ -1617,7 +1617,7 @@
         "实现 Shadow 相机矩阵（正交投影）传入 Pass",
         "Shadow Pass 无前置依赖，可最早执行"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.12", "phase7-7.12"],
       "test_verification": "阴影正确渲染",

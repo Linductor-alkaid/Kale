@@ -15,6 +15,7 @@
 #include <kale_device/vulkan_context.hpp>
 #include <kale_device/vulkan_rdi_utils.hpp>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -157,6 +158,10 @@ private:
     bool CreateTextureInternal(const TextureDesc& desc, const void* data,
                               VkImage* outImage, VkDeviceMemory* outMemory, VkImageView* outView);
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags props);
+    /** 深度仅 Pass：按 format 缓存 VkRenderPass，供 Shadow Pass 等使用 */
+    VkRenderPass GetOrCreateDepthOnlyRenderPass(VkFormat depthFormat);
+    /** 深度仅 Pass：按纹理句柄缓存 VkFramebuffer */
+    VkFramebuffer GetOrCreateDepthFramebuffer(TextureHandle depthTex);
     bool CreateUploadCommandPoolAndBuffer();
     void DestroyUploadCommandPoolAndBuffer();
     bool CreateFrameSyncObjects();
@@ -181,6 +186,8 @@ private:
     std::unordered_map<std::uint64_t, VulkanPipelineRes> pipelines_;
     std::unordered_map<std::uint64_t, VulkanDescriptorSetRes> descriptorSets_;
     VkSampler defaultSampler_ = VK_NULL_HANDLE;  // 材质纹理 WriteDescriptorSetTexture 用
+    std::map<VkFormat, VkRenderPass> depthOnlyRenderPasses_;
+    std::unordered_map<std::uint64_t, VkFramebuffer> depthFramebuffers_;
     std::uint64_t nextBufferId_ = 1;
     std::uint64_t nextTextureId_ = 1;
     std::uint64_t nextShaderId_ = 1;

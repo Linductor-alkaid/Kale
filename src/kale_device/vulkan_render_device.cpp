@@ -70,6 +70,15 @@ void VulkanRenderDevice::Shutdown() {
     }
     buffers_.clear();
 
+    for (auto& [id, fb] : depthFramebuffers_) {
+        if (fb != VK_NULL_HANDLE) vkDestroyFramebuffer(dev, fb, nullptr);
+    }
+    depthFramebuffers_.clear();
+    for (auto& [fmt, rp] : depthOnlyRenderPasses_) {
+        if (rp != VK_NULL_HANDLE) vkDestroyRenderPass(dev, rp, nullptr);
+    }
+    depthOnlyRenderPasses_.clear();
+
     for (auto& [id, res] : textures_) {
         if (res.view != VK_NULL_HANDLE) vkDestroyImageView(dev, res.view, nullptr);
         if (res.image != VK_NULL_HANDLE) vkDestroyImage(dev, res.image, nullptr);
@@ -125,6 +134,85 @@ uint32_t VulkanRenderDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropert
         }
     }
     return UINT32_MAX;
+}
+
+VkRenderPass VulkanRenderDevice::GetOrCreateDepthOnlyRenderPass(VkFormat depthFormat) {
+    if (depthFormat == VK_FORMAT_UNDEFINED) return VK_NULL_HANDLE;
+    auto it = depthOnlyRenderPasses_.find(depthFormat);
+    if (it != depthOnlyRenderPasses_.end()) return it->second;
+
+    VkDevice dev = context_.GetDevice();
+    VkAttachmentDescription depthAttachment = {};
+    depthAttachment.format = depthFormat;
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depthRef = {};
+    depthRef.attachment = 0;
+    depthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 0;
+    subpass.pColorAttachments = nullptr;
+    subpass.pDepthStencilAttachment = &depthRef;
+
+    VkSubpassDependency dependency = {};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    dependency.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo rpInfo = {};
+    rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    rpInfo.attachmentCount = 1;
+    rpInfo.pAttachments = &depthAttachment;
+    rpInfo.subpassCount = 1;
+    rpInfo.pSubpasses = &subpass;
+    rpInfo.dependencyCount = 1;
+    rpInfo.pDependencies = &dependency;
+
+    VkRenderPass rp = VK_NULL_HANDLE;
+    if (vkCreateRenderPass(dev, &rpInfo, nullptr, &rp) != VK_SUCCESS) return VK_NULL_HANDLE;
+    depthOnlyRenderPasses_[depthFormat] = rp;
+    return rp;
+}
+
+VkFramebuffer VulkanRenderDevice::GetOrCreateDepthFramebuffer(TextureHandle depthTex) {
+    if (!depthTex.IsValid()) return VK_NULL_HANDLE;
+    auto it = depthFramebuffers_.find(depthTex.id);
+    if (it != depthFramebuffers_.end()) return it->second;
+
+    auto texIt = textures_.find(depthTex.id);
+    if (texIt == textures_.end()) return VK_NULL_HANDLE;
+    const VulkanTextureRes& res = texIt->second;
+    if (res.view == VK_NULL_HANDLE || res.image == VK_NULL_HANDLE) return VK_NULL_HANDLE;
+
+    VkFormat format = ToVkFormat(res.desc.format);
+    VkRenderPass rp = GetOrCreateDepthOnlyRenderPass(format);
+    if (rp == VK_NULL_HANDLE) return VK_NULL_HANDLE;
+
+    VkFramebufferCreateInfo fbInfo = {};
+    fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    fbInfo.renderPass = rp;
+    fbInfo.attachmentCount = 1;
+    fbInfo.pAttachments = &res.view;
+    fbInfo.width = res.desc.width;
+    fbInfo.height = res.desc.height;
+    fbInfo.layers = 1;
+
+    VkFramebuffer fb = VK_NULL_HANDLE;
+    if (vkCreateFramebuffer(context_.GetDevice(), &fbInfo, nullptr, &fb) != VK_SUCCESS)
+        return VK_NULL_HANDLE;
+    depthFramebuffers_[depthTex.id] = fb;
+    return fb;
 }
 
 bool VulkanRenderDevice::CreateVmaOrAllocBuffer(const BufferDesc& desc, const void* data,
@@ -738,6 +826,12 @@ void VulkanRenderDevice::DestroyBuffer(BufferHandle handle) {
 
 void VulkanRenderDevice::DestroyTexture(TextureHandle handle) {
     if (!handle.IsValid()) return;
+    auto fbIt = depthFramebuffers_.find(handle.id);
+    if (fbIt != depthFramebuffers_.end()) {
+        if (fbIt->second != VK_NULL_HANDLE)
+            vkDestroyFramebuffer(context_.GetDevice(), fbIt->second, nullptr);
+        depthFramebuffers_.erase(fbIt);
+    }
     auto it = textures_.find(handle.id);
     if (it == textures_.end()) return;
     VkDevice dev = context_.GetDevice();
@@ -1339,28 +1433,52 @@ VulkanCommandList::VulkanCommandList(VulkanRenderDevice* device, VkCommandBuffer
 
 void VulkanCommandList::BeginRenderPass(const std::vector<TextureHandle>& colorAttachments,
                                         TextureHandle depthAttachment) {
-    (void)depthAttachment;
-    if (!device_ || !commandBuffer_ || colorAttachments.empty()) return;
-    VulkanContext* ctx = device_->GetContext();
-    VkRenderPass rp = ctx->GetRenderPass();
-    if (!rp) return;
-    std::uint32_t scCount = ctx->GetSwapchainImageCount();
-    std::uint32_t width = ctx->GetSwapchainWidth();
-    std::uint32_t height = ctx->GetSwapchainHeight();
-    VkFramebuffer fb = VK_NULL_HANDLE;
-    if (colorAttachments[0].id >= 1 && colorAttachments[0].id <= scCount)
-        fb = ctx->GetFramebuffer(static_cast<std::uint32_t>(colorAttachments[0].id - 1));
-    if (!fb) return;
-    VkClearValue clear = {};
-    clear.color = {{ 0.0f, 0.0f, 0.1f, 1.0f }};
-    VkRenderPassBeginInfo rpBegin = {};
-    rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    rpBegin.renderPass = rp;
-    rpBegin.framebuffer = fb;
-    rpBegin.renderArea = {{ 0, 0 }, { width, height }};
-    rpBegin.clearValueCount = 1;
-    rpBegin.pClearValues = &clear;
-    vkCmdBeginRenderPass(commandBuffer_, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+    if (!device_ || !commandBuffer_) return;
+
+    if (!colorAttachments.empty()) {
+        VulkanContext* ctx = device_->GetContext();
+        VkRenderPass rp = ctx->GetRenderPass();
+        if (!rp) return;
+        std::uint32_t scCount = ctx->GetSwapchainImageCount();
+        std::uint32_t width = ctx->GetSwapchainWidth();
+        std::uint32_t height = ctx->GetSwapchainHeight();
+        VkFramebuffer fb = VK_NULL_HANDLE;
+        if (colorAttachments[0].id >= 1 && colorAttachments[0].id <= scCount)
+            fb = ctx->GetFramebuffer(static_cast<std::uint32_t>(colorAttachments[0].id - 1));
+        if (!fb) return;
+        VkClearValue clear = {};
+        clear.color = {{ 0.0f, 0.0f, 0.1f, 1.0f }};
+        VkRenderPassBeginInfo rpBegin = {};
+        rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        rpBegin.renderPass = rp;
+        rpBegin.framebuffer = fb;
+        rpBegin.renderArea = {{ 0, 0 }, { width, height }};
+        rpBegin.clearValueCount = 1;
+        rpBegin.pClearValues = &clear;
+        vkCmdBeginRenderPass(commandBuffer_, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+        return;
+    }
+
+    if (depthAttachment.IsValid()) {
+        auto texIt = device_->textures_.find(depthAttachment.id);
+        if (texIt == device_->textures_.end()) return;
+        VkFormat depthFormat = ToVkFormat(texIt->second.desc.format);
+        VkRenderPass rp = device_->GetOrCreateDepthOnlyRenderPass(depthFormat);
+        VkFramebuffer fb = device_->GetOrCreateDepthFramebuffer(depthAttachment);
+        if (rp == VK_NULL_HANDLE || fb == VK_NULL_HANDLE) return;
+        std::uint32_t width = texIt->second.desc.width;
+        std::uint32_t height = texIt->second.desc.height;
+        VkClearValue clear = {};
+        clear.depthStencil = { 1.0f, 0 };
+        VkRenderPassBeginInfo rpBegin = {};
+        rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        rpBegin.renderPass = rp;
+        rpBegin.framebuffer = fb;
+        rpBegin.renderArea = {{ 0, 0 }, { width, height }};
+        rpBegin.clearValueCount = 1;
+        rpBegin.pClearValues = &clear;
+        vkCmdBeginRenderPass(commandBuffer_, &rpBegin, VK_SUBPASS_CONTENTS_INLINE);
+    }
 }
 
 void VulkanCommandList::EndRenderPass() {

@@ -144,12 +144,12 @@
 
 ### 3.1 Shadow Pass
 
-- [ ] 声明 ShadowMap 纹理：`DeclareTexture("ShadowMap", {2048, 2048, Format::D32})`
-- [ ] 实现 Shadow Pass：`AddPass("ShadowPass", setup, execute)`
-- [ ] Setup 中 `b.WriteDepth(shadowMap)`
-- [ ] Execute 中遍历 `GetDrawsForPass(PassFlags::ShadowCaster)` 绘制
-- [ ] 实现 Shadow 相机矩阵（正交投影）传入 Pass
-- [ ] Shadow Pass 无前置依赖，可最早执行
+- [x] 声明 ShadowMap 纹理：`DeclareTexture("ShadowMap", {2048, 2048, Format::D32})`
+- [x] 实现 Shadow Pass：`AddPass("ShadowPass", setup, execute)`
+- [x] Setup 中 `b.WriteDepth(shadowMap)`
+- [x] Execute 中遍历 `GetDrawsForPass(PassFlags::ShadowCaster)` 绘制
+- [x] 实现 Shadow 相机矩阵（正交投影）传入 Pass
+- [x] Shadow Pass 无前置依赖，可最早执行
 
 ### 3.2 GBuffer Pass
 
