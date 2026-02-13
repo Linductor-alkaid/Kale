@@ -132,21 +132,21 @@
 
 ### 3.1 OpenGL 基础
 
-- [ ] 实现 `OpenGLRenderDevice : public IRenderDevice`
-- [ ] 使用 `SDL_GL_CreateContext(window)` 创建 GL Context
-- [ ] 实现 `Initialize` / `Shutdown`
-- [ ] 实现 Swapchain 语义（OpenGL 由窗口系统隐式提供）
-- [ ] 实现 `AcquireNextImage` / `Present` / `GetBackBuffer`（GL 适配）
+- [x] 实现 `OpenGLRenderDevice : public IRenderDevice`
+- [x] 使用 `SDL_GL_CreateContext(window)` 创建 GL Context
+- [x] 实现 `Initialize` / `Shutdown`
+- [x] 实现 Swapchain 语义（OpenGL 由窗口系统隐式提供）
+- [x] 实现 `AcquireNextImage` / `Present` / `GetBackBuffer`（GL 适配）
 
 ### 3.2 命令队列与 GL 映射
 
-- [ ] 设计 `GLCommand` 结构表示命令（类型 + 参数）
-- [ ] 实现 `OpenGLCommandList` 将 CommandList 调用序列化为 GLCommand 队列
-- [ ] 实现 `BeginCommandList(threadIndex)` 分配可录制对象（threadIndex 忽略）
-- [ ] 实现 `EndCommandList` 缓存命令
-- [ ] 实现 `Submit` 按序执行 GL 调用（glDraw*、glBind* 等）
-- [ ] 实现资源创建：Buffer → GL Buffer，Texture → GL Texture，Pipeline → GL Program
-- [ ] 实现 DescriptorSet 映射到纹理单元
+- [x] 设计 `GLCommand` 结构表示命令（类型 + 参数）
+- [x] 实现 `OpenGLCommandList` 将 CommandList 调用序列化为 GLCommand 队列
+- [x] 实现 `BeginCommandList(threadIndex)` 分配可录制对象（threadIndex 忽略）
+- [x] 实现 `EndCommandList` 缓存命令
+- [x] 实现 `Submit` 按序执行 GL 调用（glDraw*、glBind* 等）
+- [x] 实现资源创建：Buffer → GL Buffer，Texture → GL Texture，Pipeline → GL Program
+- [x] 实现 DescriptorSet 映射到纹理单元
 
 ### 3.3 状态缓存
 
@@ -156,9 +156,9 @@
 
 ### 3.4 同步与多线程
 
-- [ ] 实现 Fence：`glFenceSync` / `glClientWaitSync`
-- [ ] 实现 Semaphore：OpenGL 无原生语义，可用 Fence 模拟或简化
-- [ ] 多线程录制：`ParallelRecordCommands` 时 OpenGL 退化为串行
+- [x] 实现 Fence：`glFenceSync` / `glClientWaitSync`
+- [x] 实现 Semaphore：OpenGL 无原生语义，可用 Fence 模拟或简化
+- [x] 多线程录制：`ParallelRecordCommands` 时 OpenGL 退化为串行
 
 ---
 

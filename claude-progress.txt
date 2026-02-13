@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase11-11.6 OpenGL 后端
+状态：已完成
+- 实现：OpenGLRenderDevice（opengl_render_device.hpp/cpp）使用 SDL_GL_CreateContext 创建 GL 3.1 上下文；Initialize/Shutdown、Swapchain 语义（AcquireNextImage 返回 0、Present 调 SDL_GL_SwapWindow、GetBackBuffer 返回固定句柄 kBackBufferTextureId）；OpenGLCommandList 将 CommandList 调用录制成 std::function 队列，Submit 时 EnsureContext 后按序执行；资源创建 Buffer/Texture/Shader/Pipeline/DescriptorSet 映射为 GL Buffer/Texture/Shader/Program 及纹理单元绑定；通过 SDL_GL_GetProcAddress 加载 GL 3.x 函数（gl.h 仅 1.1）。CMake 在 KALE_ENABLE_OPENGL_BACKEND=ON 时加入 opengl_render_device.cpp 并链接 OpenGL::OpenGL，CreateRenderDevice(Backend::OpenGL) 返回 OpenGLRenderDevice 实例。
+- 验证：编译通过（-DKALE_ENABLE_OPENGL_BACKEND=ON），ctest 70/70 通过（新增 test_opengl_backend：CreateRenderDevice(OpenGL) 非空、Initialize+CreateBuffer+DestroyBuffer+Shutdown 不崩溃）。phase11-11.6 status=completed，hold=null。device_abstraction_layer_todolist Phase 3 中 3.1、3.2、3.4 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.9 着色器热重载集成
 状态：已完成
 - 实现：ShaderManager 增加 EnableHotReload(bool)、IsHotReloadEnabled()、ProcessHotReload()、RegisterReloadCallback(ShaderReloadedCallback)；轮询已加载 path 的 mtime（pathLastModified_），LoadShader 成功时 RecordPathLastModified(path)；ProcessHotReload 检测 mtime 变化后调用 ReloadShader(path) 并派发回调，供应用层/材质层重新创建受影响的 Pipeline；与 resource_management_layer 的 EnableHotReload/ProcessHotReload 对齐。

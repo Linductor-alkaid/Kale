@@ -2182,7 +2182,7 @@
         "实现 OpenGLCommandList 将 CommandList 调用序列化为 GLCommand 队列",
         "实现资源创建：Buffer → GL Buffer，Texture → GL Texture，Pipeline → GL Program"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase2-2.2"],
       "test_verification": "OpenGL 后端正确渲染",

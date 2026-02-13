@@ -465,6 +465,17 @@ target_link_libraries(test_device_capabilities
 add_test(NAME test_device_capabilities COMMAND test_device_capabilities)
 set_tests_properties(test_device_capabilities PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_opengl_backend test_opengl_backend.cpp)
+target_link_libraries(test_opengl_backend
+    PRIVATE
+        kale_device
+)
+if(TARGET SDL3::SDL3)
+    target_link_libraries(test_opengl_backend PRIVATE SDL3::SDL3)
+endif()
+add_test(NAME test_opengl_backend COMMAND test_opengl_backend)
+set_tests_properties(test_opengl_backend PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_shadow_pass test_shadow_pass.cpp)
 target_link_libraries(test_shadow_pass
     PRIVATE

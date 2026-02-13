@@ -1,8 +1,8 @@
 # Kale 设备抽象层 (Device Abstraction Layer)
 # RDI、窗口系统、输入管理
-# 依赖：Vulkan、SDL3、glm
+# 依赖：Vulkan、SDL3、glm；可选 OpenGL
 
-add_library(kale_device STATIC
+set(kale_device_sources
     placeholder.cpp
     window_system.cpp
     vulkan_context.cpp
@@ -11,6 +11,13 @@ add_library(kale_device STATIC
     render_device.cpp
     vulkan_render_device.cpp
 )
+if(KALE_ENABLE_OPENGL_BACKEND)
+    find_package(OpenGL QUIET)
+    if(OpenGL_FOUND)
+        list(APPEND kale_device_sources opengl_render_device.cpp)
+    endif()
+endif()
+add_library(kale_device STATIC ${kale_device_sources})
 
 target_include_directories(kale_device
     PUBLIC
@@ -29,4 +36,8 @@ if(TARGET SDL3::SDL3)
 endif()
 if(TARGET Vulkan::Vulkan)
     target_link_libraries(kale_device PUBLIC Vulkan::Vulkan)
+endif()
+if(KALE_ENABLE_OPENGL_BACKEND AND OpenGL_FOUND)
+    target_link_libraries(kale_device PUBLIC OpenGL::OpenGL)
+    target_compile_definitions(kale_device PRIVATE KALE_HAS_OPENGL_BACKEND=1)
 endif()
