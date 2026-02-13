@@ -762,7 +762,7 @@
         "等待 GPU 完成后 Free StagingAllocation",
         "支持 Mipmap 链上传（逐级 Copy）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.3", "phase3-3.7"],
       "test_verification": "纹理通过 Staging 正确上传"

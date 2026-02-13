@@ -285,7 +285,8 @@ bool VulkanRenderDevice::CreateTextureInternal(const TextureDesc& desc, const vo
     if (format == VK_FORMAT_UNDEFINED) return false;
 
     VkImageUsageFlags usage = ToVkImageUsage(desc.usage);
-    if (data) usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    /* 允许无初始数据时通过 Staging 上传（TextureLoader 集成 Staging） */
+    usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

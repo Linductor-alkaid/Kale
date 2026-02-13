@@ -3,6 +3,14 @@
 # Format: [YYYY-MM-DD HH:MM] Action - Description
 
 === 2026-02-13 ===
+功能：phase6-6.4 TextureLoader 集成 Staging
+状态：已完成
+- TextureLoader：当 ctx.stagingMgr 非空时走 Staging 路径（CreateTexture(desc,nullptr) + Allocate + memcpy + SubmitUpload + FlushUploads + WaitForFence + Free）
+- 无 stagingMgr 时回退为 CreateTexture(desc, data) 保持兼容
+- Vulkan：CreateTexture 在 data 为 nullptr 时也设置 TRANSFER_DST_BIT 以支持 Staging 上传
+- 编译通过，ctest 通过
+
+=== 2026-02-13 ===
 功能：phase6-6.3 Upload Queue 与 Copy 命令
 状态：已完成
 - CommandList 新增 CopyBufferToBuffer、CopyBufferToTexture；VulkanCommandList 实现并处理纹理 layout 屏障

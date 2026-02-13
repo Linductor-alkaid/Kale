@@ -1,6 +1,6 @@
 /**
  * @file texture_loader.cpp
- * @brief TextureLoader 实现：stb_image 加载 PNG/JPG，RDI CreateTexture 直接上传
+ * @brief TextureLoader 实现：stb_image 加载 PNG/JPG；优先通过 Staging 上传（phase6-6.4）
  */
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -17,6 +17,7 @@
 #include <kale_device/rdi_types.hpp>
 #include <kale_resource/resource_manager.hpp>
 #include <kale_resource/resource_types.hpp>
+#include <kale_resource/staging_memory_manager.hpp>
 #include <kale_resource/texture_loader.hpp>
 
 namespace kale::resource {
@@ -36,6 +37,17 @@ bool HasExtension(const std::string& path, const char* ext) {
 
 bool SupportsExtension(const std::string& path) {
     return HasExtension(path, ".png") || HasExtension(path, ".jpg") || HasExtension(path, ".jpeg");
+}
+
+/** 按 Format 返回每像素字节数（仅支持 R8/RG8/RGBA8） */
+std::size_t BytesPerPixel(kale_device::Format format) {
+    switch (format) {
+        case kale_device::Format::R8_UNORM: return 1;
+        case kale_device::Format::RG8_UNORM: return 2;
+        case kale_device::Format::RGBA8_UNORM:
+        case kale_device::Format::RGBA8_SRGB: return 4;
+        default: return 4;
+    }
 }
 
 }  // namespace
@@ -99,14 +111,49 @@ std::unique_ptr<Texture> TextureLoader::LoadSTB(const std::string& path, Resourc
     desc.usage = kale_device::TextureUsage::Sampled;
     desc.isCube = false;
 
-    kale_device::TextureHandle handle = ctx.device->CreateTexture(desc, uploadData);
-    if (pixels) stbi_image_free(pixels);
+    kale_device::TextureHandle handle;
 
-    if (!handle.IsValid()) {
-        if (ctx.resourceManager) {
-            ctx.resourceManager->SetLastError("CreateTexture failed for: " + path);
+    if (ctx.stagingMgr && ctx.device) {
+        /* Staging 路径：CreateTexture(desc, nullptr) + Allocate + SubmitUpload + FlushUploads + Free(alloc, fence) */
+        handle = ctx.device->CreateTexture(desc, nullptr);
+        if (!handle.IsValid()) {
+            if (pixels) stbi_image_free(pixels);
+            if (ctx.resourceManager) {
+                ctx.resourceManager->SetLastError("CreateTexture failed for: " + path);
+            }
+            return nullptr;
         }
-        return nullptr;
+        std::size_t bpp = BytesPerPixel(format);
+        std::size_t uploadSize = static_cast<std::size_t>(w) * static_cast<std::size_t>(h) * desc.depth * bpp;
+        StagingAllocation staging = ctx.stagingMgr->Allocate(uploadSize);
+        if (!staging.IsValid()) {
+            ctx.device->DestroyTexture(handle);
+            if (pixels) stbi_image_free(pixels);
+            if (ctx.resourceManager) {
+                ctx.resourceManager->SetLastError("Staging Allocate failed for: " + path);
+            }
+            return nullptr;
+        }
+        std::memcpy(staging.mappedPtr, uploadData, uploadSize);
+        ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, 0,
+                                    static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h), 1);
+        kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
+        if (fence.IsValid()) {
+            ctx.device->WaitForFence(fence);
+        }
+        /* 上传已完成，直接回收到池（无需延迟 Free(alloc, fence)） */
+        ctx.stagingMgr->Free(staging);
+        if (pixels) stbi_image_free(pixels);
+    } else {
+        /* 无 Staging 时回退：直接 CreateTexture(desc, data) */
+        handle = ctx.device->CreateTexture(desc, uploadData);
+        if (pixels) stbi_image_free(pixels);
+        if (!handle.IsValid()) {
+            if (ctx.resourceManager) {
+                ctx.resourceManager->SetLastError("CreateTexture failed for: " + path);
+            }
+            return nullptr;
+        }
     }
 
     auto tex = std::make_unique<Texture>();

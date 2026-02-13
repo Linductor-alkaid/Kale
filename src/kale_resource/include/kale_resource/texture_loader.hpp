@@ -3,7 +3,8 @@
  * @brief 纹理加载器：PNG/JPG 等未压缩格式（stb_image）
  *
  * 与 resource_management_layer_design.md 5.6 对齐。
- * phase3-3.7：简单 TextureLoader，直接通过 RDI CreateTexture 传入数据（暂不通过 Staging）。
+ * phase3-3.7：简单 TextureLoader。
+ * phase6-6.4：当 ctx.stagingMgr 非空时通过 Staging 池上传；否则回退为 CreateTexture(desc, data)。
  */
 
 #pragma once
