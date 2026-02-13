@@ -186,9 +186,9 @@
 
 ### 3.6 SetupRenderGraph 示例
 
-- [ ] 实现完整的 SetupRenderGraph 函数（Deferred + Shadow 管线）
-- [ ] 验证 Pass 依赖 DAG：Shadow → GBuffer → Lighting → PostProcess → Output
-- [ ] 与分辨率 SetResolution 配合，DeclareTexture 使用当前分辨率
+- [x] 实现完整的 SetupRenderGraph 函数（Deferred + Shadow 管线）
+- [x] 验证 Pass 依赖 DAG：Shadow → GBuffer → Lighting → PostProcess → Output
+- [x] 与分辨率 SetResolution 配合，DeclareTexture 使用当前分辨率
 
 ### 3.7 Pass 依赖推导
 

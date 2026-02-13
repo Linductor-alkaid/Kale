@@ -1716,7 +1716,7 @@
         "验证 Pass 依赖 DAG：Shadow → GBuffer → Lighting → PostProcess → Output",
         "与分辨率 SetResolution 配合，DeclareTexture 使用当前分辨率"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.4", "phase8-8.5", "phase8-8.6", "phase8-8.7", "phase8-8.8"],
       "test_verification": "完整 Deferred 管线正确运行",

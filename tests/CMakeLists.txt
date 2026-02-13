@@ -268,4 +268,13 @@ target_link_libraries(test_output_to_swapchain_pass
 )
 add_test(NAME test_output_to_swapchain_pass COMMAND test_output_to_swapchain_pass)
 
+add_executable(test_setup_render_graph test_setup_render_graph.cpp)
+target_link_libraries(test_setup_render_graph
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_setup_render_graph COMMAND test_setup_render_graph)
+
 set_tests_properties(test_gamepad_support PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
