@@ -138,9 +138,9 @@
 
 ### 5.3 资源管理集成
 
-- [ ] ResourceLoader 内部 `LoadAsync` 使用 `resource_loaded_channel_->try_send()`
-- [ ] ResourceManager 每帧 `ProcessLoadedResources()` 调用 `channel_->try_recv()`
-- [ ] 实现 `ResourceLoadedEvent` 结构（path, resource handle）
+- [x] ResourceLoader 内部 `LoadAsync` 使用 `resource_loaded_channel_->try_send()`
+- [x] ResourceManager 每帧 `ProcessLoadedResources()` 调用 `channel_->try_recv()`
+- [x] 实现 `ResourceLoadedEvent` 结构（path, resource handle）
 
 ### 5.4 ECS 并行系统集成
 

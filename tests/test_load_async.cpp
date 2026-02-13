@@ -143,6 +143,37 @@ static void test_load_async_failure_propagates_exception() {
     TEST_CHECK(caught);
 }
 
+/// phase9-9.8: ProcessLoadedResources 从 channel try_recv 并派发回调（LoadAsync 成功后 try_send 到 resource_loaded_channel）
+static void test_process_loaded_resources() {
+    ::executor::Executor ex;
+    ex.initialize(::executor::ExecutorConfig{});
+    kale::executor::RenderTaskScheduler sched(&ex);
+
+    kale::resource::ResourceManager rm(&sched, nullptr, nullptr);
+    rm.RegisterLoader(std::make_unique<DummyLoader>());
+    rm.SetAssetPath("");
+
+    std::vector<std::pair<kale::resource::ResourceHandleAny, std::string>> received;
+    rm.RegisterLoadedCallback([&received](kale::resource::ResourceHandleAny h, const std::string& path) {
+        received.emplace_back(h, path);
+    });
+
+    auto fut = rm.LoadAsync<DummyResource>("channel/dummy.res");
+    TEST_CHECK(fut.valid());
+    kale::resource::ResourceHandle<DummyResource> h = fut.get();
+    TEST_CHECK(h.IsValid());
+
+    TEST_CHECK(received.empty());
+    rm.ProcessLoadedResources();
+    TEST_CHECK(received.size() == 1u);
+    TEST_CHECK(received[0].first.id == h.id);
+    TEST_CHECK(received[0].first.typeId == typeid(DummyResource));
+    TEST_CHECK(received[0].second.find("channel") != std::string::npos || received[0].second.find("dummy") != std::string::npos);
+
+    sched.WaitAll();
+    ex.shutdown(true);
+}
+
 /// phase4-4.4: ProcessLoadedCallbacks 在成功加载后被调用
 static void test_process_loaded_callbacks() {
     ::executor::Executor ex;
@@ -200,6 +231,7 @@ int main() {
     test_load_async_no_loader_returns_invalid_handle();
     test_load_async_placeholder_then_async_fill();
     test_load_async_failure_propagates_exception();
+    test_process_loaded_resources();
     test_process_loaded_callbacks();
     return 0;
 }

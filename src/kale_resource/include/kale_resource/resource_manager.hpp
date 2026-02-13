@@ -125,6 +125,12 @@ public:
     void ProcessLoadedCallbacks();
 
     /**
+     * @brief 从 scheduler 的 resource_loaded_channel 中 try_recv 并派发已注册的 LoadedCallback（供主循环每帧调用）
+     * 与 ProcessLoadedCallbacks() 配合：ProcessLoadedCallbacks() 会先调用本方法再处理同步路径的 pendingLoaded_
+     */
+    void ProcessLoadedResources();
+
+    /**
      * @brief 创建占位符资源（简单几何体、1x1 默认纹理、默认材质）；需在 SetAssetPath 后、使用 GetPlaceholder* 前调用；无 device 时跳过
      */
     void CreatePlaceholders();
@@ -307,7 +313,17 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         }
         cache_.SetResource(ToAny(handle), std::any(ptr));
         cache_.SetReady(ToAny(handle));
-        EnqueueLoaded(ToAny(handle), resolved);
+        kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
+            scheduler_ ? scheduler_->GetResourceLoadedChannel() : nullptr;
+        if (ch) {
+            kale::executor::ResourceLoadedEvent ev;
+            ev.path = resolved;
+            ev.resource_handle_id = handle.id;
+            ev.type_id = typeid(T);
+            ch->try_send(std::move(ev));
+        } else {
+            EnqueueLoaded(ToAny(handle), resolved);
+        }
         return handle;
     };
 

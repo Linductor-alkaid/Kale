@@ -1871,7 +1871,7 @@
         "ResourceManager 每帧 ProcessLoadedResources() 调用 channel_->try_recv()",
         "实现 ResourceLoadedEvent 结构（path, resource handle）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase4-4.1", "phase4-4.3"],
       "test_verification": "资源加载与 executor 正确集成",

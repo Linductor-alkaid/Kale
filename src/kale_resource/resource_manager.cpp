@@ -114,7 +114,27 @@ void ResourceManager::RegisterLoadedCallback(LoadedCallback cb) {
     }
 }
 
+void ResourceManager::ProcessLoadedResources() {
+    if (!scheduler_) return;
+    kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
+        scheduler_->GetResourceLoadedChannel();
+    if (!ch) return;
+    std::vector<LoadedCallback> callbacks;
+    {
+        std::lock_guard<std::mutex> lock(loadedMutex_);
+        callbacks = loadedCallbacks_;
+    }
+    kale::executor::ResourceLoadedEvent ev;
+    while (ch->try_recv(ev)) {
+        ResourceHandleAny handle{ev.resource_handle_id, ev.type_id};
+        for (const auto& cb : callbacks) {
+            if (cb) cb(handle, ev.path);
+        }
+    }
+}
+
 void ResourceManager::ProcessLoadedCallbacks() {
+    ProcessLoadedResources();
     std::vector<std::pair<ResourceHandleAny, std::string>> local;
     std::vector<LoadedCallback> callbacks;
     {

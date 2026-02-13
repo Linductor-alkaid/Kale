@@ -20,10 +20,11 @@
 
 namespace kale::executor {
 
-/// 资源加载完成事件：供 ResourceLoader 发送、ResourceManager 主线程 try_recv 消费
+/// 资源加载完成事件：供 LoadAsync 发送、ResourceManager 主线程 ProcessLoadedResources try_recv 消费
 struct ResourceLoadedEvent {
     std::string path;
     uint64_t resource_handle_id = 0;
+    std::type_index type_id{typeid(void)};
 };
 
 /// 可见物体列表：由 CullScene 等写入 write_buffer()，渲染管线从 read_buffer() 读取
