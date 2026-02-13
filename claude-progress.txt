@@ -1,3 +1,10 @@
+=== 2026-02-13 09:36:22 ===
+功能：phase6-6.8 RenderPassBuilder
+状态：已完成
+- 实现 RenderPassBuilder 类：WriteColor(slot, texture)、WriteDepth(texture)、ReadTexture(texture)、WriteSwapchain()
+- 新增 kale_pipeline/include/kale_pipeline/render_pass_builder.hpp，GetColorOutputs/GetDepthOutput/GetReadTextures/WritesSwapchain 供 Compile 使用
+- placeholder 引用验证编译，编译通过，ctest 通过
+
 # Kale Rendering Engine - Development Progress Log
 # This file tracks the progress of the AI-assisted development of the Kale rendering engine.
 # Format: [YYYY-MM-DD HH:MM] Action - Description

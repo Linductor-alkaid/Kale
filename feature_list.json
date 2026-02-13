@@ -838,7 +838,7 @@
         "实现 WriteSwapchain() 声明写入当前 back buffer",
         "Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.7"],
       "test_verification": "Pass 构建器可以正确声明依赖"

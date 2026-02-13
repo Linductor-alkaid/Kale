@@ -32,12 +32,12 @@
 
 ### 1.3 RenderPassBuilder
 
-- [ ] 实现 `RenderPassBuilder` 类
-- [ ] 实现 `WriteColor(uint32_t slot, RGResourceHandle texture)`
-- [ ] 实现 `WriteDepth(RGResourceHandle texture)`
-- [ ] 实现 `ReadTexture(RGResourceHandle texture)`
-- [ ] 实现 `WriteSwapchain()` 声明写入当前 back buffer
-- [ ] Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖
+- [x] 实现 `RenderPassBuilder` 类
+- [x] 实现 `WriteColor(uint32_t slot, RGResourceHandle texture)`
+- [x] 实现 `WriteDepth(RGResourceHandle texture)`
+- [x] 实现 `ReadTexture(RGResourceHandle texture)`
+- [x] 实现 `WriteSwapchain()` 声明写入当前 back buffer
+- [x] Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖
 
 ### 1.4 RenderGraph 声明式接口
 
