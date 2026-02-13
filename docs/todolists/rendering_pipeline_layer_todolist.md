@@ -261,12 +261,12 @@
 
 ### 5.3 多相机/多视口
 
-- [ ] 支持 `Execute(IRenderDevice* device, RenderTarget* target)` 或类似重载
-- [ ] 方案 A：每相机独立 RenderGraph 实例，Execute 时指定 RenderTarget
-- [ ] 方案 B：单 RenderGraph 支持 Execute(cameraIndex, target)
-- [ ] 方案 C：应用层对每相机分别 ClearSubmitted、SubmitRenderable、Execute 到不同 target
-- [ ] CullScene 多相机返回 `std::vector<std::vector<SceneNode*>>`
-- [ ] 应用层分别 SubmitRenderable 到各自的 Pass 链或 RenderTarget
+- [x] 支持 `Execute(IRenderDevice* device, RenderTarget* target)` 或类似重载
+- [x] 方案 A：每相机独立 RenderGraph 实例，Execute 时指定 RenderTarget
+- [x] 方案 B：单 RenderGraph 支持 Execute(cameraIndex, target)
+- [x] 方案 C：应用层对每相机分别 ClearSubmitted、SubmitRenderable、Execute 到不同 target
+- [x] CullScene 多相机返回 `std::vector<std::vector<SceneNode*>>`
+- [x] 应用层分别 SubmitRenderable 到各自的 Pass 链或 RenderTarget
 
 ### 5.4 Transparent Pass
 

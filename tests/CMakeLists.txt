@@ -521,6 +521,14 @@ target_link_libraries(test_output_to_swapchain_pass
 )
 add_test(NAME test_output_to_swapchain_pass COMMAND test_output_to_swapchain_pass)
 
+add_executable(test_multi_viewport_output_target test_multi_viewport_output_target.cpp)
+target_link_libraries(test_multi_viewport_output_target
+    PRIVATE
+        kale_pipeline
+        kale_device
+)
+add_test(NAME test_multi_viewport_output_target COMMAND test_multi_viewport_output_target)
+
 add_executable(test_setup_render_graph test_setup_render_graph.cpp)
 target_link_libraries(test_setup_render_graph
     PRIVATE

@@ -2355,7 +2355,7 @@
         "方案 C：应用层对每相机分别 ClearSubmitted、SubmitRenderable、Execute 到不同 target",
         "CullScene 多相机返回 std::vector<std::vector<SceneNode*>>"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase10-10.2"],
       "test_verification": "多相机多视口正确渲染",

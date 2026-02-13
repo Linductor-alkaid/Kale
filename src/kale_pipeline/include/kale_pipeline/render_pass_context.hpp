@@ -65,6 +65,13 @@ public:
     /** 将 RG 纹理句柄解析为 RDI TextureHandle（需构造时传入 graph）；无 graph 或无效 handle 返回空句柄。 */
     kale_device::TextureHandle GetCompiledTexture(RGResourceHandle handle) const;
 
+    /**
+     * 返回当前覆盖的输出目标（多视口/离屏渲染）。
+     * 当应用层 SetOutputTarget 或 Execute(device, target) 指定时，WriteSwapchain 类 Pass 写入此纹理而非 swapchain。
+     * 返回无效句柄时表示使用 device->GetBackBuffer()。
+     */
+    kale_device::TextureHandle GetOutputTarget() const;
+
 private:
     const std::vector<SubmittedDraw>* draws_ = nullptr;
     kale_device::IRenderDevice* device_ = nullptr;

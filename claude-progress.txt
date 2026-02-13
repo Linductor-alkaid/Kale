@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase12-12.6 多相机/多视口
+状态：已完成
+- 实现：RenderGraph 增加 SetOutputTarget(TextureHandle)、GetOutputTarget()；Execute(device, outputTarget) 重载，本帧 WriteSwapchain 类 Pass 写入 outputTarget 而非 swapchain，调用后恢复原状态。RenderPassContext::GetOutputTarget() 返回 graph 的覆盖目标；RecordOnePass 与 ExecuteOutputToSwapchainPass 在 writesSwapchain 时使用 ctx.GetOutputTarget().IsValid() ? ctx.GetOutputTarget() : device->GetBackBuffer()。方案 C（多 RG + 每视口 ClearSubmitted、SubmitVisibleToRenderGraph、Execute）与 phase10-10.3 对齐；离屏/小地图可 SetOutputTarget 或 Execute(device, offscreenTex)。
+- 验证：编译通过，ctest 71/71 通过（新增 test_multi_viewport_output_target：SetOutputTarget/GetOutputTarget、Execute(device,target) 本帧覆盖、Execute(device) 后无覆盖、无 graph 时 GetOutputTarget 无效）。phase12-12.6 status=completed，hold=null。rendering_pipeline_layer_todolist 5.3 多相机/多视口六项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.6 OpenGL 后端
 状态：已完成
 - 实现：OpenGLRenderDevice（opengl_render_device.hpp/cpp）使用 SDL_GL_CreateContext 创建 GL 3.1 上下文；Initialize/Shutdown、Swapchain 语义（AcquireNextImage 返回 0、Present 调 SDL_GL_SwapWindow、GetBackBuffer 返回固定句柄 kBackBufferTextureId）；OpenGLCommandList 将 CommandList 调用录制成 std::function 队列，Submit 时 EnsureContext 后按序执行；资源创建 Buffer/Texture/Shader/Pipeline/DescriptorSet 映射为 GL Buffer/Texture/Shader/Program 及纹理单元绑定；通过 SDL_GL_GetProcAddress 加载 GL 3.x 函数（gl.h 仅 1.1）。CMake 在 KALE_ENABLE_OPENGL_BACKEND=ON 时加入 opengl_render_device.cpp 并链接 OpenGL::OpenGL，CreateRenderDevice(Backend::OpenGL) 返回 OpenGLRenderDevice 实例。

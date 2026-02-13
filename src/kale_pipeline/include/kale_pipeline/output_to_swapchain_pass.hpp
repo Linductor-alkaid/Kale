@@ -29,7 +29,7 @@ inline void ExecuteOutputToSwapchainPass(const RenderPassContext& ctx,
     kale_device::IRenderDevice* device = ctx.GetDevice();
     if (!device) return;
     kale_device::TextureHandle srcTex = ctx.GetCompiledTexture(finalColorHandle);
-    kale_device::TextureHandle dstTex = device->GetBackBuffer();
+    kale_device::TextureHandle dstTex = ctx.GetOutputTarget().IsValid() ? ctx.GetOutputTarget() : device->GetBackBuffer();
     if (!srcTex.IsValid() || !dstTex.IsValid() || copyWidth == 0 || copyHeight == 0) return;
     cmd.CopyTextureToTexture(srcTex, dstTex, copyWidth, copyHeight);
 }

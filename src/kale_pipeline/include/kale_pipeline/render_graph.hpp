@@ -69,6 +69,15 @@ public:
     std::uint32_t GetResolutionHeight() const { return resolutionHeight_; }
 
     /**
+     * 设置覆盖的输出目标（多视口/离屏，phase12-12.6）。
+     * 当有效时，WriteSwapchain 类 Pass 写入此纹理而非 swapchain；用于小地图、多相机输出到离屏纹理等。
+     * 设为无效句柄后恢复使用 GetBackBuffer()。
+     */
+    void SetOutputTarget(kale_device::TextureHandle target) { outputTarget_ = target; }
+    /** 当前覆盖的输出目标；无效表示使用 swapchain。 */
+    kale_device::TextureHandle GetOutputTarget() const { return outputTarget_; }
+
+    /**
      * 声明一张纹理，返回 RG 内部句柄。
      * 若 desc.width 或 desc.height 为 0，则使用 SetResolution 设置的宽高。
      * 同名重复声明返回同一句柄（未定义行为或可规定为返回已有句柄，此处采用返回已有句柄）。
@@ -147,6 +156,13 @@ public:
      * Present() 由应用层在 Execute 返回后调用。
      */
     void Execute(kale_device::IRenderDevice* device);
+
+    /**
+     * 执行一帧渲染到指定输出目标（多视口/离屏，phase12-12.6）。
+     * 本帧 WriteSwapchain 类 Pass 写入 outputTarget 而非 swapchain；调用后不改变 SetOutputTarget 状态（仅本帧生效）。
+     * 若 outputTarget 无效，等价于 Execute(device)。
+     */
+    void Execute(kale_device::IRenderDevice* device, kale_device::TextureHandle outputTarget);
 
     /**
      * 帧末回收本帧提交的 Renderable 占用的帧内资源（如实例级 DescriptorSet）。
@@ -259,6 +275,9 @@ private:
     std::uint32_t currentFrameIndex_ = 0;
 
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
+
+    /** 覆盖的输出目标；有效时 WriteSwapchain 写入此纹理而非 GetBackBuffer()（phase12-12.6）。 */
+    kale_device::TextureHandle outputTarget_;
 };
 
 // -----------------------------------------------------------------------------
@@ -534,7 +553,8 @@ inline kale_device::CommandList* RenderGraph::RecordOnePass(kale_device::IRender
     std::vector<kale_device::TextureHandle> colorAttachments;
     kale_device::TextureHandle depthAttachment;
     if (info.writesSwapchain) {
-        colorAttachments.push_back(device->GetBackBuffer());
+        kale_device::TextureHandle outTex = ctx.GetOutputTarget().IsValid() ? ctx.GetOutputTarget() : device->GetBackBuffer();
+        colorAttachments.push_back(outTex);
     } else {
         for (const auto& p : info.colorOutputs) {
             auto th = GetCompiledTexture(p.second);
@@ -646,6 +666,17 @@ inline void RenderGraph::Execute(kale_device::IRenderDevice* device) {
 
 inline kale_device::TextureHandle RenderPassContext::GetCompiledTexture(RGResourceHandle handle) const {
     return graph_ ? graph_->GetCompiledTexture(handle) : kale_device::TextureHandle{};
+}
+
+inline kale_device::TextureHandle RenderPassContext::GetOutputTarget() const {
+    return graph_ ? graph_->GetOutputTarget() : kale_device::TextureHandle{};
+}
+
+inline void RenderGraph::Execute(kale_device::IRenderDevice* device, kale_device::TextureHandle outputTarget) {
+    kale_device::TextureHandle prev = outputTarget_;
+    if (outputTarget.IsValid()) outputTarget_ = outputTarget;
+    Execute(device);
+    outputTarget_ = prev;
 }
 
 }  // namespace kale::pipeline
