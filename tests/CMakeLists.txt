@@ -201,6 +201,16 @@ target_link_libraries(test_scene_node_factories
 )
 add_test(NAME test_scene_node_factories COMMAND test_scene_node_factories)
 
+add_executable(test_submit_visible test_submit_visible.cpp)
+target_link_libraries(test_submit_visible
+    PRIVATE
+        kale_pipeline
+        kale_scene
+        kale_resource
+        kale_device
+)
+add_test(NAME test_submit_visible COMMAND test_submit_visible)
+
 add_executable(test_entity_component_storage test_entity_component_storage.cpp)
 target_link_libraries(test_entity_component_storage
     PRIVATE

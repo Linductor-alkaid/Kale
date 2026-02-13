@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.3 多视口支持
+状态：已完成
+- 实现：kale_pipeline 新增 submit_visible.hpp，提供 SubmitVisibleToRenderGraph(SceneManager*, RenderGraph*, CameraNode*)，内部 CullScene(camera) 后对每个可见且带 Renderable 的节点调用 renderGraph->SubmitRenderable。应用层可对每视口：rg->ClearSubmitted() 后 SubmitVisibleToRenderGraph(sm, rg, camera)，实现分别提交到各自 Pass 链；多视口使用多套 RenderGraph 实例与 phase12-12.6 对齐。
+- 验证：编译通过，ctest 64/64 通过（新增 test_submit_visible：null sceneManager/renderGraph/camera 不崩溃、null camera 不提交、正常路径至少 1 draw、多视口两 RG 各自得到可见列表）。phase10-10.3 status=completed，hold=null。scene_management_layer_todolist 4.3 多视口两项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase12-12.5 压缩纹理支持
 状态：已完成
 - 实现：TextureLoader::Supports 增加 .ktx；Load 按扩展名分发到 LoadKTX 或 LoadSTB。LoadKTX 内联解析 KTX1（12 字节 identifier、endianness、glInternalFormat→RDI Format 映射 RGBA8/BC1/BC3/BC5/BC7），有 Staging 时 CreateTexture(desc,nullptr)+Allocate+SubmitUpload+FlushUploads+WaitForFence+Free，无 Staging 时仅 RGBA8 走 CreateTexture(desc, data)。kale_device 增加 FromVkFormat(VkFormat) 供后续 KTX2/Vk 格式使用。

@@ -171,8 +171,8 @@
 
 ### 4.3 多视口支持
 
-- [ ] 应用层可分别 SubmitRenderable 到各自 RenderTarget 或 Pass 链
-- [ ] 与 Render Graph 多套 Pass 链输出到不同 RenderTarget 对齐（小地图、分屏等）
+- [x] 应用层可分别 SubmitRenderable 到各自 RenderTarget 或 Pass 链
+- [x] 与 Render Graph 多套 Pass 链输出到不同 RenderTarget 对齐（小地图、分屏等）
 
 ### 4.4 工厂函数
 

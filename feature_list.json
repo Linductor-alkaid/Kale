@@ -1944,7 +1944,7 @@
         "应用层可分别 SubmitRenderable 到各自 RenderTarget 或 Pass 链",
         "与 Render Graph 多套 Pass 链输出到不同 RenderTarget 对齐（小地图、分屏等）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase10-10.2"],
       "test_verification": "多视口正确渲染",
