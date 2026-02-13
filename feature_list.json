@@ -386,7 +386,7 @@
         "实现 AddRef / Release 引用计数",
         "线程安全：entries_、pathToId_ 的 mutex 保护"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase3-3.1"],
       "test_verification": "资源缓存正常工作，引用计数正确，线程安全"
