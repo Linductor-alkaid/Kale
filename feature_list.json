@@ -772,7 +772,7 @@
         "通过视锥测试的节点加入 visibleNodes",
         "需访问 node->children：SceneManager 为 SceneNode 的 friend 或提供访问接口"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase5-5.4",

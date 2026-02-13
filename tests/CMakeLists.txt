@@ -127,6 +127,12 @@ target_link_libraries(test_cull_scene_multi_camera
 )
 add_test(NAME test_cull_scene_multi_camera COMMAND test_cull_scene_multi_camera)
 
+add_executable(test_cull_scene_single_camera test_cull_scene_single_camera.cpp)
+target_link_libraries(test_cull_scene_single_camera
+  kale_scene kale_resource kale_device glm::glm
+)
+add_test(NAME test_cull_scene_single_camera COMMAND test_cull_scene_single_camera)
+
 add_executable(test_scene_node_factories test_scene_node_factories.cpp)
 target_link_libraries(test_scene_node_factories
     PRIVATE
