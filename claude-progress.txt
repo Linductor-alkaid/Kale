@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.21 渲染管线层错误处理与生命周期
+状态：已完成
+- 实现：RenderGraph::GetCompiledTexture/GetCompiledBuffer 在未编译或句柄无效时返回空句柄（IsCompiled 与 compiledTextures_.size()==resources_.size() 校验，避免 Compile 失败后越界）；Compile 失败时 GetLastError 非空、资源分配失败时已分配资源循环 Destroy 已存在；ReleaseFrameResources 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()（链至 Material::ReleaseAllInstanceDescriptorSets）。新增 test_render_pipeline_error_lifecycle：Compile(nullptr) 返回 false 且 GetLastError 非空、两纹理第二份 CreateTexture 失败时第一份被 Destroy、未编译/无效 handle 时 GetCompiledTexture/GetCompiledBuffer 返回空、编译成功后有效句柄返回有效、ReleaseFrameResources 空 submittedDraws 不崩溃。
+- 验证：编译通过，ctest 83/83 通过。phase13-13.21 status=completed，hold=null。rendering_pipeline_layer_todolist 错误处理与生命周期、RGResourceHandle 与 RDI 映射相关项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.20 渲染管线层应用层集成
 状态：已完成
 - 实现：RenderEngine::Initialize 中创建 renderGraph 后调用 SetResolution(config.width, config.height)；应用层 OnRender 流程已由 render_demo 与 design 对齐（ClearSubmitted → SubmitVisibleToRenderGraph → Execute，Run 中 OnRender 后 Present）。新增 test_render_pipeline_app_integration：Initialize → SetResolution/SetupForwardOnlyRenderGraph/Compile → 最小场景（占位符 mesh/material + 相机）→ Run 一帧（OnRender 内 ClearSubmitted/SubmitVisibleToRenderGraph/Execute）→ RequestQuit，验证无崩溃且 renderCount>=1。

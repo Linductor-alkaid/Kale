@@ -2772,7 +2772,7 @@
         "遍历本帧 SubmittedDraws 中的 Material，调用 ReleaseAllInstanceDescriptorSets",
         "RGResourceHandle → RDI Handle 映射验证"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase6-6.6"],
       "hold": null

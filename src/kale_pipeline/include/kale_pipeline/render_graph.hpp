@@ -395,15 +395,17 @@ inline bool RenderGraph::Compile(kale_device::IRenderDevice* device) {
 
 inline kale_device::TextureHandle RenderGraph::GetCompiledTexture(RGResourceHandle handle) const {
     if (handle == kInvalidRGResourceHandle || handle == 0) return kale_device::TextureHandle{};
+    if (!IsCompiled() || compiledTextures_.size() != resources_.size()) return kale_device::TextureHandle{};
     size_t idx = static_cast<size_t>(handle - 1);
-    if (idx >= resources_.size() || !resources_[idx].isTexture) return kale_device::TextureHandle{};
+    if (idx >= resources_.size() || !resources_[idx].isTexture || idx >= compiledTextures_.size()) return kale_device::TextureHandle{};
     return compiledTextures_[idx];
 }
 
 inline kale_device::BufferHandle RenderGraph::GetCompiledBuffer(RGResourceHandle handle) const {
     if (handle == kInvalidRGResourceHandle || handle == 0) return kale_device::BufferHandle{};
+    if (!IsCompiled() || compiledBuffers_.size() != resources_.size()) return kale_device::BufferHandle{};
     size_t idx = static_cast<size_t>(handle - 1);
-    if (idx >= resources_.size() || resources_[idx].isTexture) return kale_device::BufferHandle{};
+    if (idx >= resources_.size() || resources_[idx].isTexture || idx >= compiledBuffers_.size()) return kale_device::BufferHandle{};
     return compiledBuffers_[idx];
 }
 

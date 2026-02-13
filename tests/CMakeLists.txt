@@ -640,6 +640,14 @@ target_link_libraries(test_pass_dependency_derivation
 )
 add_test(NAME test_pass_dependency_derivation COMMAND test_pass_dependency_derivation)
 
+add_executable(test_render_pipeline_error_lifecycle test_render_pipeline_error_lifecycle.cpp)
+target_link_libraries(test_render_pipeline_error_lifecycle
+    PRIVATE
+        kale_pipeline
+        kale_device
+)
+add_test(NAME test_render_pipeline_error_lifecycle COMMAND test_render_pipeline_error_lifecycle)
+
 add_executable(test_frame_pipeline test_frame_pipeline.cpp)
 target_link_libraries(test_frame_pipeline
     PRIVATE

@@ -334,15 +334,15 @@
 
 ### Compile 失败
 
-- [ ] Compile 在分辨率变化或首次 Setup 时调用
-- [ ] 失败时返回 false 或抛出，GetLastError 获取原因
-- [ ] 资源分配失败时保证已分配资源可释放
+- [x] Compile 在分辨率变化或首次 Setup 时调用
+- [x] 失败时返回 false 或抛出，GetLastError 获取原因
+- [x] 资源分配失败时保证已分配资源可释放
 
 ### 实例级 DescriptorSet 回收
 
-- [ ] 每帧 Execute 结束时调用 ReleaseFrameResources
-- [ ] 遍历本帧 SubmittedDraws 中的 Material，调用 ReleaseAllInstanceDescriptorSets
-- [ ] 池化复用，避免每帧大量分配
+- [x] 每帧 Execute 结束时调用 ReleaseFrameResources
+- [x] 遍历本帧 SubmittedDraws 中的 Material，调用 ReleaseAllInstanceDescriptorSets
+- [x] 池化复用，避免每帧大量分配
 
 ### 帧流水线同步
 
@@ -362,9 +362,9 @@
 
 ### RGResourceHandle 与 RDI 映射
 
-- [ ] RenderGraph 内部使用逻辑句柄（字符串名或 ID）
-- [ ] Compile 时解析依赖，分配实际 GPU 资源并建立 RGResourceHandle → RDI Handle 映射
-- [ ] 与 RDI 的 TextureHandle/BufferHandle 区分
+- [x] RenderGraph 内部使用逻辑句柄（字符串名或 ID）
+- [x] Compile 时解析依赖，分配实际 GPU 资源并建立 RGResourceHandle → RDI Handle 映射
+- [x] 与 RDI 的 TextureHandle/BufferHandle 区分
 
 ### 技术栈
 
