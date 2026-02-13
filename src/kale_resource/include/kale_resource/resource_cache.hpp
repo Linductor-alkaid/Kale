@@ -198,6 +198,20 @@ public:
         return ResourceHandleAny{it->second, typeId};
     }
 
+    /**
+     * @brief 遍历所有已加载且未待释放的条目（用于热重载侦测）
+     * @param f 回调 void(const std::string& path, std::type_index typeId, ResourceHandleAny handle)
+     */
+    template <typename Func>
+    void ForEachLoadedEntry(Func&& f) const {
+        std::lock_guard lock(mutex_);
+        for (const auto& [id, entry] : entries_) {
+            if (entry.isReady && !entry.pendingRelease && !entry.path.empty()) {
+                f(entry.path, entry.typeId, ResourceHandleAny{id, entry.typeId});
+            }
+        }
+    }
+
 private:
     static std::string makePathKey(const std::string& path, std::type_index typeId) {
         return path + '\0' + typeId.name();

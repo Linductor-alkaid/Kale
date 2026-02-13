@@ -2257,7 +2257,7 @@
         "使用 inotify/watchdog 或轮询 GetFileModificationTime",
         "记录 path → lastModified 映射"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase4-4.3"],
       "test_verification": "文件变化正确侦测",

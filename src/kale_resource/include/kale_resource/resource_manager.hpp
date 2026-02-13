@@ -8,7 +8,9 @@
 
 #pragma once
 
+#include <filesystem>
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -164,6 +166,31 @@ public:
     void ProcessPendingReleases();
 
     /**
+     * @brief 启用/禁用热重载文件变化侦测（phase12-12.1）
+     */
+    void EnableHotReload(bool enable);
+
+    /**
+     * @brief 是否已启用热重载侦测
+     */
+    bool IsHotReloadEnabled() const { return hotReloadEnabled_; }
+
+    /**
+     * @brief 每帧调用：检查已加载资源的文件时间戳，若变化则更新 path→lastModified 并调用已注册的 HotReloadCallback
+     */
+    void ProcessHotReload();
+
+    /**
+     * @brief 热重载侦测到文件变化时的回调：(path, typeId)；phase12-12.2 可注册以执行重新 Load
+     */
+    using HotReloadCallback = std::function<void(const std::string& path, std::type_index typeId)>;
+
+    /**
+     * @brief 注册文件变化回调（可选）；ProcessHotReload 检测到变化时调用
+     */
+    void RegisterHotReloadCallback(HotReloadCallback cb);
+
+    /**
      * @brief 获取占位符 Mesh（未就绪时 Draw 使用）；CreatePlaceholders 未调用或失败时返回 nullptr
      */
     Mesh* GetPlaceholderMesh();
@@ -190,6 +217,13 @@ private:
     /// 供 LoadAsync 任务内成功完成时入队，由 ProcessLoadedCallbacks 派发
     void EnqueueLoaded(ResourceHandleAny handle, const std::string& path);
 
+    /// 记录已加载路径的文件修改时间（热重载侦测用）；Load/LoadAsync 成功时调用
+    void RecordPathLastModified(const std::string& path, std::type_index typeId);
+
+    static std::string MakePathKey(const std::string& path, std::type_index typeId) {
+        return path + '\0' + std::string(typeId.name());
+    }
+
     ResourceCache cache_;
     std::vector<std::unique_ptr<IResourceLoader>> loaders_;
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
@@ -202,6 +236,11 @@ private:
     std::mutex loadedMutex_;
     std::vector<std::pair<ResourceHandleAny, std::string>> pendingLoaded_;
     std::vector<LoadedCallback> loadedCallbacks_;
+
+    bool hotReloadEnabled_ = false;
+    std::map<std::string, std::filesystem::file_time_type> pathLastModified_;
+    std::vector<HotReloadCallback> hotReloadCallbacks_;
+    mutable std::mutex hotReloadMutex_;
 
     std::unique_ptr<Mesh> placeholderMesh_;
     std::unique_ptr<Texture> placeholderTexture_;
@@ -258,7 +297,9 @@ ResourceHandle<T> ResourceManager::Load(const std::string& path) {
         return ResourceHandle<T>{};
     }
 
-    return cache_.Register<T>(resolved, ptr, true);
+    ResourceHandle<T> handle = cache_.Register<T>(resolved, ptr, true);
+    RecordPathLastModified(resolved, typeId);
+    return handle;
 }
 
 // -----------------------------------------------------------------------------
@@ -323,6 +364,7 @@ kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
         }
         cache_.SetResource(ToAny(handle), std::any(ptr));
         cache_.SetReady(ToAny(handle));
+        RecordPathLastModified(resolved, typeId);
         kale::executor::TaskChannel<kale::executor::ResourceLoadedEvent, 32>* ch =
             scheduler_ ? scheduler_->GetResourceLoadedChannel() : nullptr;
         if (ch) {

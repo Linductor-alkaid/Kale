@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase12-12.1 文件变化侦测
+状态：已完成
+- 实现：ResourceCache::ForEachLoadedEntry(f) 枚举已加载且未待释放条目；ResourceManager::EnableHotReload(bool)、IsHotReloadEnabled()、ProcessHotReload()、RegisterHotReloadCallback(HotReloadCallback)；path→lastModified 用 std::filesystem::file_time_type 轮询；Load/LoadAsync 成功时 RecordPathLastModified；ProcessHotReload 检测 mtime 变化后更新映射并派发 HotReloadCallback。
+- 验证：编译通过，ctest 60/60 通过（新增 test_file_change_detection：EnableHotReload/IsHotReloadEnabled、ProcessHotReload 禁用无操作、ForEachLoadedEntry 枚举、临时文件 mtime 变更后 ProcessHotReload 触发回调）。phase12-12.1 status=completed，hold=null。resource_management_layer_todolist 5.1 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase12-12.9 场景切换与悬空引用
 状态：已完成
 - 实现：SceneManager::IsDescendantOf(parent, node)；EntityManager::UnbindSceneNodeRefsPointingToSubtree(sceneMgr, subtreeRoot)；SwitchToNewLevel(sceneMgr, entityMgr, newRoot) 先解绑再 SetActiveScene；SetActiveScene(root, em) 在 Debug 下若 em 非空则遍历 EntitiesWith<SceneNodeRef> 检查指向即将销毁子树的 ref 并 assert。新增 scene_switch.hpp/cpp。

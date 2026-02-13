@@ -209,11 +209,11 @@
 
 ### 5.1 文件变化侦测
 
-- [ ] 实现 `EnableHotReload(bool enable)` 开关
-- [ ] 实现 `ProcessHotReload()` 每帧调用
-- [ ] 检查已加载资源的文件时间戳
-- [ ] 使用 inotify/watchdog 或轮询 GetFileModificationTime
-- [ ] 记录 path → lastModified 映射
+- [x] 实现 `EnableHotReload(bool enable)` 开关
+- [x] 实现 `ProcessHotReload()` 每帧调用
+- [x] 检查已加载资源的文件时间戳
+- [x] 使用 inotify/watchdog 或轮询 GetFileModificationTime
+- [x] 记录 path → lastModified 映射
 
 ### 5.2 热重载流程
 

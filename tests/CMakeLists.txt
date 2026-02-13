@@ -142,6 +142,13 @@ target_link_libraries(test_refcount_deferred_release
 )
 add_test(NAME test_refcount_deferred_release COMMAND test_refcount_deferred_release)
 
+add_executable(test_file_change_detection test_file_change_detection.cpp)
+target_link_libraries(test_file_change_detection
+    PRIVATE
+        kale_resource
+)
+add_test(NAME test_file_change_detection COMMAND test_file_change_detection)
+
 add_executable(test_scene_node_ref test_scene_node_ref.cpp)
 target_link_libraries(test_scene_node_ref
     PRIVATE

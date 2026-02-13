@@ -9,6 +9,7 @@
 #include <cctype>
 #include <cstdint>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <typeindex>
 
@@ -18,6 +19,18 @@
 namespace kale::resource {
 
 namespace {
+
+/** 获取文件最后修改时间；文件不存在或错误时返回 nullopt */
+std::optional<std::filesystem::file_time_type> GetFileModificationTime(const std::string& path) {
+    try {
+        std::filesystem::path p(path);
+        if (!std::filesystem::exists(p) || !std::filesystem::is_regular_file(p))
+            return std::nullopt;
+        return std::filesystem::last_write_time(p);
+    } catch (...) {
+        return std::nullopt;
+    }
+}
 
 /** 路径是否为绝对路径（Unix / 或 Windows 盘符） */
 bool isAbsolutePath(const std::string& path) {
@@ -160,6 +173,56 @@ void ResourceManager::EnqueueLoaded(ResourceHandleAny handle, const std::string&
 void ResourceManager::Unload(ResourceHandleAny handle) {
     if (!handle.IsValid()) return;
     cache_.Release(handle);
+}
+
+void ResourceManager::EnableHotReload(bool enable) {
+    hotReloadEnabled_ = enable;
+}
+
+void ResourceManager::RecordPathLastModified(const std::string& path, std::type_index typeId) {
+    auto mt = GetFileModificationTime(path);
+    if (!mt) return;
+    std::lock_guard<std::mutex> lock(hotReloadMutex_);
+    pathLastModified_[MakePathKey(path, typeId)] = *mt;
+}
+
+void ResourceManager::RegisterHotReloadCallback(HotReloadCallback cb) {
+    if (cb) {
+        std::lock_guard<std::mutex> lock(hotReloadMutex_);
+        hotReloadCallbacks_.push_back(std::move(cb));
+    }
+}
+
+void ResourceManager::ProcessHotReload() {
+    if (!hotReloadEnabled_) return;
+    std::vector<std::pair<std::string, std::type_index>> toNotify;
+    cache_.ForEachLoadedEntry([this, &toNotify](const std::string& path,
+                                                std::type_index typeId,
+                                                ResourceHandleAny /*handle*/) {
+        auto current = GetFileModificationTime(path);
+        if (!current) return;
+        const std::string key = MakePathKey(path, typeId);
+        std::lock_guard<std::mutex> lock(hotReloadMutex_);
+        auto it = pathLastModified_.find(key);
+        if (it == pathLastModified_.end()) {
+            pathLastModified_[key] = *current;
+            return;
+        }
+        if (*current != it->second) {
+            it->second = *current;
+            toNotify.emplace_back(path, typeId);
+        }
+    });
+    std::vector<HotReloadCallback> callbacks;
+    {
+        std::lock_guard<std::mutex> lock(hotReloadMutex_);
+        callbacks = hotReloadCallbacks_;
+    }
+    for (const auto& [path, typeId] : toNotify) {
+        for (const auto& cb : callbacks) {
+            if (cb) cb(path, typeId);
+        }
+    }
 }
 
 void ResourceManager::ProcessPendingReleases() {
