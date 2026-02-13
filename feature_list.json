@@ -603,7 +603,7 @@
         "实现 handleRegistry_（std::unordered_map<SceneNodeHandle, SceneNode*>）",
         "节点创建时分配 handle 并注册，销毁时从注册表移除"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [],
       "test_verification": "句柄分配和解析正常工作",

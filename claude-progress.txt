@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase5-5.1 句柄与类型定义（验证）
+状态：已完成
+- 验证：编译通过，ctest 50/50 通过；SceneNodeHandle、kInvalidSceneNodeHandle、SceneManager::GetHandle/GetNode、handleRegistry_、节点创建时分配 handle 并注册与销毁时移除已由前期实现，test_scene_node_ref 与 test_entity_manager 等覆盖场景句柄使用。本会话将 phase5-5.1 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。scene_management_layer_todolist 1.1 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.8 简单 ModelLoader（验证）
 状态：已完成
 - 验证：编译通过，ctest 50/50 通过；ModelLoader（IResourceLoader、.gltf/.glb、LoadGLTF、RDI CreateBuffer、Mesh 结构）已由前期实现，test_full_model_loader 覆盖完整 ModelLoader（含材质路径）。本会话将 phase3-3.8 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.7 已为已勾选状态。
