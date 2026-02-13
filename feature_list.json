@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "description": "Vulkan + SDL3 rendering engine with modular layered architecture",
   "last_updated": "2026-02-12",
-  "status_enum": ["pending", "inprogress", "verifying", "completed"],
-  "status_hold_format": "<status> hold by <agent_id>",
+  "status_enum": [
+    "pending",
+    "inprogress",
+    "verifying",
+    "completed"
+  ],
+  "hold field": "每个 feature 的 hold：null=无人持有，否则为 agent_id；选任务时同步更新 status 与 hold",
   "status_flow": "pending -> inprogress -> verifying -> completed (或 verifying -> inprogress 若测试失败)",
   "features": [
     {
@@ -21,7 +26,8 @@
       ],
       "status": "completed",
       "priority": "critical",
-      "dependencies": []
+      "dependencies": [],
+      "hold": null
     },
     {
       "id": "phase0-0.2",
@@ -37,7 +43,8 @@
       ],
       "status": "completed",
       "priority": "critical",
-      "dependencies": []
+      "dependencies": [],
+      "hold": null
     },
     {
       "id": "phase1-1.1",
@@ -59,8 +66,11 @@
       ],
       "status": "completed",
       "priority": "high",
-      "dependencies": ["phase0-0.2"],
-      "test_verification": "创建窗口并显示，验证窗口大小和标题正确，事件循环正常工作"
+      "dependencies": [
+        "phase0-0.2"
+      ],
+      "test_verification": "创建窗口并显示，验证窗口大小和标题正确，事件循环正常工作",
+      "hold": null
     },
     {
       "id": "phase1-1.2",
@@ -79,8 +89,11 @@
       ],
       "status": "completed",
       "priority": "high",
-      "dependencies": ["phase1-1.1"],
-      "test_verification": "成功创建 Vulkan 设备和 Swapchain，validation layers 正常工作"
+      "dependencies": [
+        "phase1-1.1"
+      ],
+      "test_verification": "成功创建 Vulkan 设备和 Swapchain，validation layers 正常工作",
+      "hold": null
     },
     {
       "id": "phase1-1.3",
@@ -99,8 +112,11 @@
       ],
       "status": "completed",
       "priority": "high",
-      "dependencies": ["phase1-1.2"],
-      "test_verification": "成功在窗口中渲染一个三角形，验证每帧渲染流程正常"
+      "dependencies": [
+        "phase1-1.2"
+      ],
+      "test_verification": "成功在窗口中渲染一个三角形，验证每帧渲染流程正常",
+      "hold": null
     },
     {
       "id": "phase1-1.4",
@@ -119,8 +135,11 @@
       ],
       "status": "completed",
       "priority": "high",
-      "dependencies": ["phase1-1.1"],
-      "test_verification": "键盘和鼠标输入正常响应，按键状态和鼠标位置准确"
+      "dependencies": [
+        "phase1-1.1"
+      ],
+      "test_verification": "键盘和鼠标输入正常响应，按键状态和鼠标位置准确",
+      "hold": null
     },
     {
       "id": "phase1-1.5",
@@ -139,10 +158,13 @@
         "基于 std::atomic 和 CAS 实现无锁环形缓冲区",
         "使用固定容量，避免动态分配"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase0-0.1"],
-      "test_verification": "多线程 send/recv 无数据竞争，高并发压力测试通过"
+      "dependencies": [
+        "phase0-0.1"
+      ],
+      "test_verification": "多线程 send/recv 无数据竞争，高并发压力测试通过",
+      "hold": null
     },
     {
       "id": "phase1-1.6",
@@ -157,10 +179,13 @@
         "单元测试：高并发压力测试",
         "保持与 executor 解耦，可独立使用"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "medium",
-      "dependencies": ["phase1-1.5"],
-      "test_verification": "单元测试通过，验证无数据竞争"
+      "dependencies": [
+        "phase1-1.5"
+      ],
+      "test_verification": "单元测试通过，验证无数据竞争",
+      "hold": null
     },
     {
       "id": "phase1-1.7",
@@ -176,10 +201,13 @@
         "实现 ExecutorFuture<T>::get() 阻塞直到就绪",
         "实现 ExecutorFuture<T>::valid() 有效性检查"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase0-0.1"],
-      "test_verification": "Promise/Future 异步结果传递正常工作"
+      "dependencies": [
+        "phase0-0.1"
+      ],
+      "test_verification": "Promise/Future 异步结果传递正常工作",
+      "hold": null
     },
     {
       "id": "phase1-1.8",
@@ -193,10 +221,13 @@
         "返回 ExecutorFuture<std::invoke_result_t<F, T>>",
         "避免阻塞当前线程，由 executor 调度续接任务"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase1-1.7"],
-      "test_verification": "链式异步操作正确执行，不阻塞主线程"
+      "dependencies": [
+        "phase1-1.7"
+      ],
+      "test_verification": "链式异步操作正确执行，不阻塞主线程",
+      "hold": null
     },
     {
       "id": "phase1-1.9",
@@ -210,10 +241,13 @@
         "集成到 LoadResourceAsync 等上层 API",
         "确保 promise::set_value 仅调用一次，标准库保证线程安全"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase1-1.7"],
-      "test_verification": "异步加载不阻塞主线程，返回正确的 Future"
+      "dependencies": [
+        "phase1-1.7"
+      ],
+      "test_verification": "异步加载不阻塞主线程，返回正确的 Future",
+      "hold": null
     },
     {
       "id": "phase2-2.1",
@@ -233,10 +267,13 @@
         "定义 BlendState、DepthStencilState、RasterizationState",
         "定义 PipelineDesc（shaders, vertexBindings, vertexAttributes, topology, rasterization, depthStencil, blendStates, colorAttachmentFormats, depthAttachmentFormat）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase1-1.3"],
-      "test_verification": "句柄和描述符类型定义完整，编译通过"
+      "dependencies": [
+        "phase1-1.3"
+      ],
+      "test_verification": "句柄和描述符类型定义完整，编译通过",
+      "hold": null
     },
     {
       "id": "phase2-2.2",
@@ -259,10 +296,13 @@
         "实现 GetLastError() 错误信息（初始化失败时）",
         "实现 CreateRenderDevice(Backend backend) 工厂函数"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.1"],
-      "test_verification": "接口定义完整，编译通过，Vulkan 实现可以初始化"
+      "dependencies": [
+        "phase2-2.1"
+      ],
+      "test_verification": "接口定义完整，编译通过，Vulkan 实现可以初始化",
+      "hold": null
     },
     {
       "id": "phase2-2.3",
@@ -282,10 +322,13 @@
         "实现 Barrier（纹理资源屏障）",
         "实现 Clear / Viewport / Scissor：ClearColor、ClearDepth、SetViewport、SetScissor"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.2"],
-      "test_verification": "接口定义完整，可以用于录制渲染命令"
+      "dependencies": [
+        "phase2-2.2"
+      ],
+      "test_verification": "接口定义完整，可以用于录制渲染命令",
+      "hold": null
     },
     {
       "id": "phase2-2.4",
@@ -304,10 +347,13 @@
         "实现 Destroy* 系列接口",
         "实现 UpdateBuffer / UpdateTexture（含 Staging Buffer 上传路径）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.2"],
-      "test_verification": "成功创建和管理 Vulkan 资源，无内存泄漏"
+      "dependencies": [
+        "phase2-2.2"
+      ],
+      "test_verification": "成功创建和管理 Vulkan 资源，无内存泄漏",
+      "hold": null
     },
     {
       "id": "phase2-2.5",
@@ -326,10 +372,14 @@
         "实现帧流水线：Acquire 时 signal semaphore，Submit 时 wait/signal",
         "集成 VMA (Vulkan Memory Allocator)"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.3", "phase2-2.4"],
-      "test_verification": "命令录制和同步正常工作，帧流水线无死锁"
+      "dependencies": [
+        "phase2-2.3",
+        "phase2-2.4"
+      ],
+      "test_verification": "命令录制和同步正常工作，帧流水线无死锁",
+      "hold": null
     },
     {
       "id": "phase2-2.6",
@@ -345,10 +395,13 @@
         "实现 GetCurrentFrameIndex 帧索引",
         "处理 VK_ERROR_OUT_OF_DATE_KHR（resize 时重建 Swapchain）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.5"],
-      "test_verification": "Swapchain 正常工作，支持窗口调整大小"
+      "dependencies": [
+        "phase2-2.5"
+      ],
+      "test_verification": "Swapchain 正常工作，支持窗口调整大小",
+      "hold": null
     },
     {
       "id": "phase3-3.1",
@@ -363,10 +416,13 @@
         "实现 ToAny(ResourceHandle<T>) 转换为 ResourceHandleAny",
         "定义 Mesh、Texture、Material 等资源句柄类型别名"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.1"],
-      "test_verification": "句柄类型定义完整，类型擦除正常工作"
+      "dependencies": [
+        "phase2-2.1"
+      ],
+      "test_verification": "句柄类型定义完整，类型擦除正常工作",
+      "hold": null
     },
     {
       "id": "phase3-3.2",
@@ -386,10 +442,13 @@
         "实现 AddRef / Release 引用计数",
         "线程安全：entries_、pathToId_ 的 mutex 保护"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.1"],
-      "test_verification": "资源缓存正常工作，引用计数正确，线程安全"
+      "dependencies": [
+        "phase3-3.1"
+      ],
+      "test_verification": "资源缓存正常工作，引用计数正确，线程安全",
+      "hold": null
     },
     {
       "id": "phase3-3.3",
@@ -407,8 +466,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.2"],
-      "test_verification": "接口定义完整，可以实现自定义加载器"
+      "dependencies": [
+        "phase2-2.2"
+      ],
+      "test_verification": "接口定义完整，可以实现自定义加载器",
+      "hold": null
     },
     {
       "id": "phase3-3.4",
@@ -427,8 +489,12 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.2", "phase3-3.2"],
-      "test_verification": "资源管理器可以注册和查找加载器"
+      "dependencies": [
+        "phase2-2.2",
+        "phase3-3.2"
+      ],
+      "test_verification": "资源管理器可以注册和查找加载器",
+      "hold": null
     },
     {
       "id": "phase3-3.5",
@@ -447,8 +513,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.4"],
-      "test_verification": "同步加载正常工作，缓存正确，失败处理合理"
+      "dependencies": [
+        "phase3-3.4"
+      ],
+      "test_verification": "同步加载正常工作，缓存正确，失败处理合理",
+      "hold": null
     },
     {
       "id": "phase3-3.6",
@@ -465,8 +534,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.1"],
-      "test_verification": "数据结构定义完整，可以表示各种资源"
+      "dependencies": [
+        "phase2-2.1"
+      ],
+      "test_verification": "数据结构定义完整，可以表示各种资源",
+      "hold": null
     },
     {
       "id": "phase3-3.7",
@@ -484,8 +556,12 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.3", "phase2-2.4"],
-      "test_verification": "成功加载 PNG/JPG 纹理，正确显示"
+      "dependencies": [
+        "phase3-3.3",
+        "phase2-2.4"
+      ],
+      "test_verification": "成功加载 PNG/JPG 纹理，正确显示",
+      "hold": null
     },
     {
       "id": "phase3-3.8",
@@ -504,8 +580,13 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.3", "phase2-2.4", "phase3-3.6"],
-      "test_verification": "成功加载 glTF 模型，正确渲染"
+      "dependencies": [
+        "phase3-3.3",
+        "phase2-2.4",
+        "phase3-3.6"
+      ],
+      "test_verification": "成功加载 glTF 模型，正确渲染",
+      "hold": null
     },
     {
       "id": "phase5-5.1",
@@ -525,7 +606,8 @@
       "status": "verifying",
       "priority": "high",
       "dependencies": [],
-      "test_verification": "句柄分配和解析正常工作"
+      "test_verification": "句柄分配和解析正常工作",
+      "hold": null
     },
     {
       "id": "phase5-5.2",
@@ -547,8 +629,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.1"],
-      "test_verification": "场景节点层级正确，变换计算准确"
+      "dependencies": [
+        "phase5-5.1"
+      ],
+      "test_verification": "场景节点层级正确，变换计算准确",
+      "hold": null
     },
     {
       "id": "phase5-5.3",
@@ -565,9 +650,12 @@
         "实现 nextHandle_ 分配递增 handle"
       ],
       "priority": "high",
-      "dependencies": ["phase5-5.2"],
+      "dependencies": [
+        "phase5-5.2"
+      ],
       "status": "verifying",
-      "test_verification": "场景创建和切换正常，无内存泄漏"
+      "test_verification": "场景创建和切换正常，无内存泄漏",
+      "hold": null
     },
     {
       "id": "phase5-5.4",
@@ -584,8 +672,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.3"],
-      "test_verification": "世界矩阵计算正确，层级变换正确传播"
+      "dependencies": [
+        "phase5-5.3"
+      ],
+      "test_verification": "世界矩阵计算正确，层级变换正确传播",
+      "hold": null
     },
     {
       "id": "phase5-5.5",
@@ -601,8 +692,11 @@
       ],
       "status": "verifying",
       "priority": "medium",
-      "dependencies": ["phase5-5.2"],
-      "test_verification": "Pass 标志正确设置和查询"
+      "dependencies": [
+        "phase5-5.2"
+      ],
+      "test_verification": "Pass 标志正确设置和查询",
+      "hold": null
     },
     {
       "id": "phase5-5.6",
@@ -617,8 +711,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.2"],
-      "test_verification": "Renderable 正确挂载到节点"
+      "dependencies": [
+        "phase5-5.2"
+      ],
+      "test_verification": "Renderable 正确挂载到节点",
+      "hold": null
     },
     {
       "id": "phase5-5.7",
@@ -634,8 +731,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.6"],
-      "test_verification": "包围盒变换正确"
+      "dependencies": [
+        "phase3-3.6"
+      ],
+      "test_verification": "包围盒变换正确",
+      "hold": null
     },
     {
       "id": "phase5-5.8",
@@ -651,8 +751,11 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.7"],
-      "test_verification": "视锥剔除正确识别可视对象"
+      "dependencies": [
+        "phase5-5.7"
+      ],
+      "test_verification": "视锥剔除正确识别可视对象",
+      "hold": null
     },
     {
       "id": "phase5-5.9",
@@ -671,8 +774,12 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.4", "phase5-5.8"],
-      "test_verification": "剔除返回正确的可见节点列表"
+      "dependencies": [
+        "phase5-5.4",
+        "phase5-5.8"
+      ],
+      "test_verification": "剔除返回正确的可见节点列表",
+      "hold": null
     },
     {
       "id": "phase5-5.10",
@@ -690,8 +797,12 @@
       ],
       "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase3-3.6", "phase5-5.6"],
-      "test_verification": "Renderable 可以正确渲染"
+      "dependencies": [
+        "phase3-3.6",
+        "phase5-5.6"
+      ],
+      "test_verification": "Renderable 可以正确渲染",
+      "hold": null
     },
     {
       "id": "phase6-6.1",
@@ -707,10 +818,13 @@
         "实现 Free(alloc) 回收到池",
         "实现 Staging Buffer 池初始化（默认 64MB poolSize_）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase2-2.2"],
-      "test_verification": "Staging 内存分配和回收正常工作"
+      "dependencies": [
+        "phase2-2.2"
+      ],
+      "test_verification": "Staging 内存分配和回收正常工作",
+      "hold": null
     },
     {
       "id": "phase6-6.2",
@@ -725,10 +839,13 @@
         "分配不足时扩展池或等待 GPU 完成回收",
         "与 Fence 关联：GPU 完成时 Free 回池"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.1"],
-      "test_verification": "池化管理减少分配次数"
+      "dependencies": [
+        "phase6-6.1"
+      ],
+      "test_verification": "池化管理减少分配次数",
+      "hold": null
     },
     {
       "id": "phase6-6.3",
@@ -743,10 +860,13 @@
         "收集 pendingUploads_ 待执行上传",
         "实现 FlushUploads(device) 在 Execute 前提交 Copy 命令"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.2"],
-      "test_verification": "数据正确上传到 GPU"
+      "dependencies": [
+        "phase6-6.2"
+      ],
+      "test_verification": "数据正确上传到 GPU",
+      "hold": null
     },
     {
       "id": "phase6-6.4",
@@ -762,10 +882,14 @@
         "等待 GPU 完成后 Free StagingAllocation",
         "支持 Mipmap 链上传（逐级 Copy）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.3", "phase3-3.7"],
-      "test_verification": "纹理通过 Staging 正确上传"
+      "dependencies": [
+        "phase6-6.3",
+        "phase3-3.7"
+      ],
+      "test_verification": "纹理通过 Staging 正确上传",
+      "hold": null
     },
     {
       "id": "phase6-6.5",
@@ -780,10 +904,14 @@
         "SubmitUpload 到 vertexBuffer、indexBuffer",
         "上传完成后 Free"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.3", "phase3-3.8"],
-      "test_verification": "模型数据通过 Staging 正确上传"
+      "dependencies": [
+        "phase6-6.3",
+        "phase3-3.8"
+      ],
+      "test_verification": "模型数据通过 Staging 正确上传",
+      "hold": null
     },
     {
       "id": "phase6-6.6",
@@ -801,10 +929,13 @@
         "实现 GetSubmittedDraws() 返回 const std::vector<SubmittedDraw>&",
         "实现 GetDrawsForPass(PassFlags pass) 按 Pass 过滤（过滤条件 (draw.passFlags & pass) != 0）"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.10"],
-      "test_verification": "绘制提交和上下文结构正常工作"
+      "dependencies": [
+        "phase5-5.10"
+      ],
+      "test_verification": "绘制提交和上下文结构正常工作",
+      "hold": null
     },
     {
       "id": "phase6-6.7",
@@ -818,10 +949,13 @@
         "定义 RGResourceHandle = uint64_t 类型（RG 内部逻辑句柄）",
         "Compile 时 RGResourceHandle 映射为 RDI 的 TextureHandle/BufferHandle"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase5-5.5"],
-      "test_verification": "Pass 标志和资源句柄定义正确"
+      "dependencies": [
+        "phase5-5.5"
+      ],
+      "test_verification": "Pass 标志和资源句柄定义正确",
+      "hold": null
     },
     {
       "id": "phase6-6.8",
@@ -838,10 +972,13 @@
         "实现 WriteSwapchain() 声明写入当前 back buffer",
         "Setup 回调中通过 RenderPassBuilder 声明 Pass 读/写依赖"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.7"],
-      "test_verification": "Pass 构建器可以正确声明依赖"
+      "dependencies": [
+        "phase6-6.7"
+      ],
+      "test_verification": "Pass 构建器可以正确声明依赖",
+      "hold": null
     },
     {
       "id": "phase6-6.9",
@@ -859,10 +996,13 @@
         "定义 RenderPassExecute = std::function<void(const RenderPassContext&, CommandList&)> 类型",
         "实现 SetResolution(uint32_t width, uint32_t height) 影响 DeclareTexture 尺寸"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.8"],
-      "test_verification": "可以声明 Pass 和资源"
+      "dependencies": [
+        "phase6-6.8"
+      ],
+      "test_verification": "可以声明 Pass 和资源",
+      "hold": null
     },
     {
       "id": "phase6-6.10",
@@ -876,10 +1016,13 @@
         "实现 ClearSubmitted() 清空本帧提交",
         "实现 submittedDraws_ 成员存储每帧提交的绘制项"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.9"],
-      "test_verification": "绘制提交和清空正常工作"
+      "dependencies": [
+        "phase6-6.9"
+      ],
+      "test_verification": "绘制提交和清空正常工作",
+      "hold": null
     },
     {
       "id": "phase6-6.11",
@@ -897,10 +1040,14 @@
         "Compile 失败时返回 false 或抛出，GetLastError 获取原因",
         "资源分配失败时保证已分配资源可释放"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.9", "phase2-2.2"],
-      "test_verification": "编译正确分析依赖，分配资源"
+      "dependencies": [
+        "phase6-6.9",
+        "phase2-2.2"
+      ],
+      "test_verification": "编译正确分析依赖，分配资源",
+      "hold": null
     },
     {
       "id": "phase6-6.12",
@@ -921,10 +1068,14 @@
         "实现 currentFrameIndex_ 轮转（kMaxFramesInFlight = 3）",
         "实现 frameFences_、acquireSemaphore_、renderCompleteSemaphore_ 管理"
       ],
-      "status": "completed",
+      "status": "verifying",
       "priority": "high",
-      "dependencies": ["phase6-6.11", "phase2-2.6"],
-      "test_verification": "单线程渲染流程正常工作"
+      "dependencies": [
+        "phase6-6.11",
+        "phase2-2.6"
+      ],
+      "test_verification": "单线程渲染流程正常工作",
+      "hold": null
     },
     {
       "id": "phase6-6.13",
@@ -940,8 +1091,11 @@
       ],
       "status": "completed",
       "priority": "high",
-      "dependencies": ["phase6-6.12"],
-      "test_verification": "前向渲染正确显示场景"
+      "dependencies": [
+        "phase6-6.12"
+      ],
+      "test_verification": "前向渲染正确显示场景",
+      "hold": null
     }
   ]
 }

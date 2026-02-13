@@ -363,15 +363,18 @@ generate_prompt() {
 | verifying | 功能完成，测试验证中 |
 | completed | 测试通过，已完成 |
 
-**Hold 格式**：选中任务后，将 status 设为 "inprogress hold by {{AGENT_ID}}" 或 "verifying hold by {{AGENT_ID}}"
-- 只有 status 中 hold by 的 agent 与你的 Agent ID 一致时，你才能选择该任务
-- 非自己 hold 的任务不可选
+**Hold 字段**：每个 feature 均有 "hold" 字段
+- hold 为 null：无人持有
+- hold 为 "{{AGENT_ID}}"：由该 agent 持有
+- **选任务时必须同时更新 status 和 hold**，不能只改 status
 
-**状态流转**：
-- 选中 pending 任务 → 改为 "inprogress hold by {{AGENT_ID}}"
-- 功能实现完成 → 改为 "verifying hold by {{AGENT_ID}}"
-- 测试通过 → 改为 "completed"（无 hold）
-- 测试失败需修复 → 改回 "inprogress hold by {{AGENT_ID}}"
+**状态与 hold 流转**：
+- 选中 pending 任务 → status="inprogress", hold="{{AGENT_ID}}"
+- 功能实现完成 → status="verifying", hold="{{AGENT_ID}}"
+- 测试通过 → status="completed", hold=null
+- 测试失败需修复 → status="inprogress", hold="{{AGENT_ID}}"
+
+**选择规则**：仅可选 (hold 为 null 且 status 为 pending 或 verifying) 或 (hold 等于 "{{AGENT_ID}}") 的任务
 
 ## 工作流程
 
@@ -380,11 +383,10 @@ generate_prompt() {
    - 验证 feature_list.json 格式正确（如果损坏则修复）
 
 ### 2. **选择下一个功能**
-   - **优先**：status 为 "verifying hold by {{AGENT_ID}}" 的任务（自己已实现待验证的）
-   - **其次**：status 为 "verifying" 的任务（无agent认领的验证任务）
-   - **再次**：status 为 "pending" 的任务（选中后立即改为 "inprogress hold by {{AGENT_ID}}"）
+   - **优先**：hold="null 或 {{AGENT_ID}}" 且 status="verifying" 的任务（无人认领或自己已实现待验证的）
+   - **其次**：hold=null 且 status="pending" 的任务（选中后立即设 status="inprogress", hold="{{AGENT_ID}}"）
    - 确保依赖已完成，优先级：critical > high > medium
-   - **禁止**选择其他agent hold 的 inprogress/verifying 任务
+   - **禁止**选择 hold 非 null 且不等于 "{{AGENT_ID}}" 的任务
 
 ### 3. **阅读相关文档**
    - docs/design/rendering_engine_design.md (总设计)
@@ -395,9 +397,11 @@ generate_prompt() {
    - 按步骤逐一实现
    - 遵循设计文档
    - 确保代码质量
-   - **实现完成后**：将 status 改为 "verifying hold by {{AGENT_ID}}"
+   - **实现完成后**：将 status 改为 "verifying"，hold 保持 "{{AGENT_ID}}"
 
 ### 5. **测试验证**（必须实际执行）
+
+   **核心原则**：验证必须覆盖**本次实现/更新的部分**，不能只跑已有测试。若本次改动涉及新逻辑，必须**新增单元测试**并加入 tests/CMakeLists.txt。
 
    **a) 编译构建**
    ```bash
@@ -408,13 +412,12 @@ generate_prompt() {
    - 检查编译输出，确保无错误
    - 如有错误，立即修复并重新构建
 
-   **b) 单元测试**
-   ```bash
-   ctest --output-on-failure
-   # 或：./build/test_task_channel 等具体测试
-   ```
-   - 若项目有 tests/ 目录或 CTest，必须运行单元测试
-   - 确保所有相关测试通过
+   **b) 单元测试**（必须覆盖本次更新）
+   - **为本次实现的功能新增单元测试**：在 tests/ 下创建 test_<功能名>.cpp，在 tests/CMakeLists.txt 中注册
+   - 测试应覆盖：新接口、新逻辑、边界条件、错误路径
+   - 运行 ctest --output-on-failure 或直接运行新测试可执行文件
+   - 确保**新增测试**和**已有测试**均通过
+   - 若本次仅修改文档或 trivial 改动，可沿用已有测试，但需说明
 
    **c) 功能验证**
    - 运行可执行文件（如 hello_kale 或相关 demo）验证实现的功能
@@ -428,17 +431,17 @@ generate_prompt() {
    - 确认无明显的生产环境风险（如断言滥用、未处理错误码）
 
    **测试结果处理**：
-   - 测试通过 → 将 status 改为 "completed"
-   - 测试失败需修复 → 将 status 改回 "inprogress hold by {{AGENT_ID}}"，修复后重新验证
+   - 测试通过 → status="completed", hold=null
+   - 测试失败需修复 → status="inprogress", hold="{{AGENT_ID}}"，修复后重新验证
 
 ### 6. **更新文档**（必须实际执行）
    你必须实际修改以下文件：
    
-   a) **feature_list.json**（按实际情况更新 status）：
-   - 选任务时：pending → "inprogress hold by {{AGENT_ID}}"
-   - 实现完成：inprogress → "verifying hold by {{AGENT_ID}}"
-   - 测试通过：verifying → "completed"
-   - 测试失败：verifying → "inprogress hold by {{AGENT_ID}}"
+   a) **feature_list.json**（同时更新 status 与 hold）：
+   - 选任务时：status="inprogress", hold="{{AGENT_ID}}"
+   - 实现完成：status="verifying", hold="{{AGENT_ID}}"
+   - 测试通过：status="completed", hold=null
+   - 测试失败：status="inprogress", hold="{{AGENT_ID}}"
    - 确保 JSON 格式正确
    
    b) **claude-progress.txt**：
@@ -473,20 +476,22 @@ generate_prompt() {
 
 - ✅ **必须实际执行**测试构建，不能只输出建议
 - ✅ **必须实际运行**单元测试（若有）和功能验证
+- ✅ **必须为本次实现的功能新增单元测试**（除非仅 trivial 改动），验证覆盖更新部分
 - ✅ **必须验证**功能可用且在生产场景下安全
 - ✅ **必须实际修改**文档文件，不能只说明需要修改
 - ✅ **必须实际执行** git add 和 git commit
-- ❌ **不要在项目根目录创建** test_* 文件
+- ✅ **必须同时更新** feature_list.json 的 status 与 hold 字段
+- ❌ **不要在项目根目录创建** test_* 文件（测试文件放在 tests/ 目录）
 - ✅ **必须清理**所有临时文件
-- ✅ **必须更新** feature_list.json 的状态
+- ✅ **必须更新** feature_list.json 的状态与 hold
 
 ## 完成标准
 
 本次会话被视为成功完成，当且仅当：
 1. ✅ 功能已实际实现并通过编译
-2. ✅ 单元测试通过（若有相关测试）
+2. ✅ **本次更新部分**已有单元测试覆盖，且所有测试通过
 3. ✅ 功能已验证可用，且无明显生产场景风险
-4. ✅ feature_list.json 已被实际修改（status → "completed"）
+4. ✅ feature_list.json 的 status 与 hold 已被正确更新
 5. ✅ claude-progress.txt 已被实际更新
 6. ✅ todolist.md 已被实际更新
 7. ✅ 已执行 git commit
