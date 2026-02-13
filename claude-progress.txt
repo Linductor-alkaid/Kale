@@ -1,3 +1,9 @@
+=== 2026-02-13 10:43:02 ===
+功能：phase1-1.5 TaskChannel 核心实现（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过（test_task_channel 覆盖 SPSC send/recv、超时、压力测试）
+- feature_list.json 中 phase1-1.5 的 status 更新为 completed，hold=null
+
 === 2026-02-13 (session) ===
 功能：phase3-3.3 IResourceLoader 接口（验证）
 状态：已完成

@@ -158,7 +158,7 @@
         "基于 std::atomic 和 CAS 实现无锁环形缓冲区",
         "使用固定容量，避免动态分配"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase0-0.1"
