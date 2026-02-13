@@ -5,6 +5,10 @@
 
 #include <cstdint>
 #include <glm/vec2.hpp>
+#include <string>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 struct SDL_Window;
 
@@ -132,6 +136,28 @@ enum class GamepadButton : int {
     DpadRight = 14,
 };
 
+/// 手柄绑定：gamepadIndex + 按钮或轴
+struct GamepadBinding {
+    int gamepadIndex = 0;
+    std::variant<GamepadButton, GamepadAxis> input;
+};
+
+/// 输入绑定：键盘键、鼠标按钮或手柄绑定之一
+using InputBinding = std::variant<KeyCode, MouseButton, GamepadBinding>;
+
+/// 便捷构造：键盘键
+inline InputBinding Keyboard(KeyCode key) { return key; }
+/// 便捷构造：鼠标按钮
+inline InputBinding Mouse(MouseButton btn) { return btn; }
+/// 便捷构造：手柄按钮（idx 为连接序号）
+inline InputBinding GamepadButtonBinding(int idx, GamepadButton button) {
+    return GamepadBinding{idx, button};
+}
+/// 便捷构造：手柄轴（idx 为连接序号）
+inline InputBinding GamepadAxisBinding(int idx, GamepadAxis axisValue) {
+    return GamepadBinding{idx, axisValue};
+}
+
 /// 输入管理器：键盘、鼠标状态与 JustPressed/JustReleased 双缓冲，以及手柄支持
 class InputManager {
 public:
@@ -170,8 +196,20 @@ public:
     /// 手柄：指定按钮是否按下
     bool IsGamepadButtonPressed(int index, GamepadButton button) const;
 
+    /// 动作映射：为 action 添加一个绑定（同一 action 可多绑定）
+    void AddActionBinding(const std::string& action, const InputBinding& binding);
+    /// 动作映射：清除指定 action 的全部绑定
+    void ClearActionBindings(const std::string& action);
+    /// 动作映射：任一绑定“触发”则 true（键/鼠为 JustPressed，手柄为当前按下）
+    bool IsActionTriggered(const std::string& action) const;
+    /// 动作映射：轴值，按键/按钮为 1.0 或 0.0，轴为 [-1,1] 或 [0,1]
+    float GetActionValue(const std::string& action) const;
+
     /// 本帧是否收到退出或窗口关闭请求（由 Update 轮询时设置）
     bool QuitRequested() const { return quitRequested_; }
+
+private:
+    bool IsMouseButtonJustPressed(MouseButton button) const;
 
 private:
     SDL_Window* window_ = nullptr;
@@ -191,6 +229,9 @@ private:
 
     /// 手柄：已打开实例缓存（实现内为 map instance_id -> SDL_Gamepad*），热插拔时在 Update 中维护
     void* gamepadCache_ = nullptr;
+
+    /// action 名称 -> 绑定列表（同一 action 多绑定）
+    std::unordered_map<std::string, std::vector<InputBinding>> actionBindings_;
 };
 
 }  // namespace kale_device

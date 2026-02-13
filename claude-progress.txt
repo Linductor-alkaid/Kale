@@ -1,3 +1,10 @@
+=== 2026-02-13 15:30:00 ===
+功能：phase11-11.3 Action Mapping
+状态：已完成
+- 实现：InputBinding = std::variant<KeyCode, MouseButton, GamepadBinding>，GamepadBinding{ gamepadIndex, variant<GamepadButton, GamepadAxis> }；InputManager 增加 AddActionBinding、ClearActionBindings、IsActionTriggered、GetActionValue；便捷构造 Keyboard()、Mouse()、GamepadButtonBinding()、GamepadAxisBinding()（与枚举同名避免冲突）；同一 action 支持多绑定；IsActionTriggered 键/鼠用 JustPressed、手柄按钮用当前按下，GetActionValue 按键/按钮 1/0、轴用 GetGamepadAxis。
+- 验证：编译通过，ctest 45/45 通过（新增 test_action_mapping：未知 action 返回 false/0、多绑定与 Clear、手柄轴/按钮不崩溃、Update 后查询不崩溃）。
+- feature_list.json 中 phase11-11.3 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 4.3 已勾选。
+
 === 2026-02-13 14:58:25 ===
 功能：phase9-9.9 ECS 并行系统集成
 状态：已完成

@@ -2124,7 +2124,7 @@
         "实现便捷构造：Keyboard()、Mouse()、GamepadButton()、GamepadAxis()",
         "同一 action 支持多绑定（如 W 与上箭头）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase11-11.2"],
       "test_verification": "Action Mapping 正确工作",

@@ -181,14 +181,14 @@
 
 ### 4.3 Action Mapping
 
-- [ ] 定义 `InputBinding = std::variant<KeyCode, MouseButton, GamepadBinding>`
-- [ ] 定义 `GamepadBinding` 结构（gamepadIndex + input）
-- [ ] 实现 `AddActionBinding(const std::string& action, const InputBinding& binding)`
-- [ ] 实现 `ClearActionBindings(const std::string& action)`
-- [ ] 实现 `IsActionTriggered(const std::string& action)`
-- [ ] 实现 `GetActionValue(const std::string& action)`（轴值）
-- [ ] 实现便捷构造：`Keyboard()`、`Mouse()`、`GamepadButton()`、`GamepadAxis()`
-- [ ] 同一 action 支持多绑定（如 W 与上箭头）
+- [x] 定义 `InputBinding = std::variant<KeyCode, MouseButton, GamepadBinding>`
+- [x] 定义 `GamepadBinding` 结构（gamepadIndex + input）
+- [x] 实现 `AddActionBinding(const std::string& action, const InputBinding& binding)`
+- [x] 实现 `ClearActionBindings(const std::string& action)`
+- [x] 实现 `IsActionTriggered(const std::string& action)`
+- [x] 实现 `GetActionValue(const std::string& action)`（轴值）
+- [x] 实现便捷构造：`Keyboard()`、`Mouse()`、`GamepadButtonBinding()`、`GamepadAxisBinding()`
+- [x] 同一 action 支持多绑定（如 W 与上箭头）
 
 ### 4.4 输入事件回调
 

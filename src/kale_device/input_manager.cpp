@@ -7,8 +7,9 @@
 #include <SDL3/SDL_keyboard.h>
 #include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_video.h>
-#include <unordered_map>
 #include <cstdlib>
+#include <unordered_map>
+#include <variant>
 
 namespace kale_device {
 
@@ -226,6 +227,60 @@ bool InputManager::IsGamepadButtonPressed(int index, GamepadButton button) const
     SDL_GamepadButton sdlBtn = static_cast<SDL_GamepadButton>(ToSDL(button));
     if (sdlBtn == SDL_GAMEPAD_BUTTON_INVALID || sdlBtn >= SDL_GAMEPAD_BUTTON_COUNT) return false;
     return SDL_GetGamepadButton(gp, sdlBtn);
+}
+
+bool InputManager::IsMouseButtonJustPressed(MouseButton button) const {
+    std::uint32_t mask = 1u << (static_cast<std::uint32_t>(button) - 1);
+    return (buttonCurrent_ & mask) != 0 && (buttonPrevious_ & mask) == 0;
+}
+
+void InputManager::AddActionBinding(const std::string& action, const InputBinding& binding) {
+    actionBindings_[action].push_back(binding);
+}
+
+void InputManager::ClearActionBindings(const std::string& action) {
+    actionBindings_.erase(action);
+}
+
+bool InputManager::IsActionTriggered(const std::string& action) const {
+    auto it = actionBindings_.find(action);
+    if (it == actionBindings_.end()) return false;
+    for (const InputBinding& b : it->second) {
+        if (std::holds_alternative<KeyCode>(b)) {
+            if (IsKeyJustPressed(std::get<KeyCode>(b))) return true;
+        } else if (std::holds_alternative<MouseButton>(b)) {
+            if (IsMouseButtonJustPressed(std::get<MouseButton>(b))) return true;
+        } else {
+            const GamepadBinding& gb = std::get<GamepadBinding>(b);
+            if (std::holds_alternative<GamepadButton>(gb.input)) {
+                if (IsGamepadButtonPressed(gb.gamepadIndex, std::get<GamepadButton>(gb.input))) return true;
+            }
+            // 轴不参与 Trigger，仅用于 GetActionValue
+        }
+    }
+    return false;
+}
+
+float InputManager::GetActionValue(const std::string& action) const {
+    auto it = actionBindings_.find(action);
+    if (it == actionBindings_.end()) return 0.0f;
+    float value = 0.0f;
+    for (const InputBinding& b : it->second) {
+        if (std::holds_alternative<KeyCode>(b)) {
+            if (IsKeyPressed(std::get<KeyCode>(b))) return 1.0f;
+        } else if (std::holds_alternative<MouseButton>(b)) {
+            if (IsMouseButtonPressed(std::get<MouseButton>(b))) return 1.0f;
+        } else {
+            const GamepadBinding& gb = std::get<GamepadBinding>(b);
+            if (std::holds_alternative<GamepadButton>(gb.input)) {
+                if (IsGamepadButtonPressed(gb.gamepadIndex, std::get<GamepadButton>(gb.input))) return 1.0f;
+            } else {
+                float v = GetGamepadAxis(gb.gamepadIndex, std::get<GamepadAxis>(gb.input));
+                if (v != 0.0f) value = v;  // 轴值覆盖，多轴时取最后一个非零
+            }
+        }
+    }
+    return value;
 }
 
 }  // namespace kale_device
