@@ -1,4 +1,10 @@
 
+=== 2026-02-13 (session) ===
+功能：phase11-11.7 设备能力查询
+状态：已完成
+- 实现：VulkanRenderDevice::Initialize 中从 VkPhysicalDevice 查询 VkPhysicalDeviceProperties / VkPhysicalDeviceFeatures 及队列族，填充 DeviceCapabilities（maxTextureSize、maxComputeWorkGroupSize、supportsGeometryShader、supportsTessellation、supportsComputeShader、maxRecordingThreads）。
+- 验证：编译通过，ctest 62/62 通过（新增 test_device_capabilities：Vulkan 初始化后 GetCapabilities 返回 maxTextureSize>0、maxComputeWorkGroupSize≥1、maxRecordingThreads 与 config 一致）。phase11-11.7 status=completed，hold=null。device_abstraction_layer_todolist 5.4 Vulkan 两项已勾选。
+
 - 验证：编译通过，ctest 61/61 通过（新增 test_preload_batch：Preload 同步路径下缓存就绪、LoadAsyncBatch 一一对应、空 paths、scheduler 异步路径、批量中部分无 loader 对应 Future 异常）。phase12-12.4 status=completed，hold=null。resource_management_layer_todolist 5.4 已勾选。
 - 实现：ResourceManager::Preload<T>(paths) 对每 path 调用 LoadAsync 触发预加载；LoadAsyncBatch<T>(paths) 返回与 paths 一一对应的 std::vector<ExecutorFuture<ResourceHandle<T>>>。场景切换前可调用 Preload 预加载新场景资源。
 状态：已完成

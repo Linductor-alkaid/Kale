@@ -229,8 +229,8 @@
 
 ### 5.4 设备能力查询
 
-- [ ] 实现 `DeviceCapabilities` 完整填充（maxTextureSize, maxComputeWorkGroupSize, supportsGeometryShader 等）
-- [ ] Vulkan：从 VkPhysicalDevice 查询
+- [x] 实现 `DeviceCapabilities` 完整填充（maxTextureSize, maxComputeWorkGroupSize, supportsGeometryShader 等）
+- [x] Vulkan：从 VkPhysicalDevice 查询
 - [ ] OpenGL：从 GL 扩展查询
 
 ### 5.5 性能测试与调优

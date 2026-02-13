@@ -2200,7 +2200,7 @@
         "Vulkan：从 VkPhysicalDevice 查询",
         "OpenGL：从 GL 扩展查询"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase2-2.2"],
       "test_verification": "设备能力正确查询",

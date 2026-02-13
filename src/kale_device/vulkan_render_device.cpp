@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <vector>
 
 namespace kale_device {
 
@@ -49,15 +50,36 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
         return false;
     }
 
-    capabilities_.maxTextureSize = 4096;
-    capabilities_.maxComputeWorkGroupSize[0] = 256;
-    capabilities_.maxComputeWorkGroupSize[1] = 256;
-    capabilities_.maxComputeWorkGroupSize[2] = 64;
-    capabilities_.supportsGeometryShader = true;
-    capabilities_.supportsTessellation = true;
-    capabilities_.supportsComputeShader = true;
-    capabilities_.supportsRayTracing = false;
-    capabilities_.maxRecordingThreads = maxRecordingThreads_;
+    // 从 VkPhysicalDevice 查询设备能力（phase11-11.7）
+    {
+        VkPhysicalDevice physical = context_.GetPhysicalDevice();
+        VkPhysicalDeviceProperties props = {};
+        VkPhysicalDeviceFeatures features = {};
+        vkGetPhysicalDeviceProperties(physical, &props);
+        vkGetPhysicalDeviceFeatures(physical, &features);
+
+        capabilities_.maxTextureSize = props.limits.maxImageDimension2D;
+        capabilities_.maxComputeWorkGroupSize[0] = props.limits.maxComputeWorkGroupSize[0];
+        capabilities_.maxComputeWorkGroupSize[1] = props.limits.maxComputeWorkGroupSize[1];
+        capabilities_.maxComputeWorkGroupSize[2] = props.limits.maxComputeWorkGroupSize[2];
+        capabilities_.supportsGeometryShader = (features.geometryShader != VK_FALSE);
+        capabilities_.supportsTessellation = (features.tessellationShader != VK_FALSE);
+        capabilities_.supportsRayTracing = false;  // 未启用 RT 扩展
+
+        std::uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(physical, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(physical, &queueFamilyCount, queueFamilies.data());
+        bool hasCompute = false;
+        for (const auto& qf : queueFamilies) {
+            if (qf.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+                hasCompute = true;
+                break;
+            }
+        }
+        capabilities_.supportsComputeShader = hasCompute;
+        capabilities_.maxRecordingThreads = maxRecordingThreads_;
+    }
 
     return true;
 }
