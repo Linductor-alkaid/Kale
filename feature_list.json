@@ -839,7 +839,7 @@
         "分配不足时扩展池或等待 GPU 完成回收",
         "与 Fence 关联：GPU 完成时 Free 回池"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.1"

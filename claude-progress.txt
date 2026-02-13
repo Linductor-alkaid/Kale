@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase6-6.2 Staging Buffer 池化（验证）
+状态：已完成
+- 验证：编译通过，ctest 55/55 通过；Staging Buffer 池化（poolBuffers_/freeLists_、Free(alloc,fence) 延迟回收、ReclaimCompleted、分配不足时先 ReclaimCompleted 再扩展池）已由前期实现于 staging_memory_manager；test_staging_memory_manager 覆盖 Free 即时回收、Free(alloc,fence) 延迟回收与 ReclaimCompleted。phase6-6.2 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.2 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase6-6.1 StagingMemoryManager（验证）
 状态：已完成
 - 验证：编译通过，ctest 55/55 通过；StagingMemoryManager 已由前期实现（staging_memory_manager.hpp/cpp），本会话新增 test_staging_memory_manager（null/零 size Allocate 返回无效、有效 device Allocate 返回有效可写、Free 即时回收、Free(alloc,fence) 延迟回收与 ReclaimCompleted、SubmitUpload pending、FlushUploads）覆盖 phase6-6.1。phase6-6.1 的 status 从 verifying 更新为 completed，hold=null。resource_management_layer_todolist 3.1 已为已勾选状态。
