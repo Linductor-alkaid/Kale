@@ -4,7 +4,7 @@
 
 add_library(kale_engine STATIC
     placeholder.cpp
-    # 待实现：render_engine.cpp, application.cpp
+    render_engine.cpp
 )
 
 target_include_directories(kale_engine

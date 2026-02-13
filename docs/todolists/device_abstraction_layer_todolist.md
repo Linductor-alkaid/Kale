@@ -245,9 +245,9 @@
 
 ### RenderEngine 初始化顺序
 
-- [ ] `SDL_Init()` → `WindowSystem::Create()` → `CreateRenderDevice()` → `InputManager::Initialize()`
-- [ ] `DeviceConfig` 从 `windowSystem_->GetNativeHandle()` 传入
-- [ ] 实现 `RenderEngine::Initialize` 中设备抽象层初始化流程
+- [x] `SDL_Init()` → `WindowSystem::Create()` → `CreateRenderDevice()` → `InputManager::Initialize()`
+- [x] `DeviceConfig` 从 `windowSystem_->GetNativeHandle()` 传入
+- [x] 实现 `RenderEngine::Initialize` 中设备抽象层初始化流程
 
 ### 主循环
 

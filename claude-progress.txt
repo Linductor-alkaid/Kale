@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.8 RenderEngine 初始化顺序
+状态：已完成
+- 实现：RenderEngine 类（kale_engine/render_engine.hpp + render_engine.cpp），Config 结构，Initialize 顺序：WindowSystem::Create（含 SDL）→ CreateRenderDevice(DeviceConfig 来自 window）→ InputManager::Initialize → executor → scheduler → sceneManager → entityManager(scheduler, sceneManager) → resourceManager(scheduler, device) → renderGraph。GetLastError/Shutdown、各 Get* 访问器。内部用 void* impl_ 指向匿名命名空间 RenderEngineImpl，避免头文件 PIMPL 析构可见性问题。
+- 验证：编译通过，ctest 25/25 通过（新增 test_render_engine_init：未初始化时 getters 为 nullptr、GetLastError 空；Initialize 成功时各 getter 非空、Shutdown 后恢复空；失败时 GetLastError 非空；Shutdown 无崩溃、可重复 Initialize）。device_abstraction_layer_todolist RenderEngine 初始化顺序已勾选。
+- feature_list.json 中 phase11-11.8 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase8-8.2 MaterialLoader
 状态：已完成
 - 实现：MaterialLoader : public IResourceLoader（kale_pipeline/material_loader.hpp + material_loader.cpp），Supports(.json)、GetResourceType() 返回 typeid(resource::Material)。LoadJSON 读文件、nlohmann::json 解析，PBR 键 albedo/normal/ao/emissive 通过 ctx.resourceManager->Load<Texture>(texPath) 与 Get 得到 Texture* 后 SetAlbedo 等，metallic/roughness 标量 SetParameter。根 CMake 添加 nlohmann/json FetchContent，kale_pipeline 链接 nlohmann_json::nlohmann_json。Loader 返回 std::any(Material*) 供 ResourceManager 登记。

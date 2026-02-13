@@ -189,3 +189,10 @@ target_link_libraries(test_material_loader
         kale_resource
 )
 add_test(NAME test_material_loader COMMAND test_material_loader)
+
+add_executable(test_render_engine_init test_render_engine_init.cpp)
+target_link_libraries(test_render_engine_init
+    PRIVATE
+        kale_engine
+)
+add_test(NAME test_render_engine_init COMMAND test_render_engine_init)

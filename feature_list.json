@@ -2219,7 +2219,7 @@
         "实现 RenderEngine::Initialize 中设备抽象层初始化流程",
         "scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": [],
       "test_verification": "引擎正确初始化",
