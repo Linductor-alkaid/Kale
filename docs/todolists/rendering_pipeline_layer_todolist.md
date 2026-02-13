@@ -99,10 +99,10 @@
 
 ### 2.2 材质级 DescriptorSet
 
-- [ ] 实现 `GetMaterialDescriptorSet()` 返回 DescriptorSetHandle
-- [ ] 材质级 DescriptorSet 同一材质所有实例共享
-- [ ] 包含纹理、采样器等不变资源
-- [ ] 材质创建时分配并绑定纹理
+- [x] 实现 `GetMaterialDescriptorSet()` 返回 DescriptorSetHandle
+- [x] 材质级 DescriptorSet 同一材质所有实例共享
+- [x] 包含纹理、采样器等不变资源
+- [x] 材质创建时分配并绑定纹理
 
 ### 2.3 实例级 DescriptorSet 池化
 

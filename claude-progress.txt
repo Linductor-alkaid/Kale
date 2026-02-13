@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.8 材质级 DescriptorSet
+状态：已完成
+- 实现：GetMaterialDescriptorSet() 返回材质级共享 DescriptorSetHandle；EnsureMaterialDescriptorSet(IRenderDevice*) 根据当前 textures_ 创建 layout（CombinedImageSampler）、CreateDescriptorSet、WriteDescriptorSetTexture 绑定纹理。RDI 新增 DescriptorType::CombinedImageSampler、WriteDescriptorSetTexture(set, binding, texture)；Vulkan 默认采样器 + vkUpdateDescriptorSets 实现写入。
+- 验证：编译通过，ctest 通过（新增 test_material_descriptor_set：默认无效、null device 无操作、无纹理不创建、一纹理/多纹理 Ensure 后有效、同一材质同一 handle）；19/19 通过。test_placeholders / test_draw_resource_check 的 Mock 设备补充 WriteDescriptorSetTexture。rendering_pipeline_layer_todolist 2.2 已勾选。
+- feature_list.json 中 phase7-7.8 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.7 Material 基类
 状态：已完成
 - 实现：kale::pipeline::Material 基类（SetTexture/SetParameter、GetShader/GetPipeline、SetShader/SetPipeline、GetTexture/GetParameter）；parameters_ 为 std::unordered_map<std::string, std::vector<std::byte>>，textures_ 为 name→Texture*；resource_types 新增 Shader 结构体（ShaderHandle）。新增 kale_pipeline/include/kale_pipeline/material.hpp，placeholder 引用 Material。

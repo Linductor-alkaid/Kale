@@ -1452,7 +1452,7 @@
         "包含纹理、采样器等不变资源",
         "材质创建时分配并绑定纹理"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.7", "phase2-2.4"],
       "test_verification": "材质级 DescriptorSet 正确共享",

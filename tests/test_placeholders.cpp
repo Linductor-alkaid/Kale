@@ -54,6 +54,8 @@ public:
         const kale_device::DescriptorSetLayoutDesc&) override {
         return {};
     }
+    void WriteDescriptorSetTexture(kale_device::DescriptorSetHandle, std::uint32_t,
+                                   kale_device::TextureHandle) override {}
 
     void DestroyBuffer(kale_device::BufferHandle) override {}
     void DestroyTexture(kale_device::TextureHandle) override {}

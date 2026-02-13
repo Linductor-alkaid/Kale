@@ -101,6 +101,8 @@ public:
     ShaderHandle CreateShader(const ShaderDesc& desc) override;
     PipelineHandle CreatePipeline(const PipelineDesc& desc) override;
     DescriptorSetHandle CreateDescriptorSet(const DescriptorSetLayoutDesc& layout) override;
+    void WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,
+                                    TextureHandle texture) override;
 
     void DestroyBuffer(BufferHandle handle) override;
     void DestroyTexture(TextureHandle handle) override;
@@ -156,6 +158,8 @@ private:
     void DestroyUploadCommandPoolAndBuffer();
     bool CreateFrameSyncObjects();
     void DestroyFrameSyncObjects();
+    bool CreateDefaultSampler();
+    void DestroyDefaultSampler();
     bool CreateCommandPoolsAndBuffers();
     void DestroyCommandPoolsAndBuffers();
 
@@ -173,6 +177,7 @@ private:
     std::unordered_map<std::uint64_t, VulkanShaderRes> shaders_;
     std::unordered_map<std::uint64_t, VulkanPipelineRes> pipelines_;
     std::unordered_map<std::uint64_t, VulkanDescriptorSetRes> descriptorSets_;
+    VkSampler defaultSampler_ = VK_NULL_HANDLE;  // 材质纹理 WriteDescriptorSetTexture 用
     std::uint64_t nextBufferId_ = 1;
     std::uint64_t nextTextureId_ = 1;
     std::uint64_t nextShaderId_ = 1;

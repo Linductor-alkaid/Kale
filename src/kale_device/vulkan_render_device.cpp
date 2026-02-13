@@ -42,6 +42,10 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
         Shutdown();
         return false;
     }
+    if (!CreateDefaultSampler()) {
+        Shutdown();
+        return false;
+    }
 
     capabilities_.maxTextureSize = 4096;
     capabilities_.maxComputeWorkGroupSize[0] = 256;
@@ -91,6 +95,7 @@ void VulkanRenderDevice::Shutdown() {
     }
     descriptorSets_.clear();
 
+    DestroyDefaultSampler();
     DestroyCommandPoolsAndBuffers();
     DestroyFrameSyncObjects();
     DestroyUploadCommandPoolAndBuffer();
@@ -772,6 +777,31 @@ void VulkanRenderDevice::DestroyDescriptorSet(DescriptorSetHandle handle) {
     descriptorSets_.erase(it);
 }
 
+void VulkanRenderDevice::WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,
+                                                    TextureHandle texture) {
+    if (!set.IsValid() || !texture.IsValid()) return;
+    auto dsIt = descriptorSets_.find(set.id);
+    auto texIt = textures_.find(texture.id);
+    if (dsIt == descriptorSets_.end() || texIt == textures_.end()) return;
+    if (defaultSampler_ == VK_NULL_HANDLE) return;
+
+    VkDescriptorImageInfo imageInfo = {};
+    imageInfo.sampler = defaultSampler_;
+    imageInfo.imageView = texIt->second.view;
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkWriteDescriptorSet write = {};
+    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    write.dstSet = dsIt->second.set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    write.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets(context_.GetDevice(), 1, &write, 0, nullptr);
+}
+
 // =============================================================================
 // UpdateBuffer / UpdateTexture
 // =============================================================================
@@ -1001,6 +1031,31 @@ void VulkanRenderDevice::DestroyFrameSyncObjects() {
     fences_.clear();
     for (auto& [id, vks] : semaphores_) { if (vks != VK_NULL_HANDLE) vkDestroySemaphore(dev, vks, nullptr); }
     semaphores_.clear();
+}
+
+bool VulkanRenderDevice::CreateDefaultSampler() {
+    VkDevice dev = context_.GetDevice();
+    VkSamplerCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    info.magFilter = VK_FILTER_LINEAR;
+    info.minFilter = VK_FILTER_LINEAR;
+    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.maxAnisotropy = 1.0f;
+    info.minLod = 0.0f;
+    info.maxLod = VK_LOD_CLAMP_NONE;
+    if (vkCreateSampler(dev, &info, nullptr, &defaultSampler_) != VK_SUCCESS)
+        return false;
+    return true;
+}
+
+void VulkanRenderDevice::DestroyDefaultSampler() {
+    if (defaultSampler_ != VK_NULL_HANDLE) {
+        vkDestroySampler(context_.GetDevice(), defaultSampler_, nullptr);
+        defaultSampler_ = VK_NULL_HANDLE;
+    }
 }
 
 bool VulkanRenderDevice::CreateCommandPoolsAndBuffers() {

@@ -205,6 +205,7 @@ enum class DescriptorType {
     UniformBuffer,
     SampledImage,
     Sampler,
+    CombinedImageSampler,  /** 材质纹理槽：image + sampler 一体，供 WriteDescriptorSetTexture 使用 */
     StorageBuffer,
     StorageImage,
 };

@@ -71,6 +71,10 @@ public:
     virtual PipelineHandle CreatePipeline(const PipelineDesc& desc) = 0;
     virtual DescriptorSetHandle CreateDescriptorSet(const DescriptorSetLayoutDesc& layout) = 0;
 
+    /** 向 DescriptorSet 的 binding 写入纹理（CombinedImageSampler，含默认采样器） */
+    virtual void WriteDescriptorSetTexture(DescriptorSetHandle set, std::uint32_t binding,
+                                           TextureHandle texture) = 0;
+
     // --- 资源销毁 ---
     virtual void DestroyBuffer(BufferHandle handle) = 0;
     virtual void DestroyTexture(TextureHandle handle) = 0;

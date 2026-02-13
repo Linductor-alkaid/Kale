@@ -121,6 +121,7 @@ VkDescriptorType ToVkDescriptorType(DescriptorType t) {
         case DescriptorType::UniformBuffer: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         case DescriptorType::SampledImage: return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         case DescriptorType::Sampler: return VK_DESCRIPTOR_TYPE_SAMPLER;
+        case DescriptorType::CombinedImageSampler: return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         case DescriptorType::StorageBuffer: return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         case DescriptorType::StorageImage: return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
         default: return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

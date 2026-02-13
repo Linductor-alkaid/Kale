@@ -3,7 +3,7 @@
  * @brief 渲染管线层材质基类：纹理/参数绑定、Shader、Pipeline
  *
  * 与 rendering_pipeline_layer_design.md 5.5、phase7-7.7 对齐。
- * 材质级 DescriptorSet、实例级池化由 phase7-7.8 / phase7-7.9 实现。
+ * 材质级 DescriptorSet：phase7-7.8；实例级池化：phase7-7.9。
  */
 
 #pragma once
@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <kale_device/rdi_types.hpp>
+#include <kale_device/render_device.hpp>
 #include <kale_resource/resource_types.hpp>
 
 namespace kale::pipeline {
@@ -76,9 +77,41 @@ public:
         return it->second.empty() ? nullptr : it->second.data();
     }
 
+    /** 材质级 DescriptorSet：同一材质所有实例共享，包含纹理/采样器等不变资源。返回无效句柄表示尚未构建或无纹理。 */
+    kale_device::DescriptorSetHandle GetMaterialDescriptorSet() const { return materialDescriptorSet_; }
+
+    /** 根据当前 textures_ 分配并绑定材质级 DescriptorSet；无 device 或无纹理则跳过。若已有 set 会先销毁再重建。 */
+    void EnsureMaterialDescriptorSet(kale_device::IRenderDevice* device) {
+        if (!device || textures_.empty()) return;
+        if (materialDescriptorSet_.IsValid()) {
+            device->DestroyDescriptorSet(materialDescriptorSet_);
+            materialDescriptorSet_ = kale_device::DescriptorSetHandle{};
+        }
+        kale_device::DescriptorSetLayoutDesc layout;
+        layout.bindings.reserve(textures_.size());
+        for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(textures_.size()); ++i) {
+            layout.bindings.push_back({
+                i,
+                kale_device::DescriptorType::CombinedImageSampler,
+                kale_device::ShaderStage::Fragment,
+                1
+            });
+        }
+        materialDescriptorSet_ = device->CreateDescriptorSet(layout);
+        if (!materialDescriptorSet_.IsValid()) return;
+        std::uint32_t binding = 0;
+        for (const auto& [name, tex] : textures_) {
+            (void)name;
+            if (tex && tex->handle.IsValid())
+                device->WriteDescriptorSetTexture(materialDescriptorSet_, binding, tex->handle);
+            ++binding;
+        }
+    }
+
 protected:
     kale::resource::Shader* shader_ = nullptr;
     kale_device::PipelineHandle pipeline_{};
+    kale_device::DescriptorSetHandle materialDescriptorSet_{};  // 材质级共享 set，EnsureMaterialDescriptorSet 构建
     std::unordered_map<std::string, kale::resource::Texture*> textures_;
     std::unordered_map<std::string, std::vector<std::byte>> parameters_;
 };
