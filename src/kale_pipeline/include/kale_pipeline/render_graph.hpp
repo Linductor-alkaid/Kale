@@ -143,6 +143,12 @@ public:
      */
     void Execute(kale_device::IRenderDevice* device);
 
+    /**
+     * 帧末回收本帧提交的 Renderable 占用的帧内资源（如实例级 DescriptorSet）。
+     * Execute() 内部在 Submit 后调用；也可由测试或自定义流程单独调用。
+     */
+    void ReleaseFrameResources();
+
     /** Compile 失败时的错误信息（空表示无错误或未执行过 Compile）。 */
     const std::string& GetLastError() const { return compileError_; }
 
@@ -209,8 +215,6 @@ private:
     void BuildFrameDrawList();
     /** 按拓扑序单线程录制所有 Pass，返回本帧的 CommandList 列表。 */
     std::vector<kale_device::CommandList*> RecordPasses(kale_device::IRenderDevice* device);
-    /** 帧末回收（如实例级 DescriptorSet）；当前无材质系统时为空实现。 */
-    void ReleaseFrameResources();
 
     std::uint32_t resolutionWidth_ = 0;
     std::uint32_t resolutionHeight_ = 0;

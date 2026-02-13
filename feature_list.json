@@ -1491,7 +1491,7 @@
         "Execute 结束时调用 ReleaseFrameResources",
         "池化回收的 DescriptorSet 供下一帧复用"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.9", "phase6-6.12"],
       "test_verification": "帧末资源正确回收",

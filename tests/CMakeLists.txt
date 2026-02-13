@@ -153,3 +153,13 @@ target_link_libraries(test_instance_descriptor_set
         kale_device
 )
 add_test(NAME test_instance_descriptor_set COMMAND test_instance_descriptor_set)
+
+add_executable(test_release_frame_resources test_release_frame_resources.cpp)
+target_link_libraries(test_release_frame_resources
+    PRIVATE
+        kale_pipeline
+        kale_scene
+        kale_device
+        kale_resource
+)
+add_test(NAME test_release_frame_resources COMMAND test_release_frame_resources)

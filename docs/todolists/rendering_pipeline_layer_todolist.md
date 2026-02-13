@@ -114,10 +114,10 @@
 
 ### 2.4 ReleaseFrameResources
 
-- [ ] 实现 `Material::ReleaseAllInstanceDescriptorSets()` 回收本帧分配的实例级 DescriptorSet
-- [ ] 实现 `RenderGraph::ReleaseFrameResources()` 遍历本帧 SubmittedDraws 中的 Material
-- [ ] Execute 结束时调用 ReleaseFrameResources
-- [ ] 池化回收的 DescriptorSet 供下一帧复用
+- [x] 实现 `Material::ReleaseAllInstanceDescriptorSets()` 回收本帧分配的实例级 DescriptorSet
+- [x] 实现 `RenderGraph::ReleaseFrameResources()` 遍历本帧 SubmittedDraws 中的 Material
+- [x] Execute 结束时调用 ReleaseFrameResources
+- [x] 池化回收的 DescriptorSet 供下一帧复用
 
 ### 2.5 PBRMaterial
 

@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.10 ReleaseFrameResources
+状态：已完成
+- 实现：phase7-7.9 已实现 Material::ReleaseAllInstanceDescriptorSets()、RenderGraph::ReleaseFrameResources() 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()、Execute 结束时调用 ReleaseFrameResources。本会话将 RenderGraph::ReleaseFrameResources() 改为 public 以便单元测试调用；新增 test_release_frame_resources（RenderGraph 遍历提交项回收池、空 submittedDraws 不崩溃、多 renderable 均回收）。
+- 验证：编译通过，ctest 21/21 通过。rendering_pipeline_layer_todolist 2.4 已勾选。
+- feature_list.json 中 phase7-7.10 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.9 实例级 DescriptorSet 池化
 状态：已完成
 - 实现：RDI 新增 WriteDescriptorSetBuffer(set, binding, buffer, offset, range)；Material 继承 resource::Material，实现 AcquireInstanceDescriptorSet(device, instanceData, size) 从池取或新建 (DescriptorSet+UniformBuffer)，UpdateBuffer 写入实例数据并返回 set；ReleaseAllInstanceDescriptorSets() 将 inUse 回收到池。resource::Material 增加 ReleaseFrameResources() 虚函数；Renderable/StaticMesh 增加 ReleaseFrameResources() 并调用 material->ReleaseFrameResources()；RenderGraph::ReleaseFrameResources() 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()。
