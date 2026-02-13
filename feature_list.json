@@ -282,7 +282,7 @@
         "实现 Barrier（纹理资源屏障）",
         "实现 Clear / Viewport / Scissor：ClearColor、ClearDepth、SetViewport、SetScissor"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "test_verification": "接口定义完整，可以用于录制渲染命令"
