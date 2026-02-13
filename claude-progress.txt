@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase3-3.6 Mesh / Texture 数据结构（验证）
+状态：已完成
+- 验证：编译通过，ctest 50/50 通过；Mesh/SubMesh/Texture/BoundingBox 数据结构已由前期实现（resource_types.hpp），本会话将 phase3-3.6 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.8 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.5 输入状态双缓冲
 状态：已完成
 - 实现：InputManager 已维护 keyCurrent_/keyPrevious_、buttonCurrent_/buttonPrevious_ 双缓冲；Update() 开头将 current 复制到 previous 再轮询 SDL 并更新 current。键盘 IsKeyJustPressed/IsKeyJustReleased 已正确；鼠标补充公开 IsMouseButtonJustPressed 与新增 IsMouseButtonJustReleased（本帧刚释放）。

@@ -532,7 +532,7 @@
         "定义 Texture 结构（handle, width, height, format, mipLevels）",
         "定义 BoundingBox 结构"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase2-2.1"
