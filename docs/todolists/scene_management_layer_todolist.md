@@ -128,10 +128,10 @@
 
 ### 3.4 System 基类
 
-- [ ] 实现 `System` 基类
-- [ ] 纯虚 `Update(float deltaTime, EntityManager& em)`
-- [ ] 可选 `OnEntityCreated(Entity)` / `OnEntityDestroyed(Entity)`
-- [ ] 实现 `GetDependencies()` 返回 `std::vector<std::type_index>`（默认空）
+- [x] 实现 `System` 基类
+- [x] 纯虚 `Update(float deltaTime, EntityManager& em)`
+- [x] 可选 `OnEntityCreated(Entity)` / `OnEntityDestroyed(Entity)`
+- [x] 实现 `GetDependencies()` 返回 `std::vector<std::type_index>`（默认空）
 
 ### 3.5 与 executor 集成
 

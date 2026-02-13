@@ -105,3 +105,10 @@ target_link_libraries(test_entity_manager
         kale_scene
 )
 add_test(NAME test_entity_manager COMMAND test_entity_manager)
+
+add_executable(test_system_base test_system_base.cpp)
+target_link_libraries(test_system_base
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_system_base COMMAND test_system_base)

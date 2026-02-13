@@ -1375,7 +1375,7 @@
         "可选 OnEntityCreated(Entity) / OnEntityDestroyed(Entity)",
         "实现 GetDependencies() 返回 std::vector<std::type_index>（默认空）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.3"],
       "test_verification": "System 基类可正确继承和使用",
