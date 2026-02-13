@@ -99,6 +99,13 @@ target_link_libraries(test_scene_node_ref
 )
 add_test(NAME test_scene_node_ref COMMAND test_scene_node_ref)
 
+add_executable(test_camera_node test_camera_node.cpp)
+target_link_libraries(test_camera_node
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_camera_node COMMAND test_camera_node)
+
 add_executable(test_entity_component_storage test_entity_component_storage.cpp)
 target_link_libraries(test_entity_component_storage
     PRIVATE

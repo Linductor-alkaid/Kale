@@ -1909,7 +1909,7 @@
         "实现 viewMatrix、projectionMatrix 成员",
         "实现 UpdateViewProjection() 由应用层或系统在需要时调用"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase5-5.2"],
       "test_verification": "CameraNode 正确工作",

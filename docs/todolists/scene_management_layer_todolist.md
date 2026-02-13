@@ -158,10 +158,10 @@
 
 ### 4.1 CameraNode
 
-- [ ] 实现 `CameraNode : public SceneNode`
-- [ ] 实现 `fov`、`nearPlane`、`farPlane` 成员
-- [ ] 实现 `viewMatrix`、`projectionMatrix` 成员
-- [ ] 实现 `UpdateViewProjection()` 由应用层或系统在需要时调用
+- [x] 实现 `CameraNode : public SceneNode`
+- [x] 实现 `fov`、`nearPlane`、`farPlane` 成员
+- [x] 实现 `viewMatrix`、`projectionMatrix` 成员
+- [x] 实现 `UpdateViewProjection()` 由应用层或系统在需要时调用
 
 ### 4.2 CullScene 多相机
 

@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase10-10.1 CameraNode
+状态：已完成
+- 实现：CameraNode 增加 fov、nearPlane、farPlane 成员（默认 60、0.1、1000）；viewMatrix、projectionMatrix 成员；UpdateViewProjection(float aspectRatio = 16.f/9.f) 在 camera_node.cpp 中实现（viewMatrix = inverse(GetWorldMatrix())，projectionMatrix = glm::perspective(radians(fov), aspectRatio, nearPlane, farPlane)）。新增 camera_node.cpp 并加入 kale_scene。
+- 验证：编译通过，ctest 47/47 通过（新增 test_camera_node：默认 fov/near/far、UpdateViewProjection 后投影非单位、aspectRatio 影响投影、与 SceneManager 配合 view*world=identity）。
+- feature_list.json 中 phase10-10.1 的 status 更新为 completed，hold=null。scene_management_layer_todolist 4.1 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase3-3.5 同步 Load 实现（验证）
 状态：已完成
 - 验证：编译通过，ctest 46/46 通过；同步 Load 实现（Load<T>(path)、缓存检查 AddRef 返回、FindLoader 调用 Load、Register 入 Cache、GetLastError 失败原因、失败不缓存）已由前期实现，本会话将 phase3-3.5 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。resource_management_layer_todolist 1.5 已为已勾选状态。
