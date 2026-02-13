@@ -690,7 +690,7 @@
         "SceneNode 实现 SetPassFlags(PassFlags f) / GetPassFlags()",
         "默认 PassFlags::All"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "medium",
       "dependencies": [
         "phase5-5.2"

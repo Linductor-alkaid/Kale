@@ -1,4 +1,9 @@
 === 2026-02-13 (session) ===
+功能：phase5-5.5 Pass 标志（验证）
+状态：已完成
+- 验证：编译通过，ctest 50/50 通过；PassFlags（ShadowCaster、Opaque、Transparent、All）与 SceneNode::SetPassFlags/GetPassFlags、默认 PassFlags::All 已由前期实现，test_cull_scene_multi_camera、test_scene_node_factories、test_entity_manager、test_shadow_pass、test_gbuffer_pass 等覆盖 Pass 标志使用。本会话将 phase5-5.5 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。scene_management_layer_todolist 1.5 已为已勾选状态。
+
+=== 2026-02-13 (session) ===
 功能：phase5-5.4 世界矩阵计算（验证）
 状态：已完成
 - 验证：编译通过，ctest 50/50 通过；SceneManager::Update/UpdateRecursive、世界矩阵 world = parentWorld * node->GetLocalTransform() 与层级变换已由前期实现，test_scene_node_ref、test_camera_node、test_cull_scene_multi_camera、test_scene_node_factories、test_entity_manager 等覆盖场景节点层级与世界矩阵传播。本会话将 phase5-5.4 的 status 从 verifying 更新为 completed。feature_list.json 已更新，hold=null。scene_management_layer_todolist 1.4 已为已勾选状态。
