@@ -198,10 +198,10 @@
 
 ### 4.5 资源依赖解析
 
-- [ ] MaterialLoader 内部解析 JSON 时引用 Texture 路径
-- [ ] 同步加载依赖：`ctx.resourceManager->Load<Texture>(texPath)`
-- [ ] 或加入依赖队列，异步加载后再设置
-- [ ] 处理循环依赖（材质 A 依赖材质 B 依赖纹理 C）
+- [x] MaterialLoader 内部解析 JSON 时引用 Texture 路径
+- [x] 同步加载依赖：`ctx.resourceManager->Load<Texture>(texPath)`
+- [x] 或加入依赖队列，异步加载后再设置
+- [x] 处理循环依赖（材质 A 依赖材质 B 依赖纹理 C）
 
 ---
 

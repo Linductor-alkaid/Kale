@@ -365,6 +365,14 @@ target_link_libraries(test_material_loader
 )
 add_test(NAME test_material_loader COMMAND test_material_loader)
 
+add_executable(test_resource_dependency_resolution test_resource_dependency_resolution.cpp)
+target_link_libraries(test_resource_dependency_resolution
+    PRIVATE
+        kale_pipeline
+        kale_resource
+)
+add_test(NAME test_resource_dependency_resolution COMMAND test_resource_dependency_resolution)
+
 add_executable(test_shader_compiler test_shader_compiler.cpp)
 target_link_libraries(test_shader_compiler
     PRIVATE

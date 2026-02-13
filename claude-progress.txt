@@ -1,3 +1,9 @@
+=== 2026-02-13 20:22:42 (session) agent_1770984760_1139874 ===
+功能：phase13-13.14 资源依赖解析
+状态：已完成
+- 实现：MaterialLoader 内纹理路径按材质文件目录解析（ResolveTexturePath），同步 Load<Texture> 依赖；thread_local 加载栈 + RAII 检测材质→材质循环依赖；test_frame_pipeline 修正为 assert resetCount/acquireCount（Execute 使用 IsFenceSignaled 轮询不调用 WaitForFence）。
+- 验证：编译通过，ctest 77/77 通过（新增 test_resource_dependency_resolution：相对路径 materials/dep_resolve_mat.json + albedo brick.png、绝对路径 normal；resource_management_layer_todolist 4.5 四项已勾选）。phase13-13.14 status=completed，hold=null。
+
 === 2026-02-13 (session) agent_1770982211_1091062 ===
 功能：phase13-13.10 设备抽象层错误处理与生命周期
 状态：已完成

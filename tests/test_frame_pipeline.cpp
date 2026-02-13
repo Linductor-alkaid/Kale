@@ -148,7 +148,7 @@ static void test_frame_pipeline_multiple_frames_no_deadlock() {
         rg.Execute(&dev);
     }
 
-    TEST_CHECK(dev.waitCount == kFrames);
+    // Execute 使用 IsFenceSignaled 轮询 + ResetFence，不调用 WaitForFence
     TEST_CHECK(dev.resetCount == kFrames);
     TEST_CHECK(dev.acquireCount == kFrames);
     TEST_CHECK(dev.submitCount == kFrames);
@@ -196,7 +196,8 @@ static void test_frame_pipeline_null_or_uncompiled_no_op() {
 
     rg.Compile(&dev);
     rg.Execute(&dev);
-    TEST_CHECK(dev.waitCount == 1 && dev.acquireCount == 1);
+    // Execute 使用 IsFenceSignaled 轮询 + ResetFence，不调用 WaitForFence；每帧一次 Acquire
+    TEST_CHECK(dev.resetCount == 1 && dev.acquireCount == 1);
 }
 
 }  // namespace

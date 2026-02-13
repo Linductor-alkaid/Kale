@@ -2642,7 +2642,7 @@
         "或加入依赖队列，异步加载后再设置",
         "处理循环依赖（材质 A 依赖材质 B 依赖纹理 C）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase4-4.2"],
       "hold": null

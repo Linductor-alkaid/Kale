@@ -1,6 +1,8 @@
 /**
  * @file material_loader.cpp
  * @brief MaterialLoader 实现：JSON 解析、依赖纹理加载、创建 PBRMaterial
+ *
+ * phase13-13.14：纹理路径解析（相对材质文件目录或 assetPath）、循环依赖检测。
  */
 
 #include <kale_pipeline/material_loader.hpp>
@@ -10,6 +12,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 
 #include <nlohmann/json.hpp>
 
@@ -33,6 +36,31 @@ std::string ReadFileToString(const std::string& path) {
     return oss.str();
 }
 
+/** 当前正在加载的材质路径集合，用于检测材质→材质循环依赖（thread_local 以支持多线程加载） */
+thread_local std::unordered_set<std::string> g_loading_material_paths;
+
+/** 判断路径是否为绝对路径（仅 Unix / 或 Windows 盘符） */
+bool IsAbsolutePath(const std::string& path) {
+    if (path.empty()) return false;
+#if defined(_WIN32)
+    if (path.size() >= 2u && std::isalpha(static_cast<unsigned char>(path[0])) && path[1] == ':')
+        return true;
+#endif
+    return path[0] == '/';
+}
+
+/** 将纹理路径解析为可传给 Load 的路径：若 texPath 相对则相对材质文件所在目录 */
+std::string ResolveTexturePath(const std::string& materialPath,
+                               const std::string& texPath,
+                               kale::resource::ResourceManager* resourceManager) {
+    if (!resourceManager || texPath.empty()) return texPath;
+    if (IsAbsolutePath(texPath)) return resourceManager->ResolvePath(texPath);
+    const size_t lastSlash = materialPath.find_last_of("/\\");
+    if (lastSlash == std::string::npos) return resourceManager->ResolvePath(texPath);
+    const std::string baseDir = materialPath.substr(0, lastSlash + 1);
+    return resourceManager->ResolvePath(baseDir + texPath);
+}
+
 }  // namespace
 
 bool MaterialLoader::Supports(const std::string& path) const {
@@ -52,6 +80,20 @@ std::any MaterialLoader::Load(const std::string& path, kale::resource::ResourceL
 kale::resource::Material* MaterialLoader::LoadJSON(const std::string& path,
                                                   kale::resource::ResourceLoadContext& ctx) {
     if (!ctx.resourceManager) return nullptr;
+
+    // 循环依赖检测：若当前 path 已在加载栈中则说明存在材质→材质循环（phase13-13.14）
+    {
+        auto it = g_loading_material_paths.find(path);
+        if (it != g_loading_material_paths.end()) {
+            ctx.resourceManager->SetLastError("MaterialLoader: circular material dependency: " + path);
+            return nullptr;
+        }
+        g_loading_material_paths.insert(path);
+    }
+    struct LoadingGuard {
+        const std::string& path;
+        ~LoadingGuard() { g_loading_material_paths.erase(path); }
+    } guard{path};
 
     std::string content = ReadFileToString(path);
     if (content.empty()) {
@@ -74,13 +116,16 @@ kale::resource::Material* MaterialLoader::LoadJSON(const std::string& path,
 
     auto mat = std::make_unique<PBRMaterial>();
 
-    auto setTextureFromKey = [&j, &ctx, &mat](const std::string& key,
-                                               void (PBRMaterial::*setter)(kale::resource::Texture*)) {
+    // 同步加载依赖纹理；纹理路径相对材质文件目录或 assetPath 解析（phase13-13.14）
+    auto setTextureFromKey = [&j, &ctx, &mat, &path](const std::string& key,
+                                                     void (PBRMaterial::*setter)(kale::resource::Texture*)) {
         auto it = j.find(key);
         if (it == j.end() || !it->is_string()) return;
         std::string texPath = it->get<std::string>();
         if (texPath.empty()) return;
-        kale::resource::TextureHandle th = ctx.resourceManager->Load<kale::resource::Texture>(texPath);
+        const std::string resolvedTexPath = ResolveTexturePath(path, texPath, ctx.resourceManager);
+        kale::resource::TextureHandle th =
+            ctx.resourceManager->Load<kale::resource::Texture>(resolvedTexPath);
         kale::resource::Texture* tex = ctx.resourceManager->Get(th);
         if (tex) (mat.get()->*setter)(tex);
     };
