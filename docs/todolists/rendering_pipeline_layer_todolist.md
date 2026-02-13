@@ -121,13 +121,13 @@
 
 ### 2.5 PBRMaterial
 
-- [ ] 实现 `PBRMaterial : public Material`
-- [ ] 实现 `SetAlbedo(Texture* tex)`
-- [ ] 实现 `SetNormal(Texture* tex)`
-- [ ] 实现 `SetMetallic(float value)`
-- [ ] 实现 `SetRoughness(float value)`
-- [ ] 实现 `SetAO(Texture* tex)`
-- [ ] 实现 `SetEmissive(Texture* tex)`
+- [x] 实现 `PBRMaterial : public Material`
+- [x] 实现 `SetAlbedo(Texture* tex)`
+- [x] 实现 `SetNormal(Texture* tex)`
+- [x] 实现 `SetMetallic(float value)`
+- [x] 实现 `SetRoughness(float value)`
+- [x] 实现 `SetAO(Texture* tex)`
+- [x] 实现 `SetEmissive(Texture* tex)`
 
 ### 2.6 Renderable::Draw 与 Material 绑定
 

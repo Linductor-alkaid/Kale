@@ -163,3 +163,11 @@ target_link_libraries(test_release_frame_resources
         kale_resource
 )
 add_test(NAME test_release_frame_resources COMMAND test_release_frame_resources)
+
+add_executable(test_pbr_material test_pbr_material.cpp)
+target_link_libraries(test_pbr_material
+    PRIVATE
+        kale_pipeline
+        kale_resource
+)
+add_test(NAME test_pbr_material COMMAND test_pbr_material)

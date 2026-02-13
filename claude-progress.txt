@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.11 PBRMaterial
+状态：已完成
+- 实现：PBRMaterial : public Material（pbr_material.hpp），SetAlbedo/SetNormal/SetAO/SetEmissive 委托 SetTexture("albedo"|"normal"|"ao"|"emissive")，SetMetallic/SetRoughness 委托 SetParameter，GetAlbedo/GetNormal/GetAO/GetEmissive 委托 GetTexture，GetMetallic/GetRoughness 从 GetParameter 读取 float（默认 0 / 0.5）。
+- 验证：编译通过，ctest 22/22 通过（新增 test_pbr_material：默认 PBR、Set/Get 纹理与标量、继承 Material 接口）。rendering_pipeline_layer_todolist 2.5 已勾选。
+- feature_list.json 中 phase7-7.11 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.10 ReleaseFrameResources
 状态：已完成
 - 实现：phase7-7.9 已实现 Material::ReleaseAllInstanceDescriptorSets()、RenderGraph::ReleaseFrameResources() 遍历 submittedDraws_ 调用 renderable->ReleaseFrameResources()、Execute 结束时调用 ReleaseFrameResources。本会话将 RenderGraph::ReleaseFrameResources() 改为 public 以便单元测试调用；新增 test_release_frame_resources（RenderGraph 遍历提交项回收池、空 submittedDraws 不崩溃、多 renderable 均回收）。

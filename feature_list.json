@@ -1513,7 +1513,7 @@
         "实现 SetAO(Texture* tex)",
         "实现 SetEmissive(Texture* tex)"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.7"],
       "test_verification": "PBR 材质正确渲染",
