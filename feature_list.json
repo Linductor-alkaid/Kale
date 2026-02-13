@@ -882,7 +882,7 @@
         "等待 GPU 完成后 Free StagingAllocation",
         "支持 Mipmap 链上传（逐级 Copy）"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": [
         "phase6-6.3",

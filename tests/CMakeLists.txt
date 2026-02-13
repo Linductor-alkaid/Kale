@@ -115,6 +115,17 @@ target_link_libraries(test_staging_memory_manager
 )
 add_test(NAME test_staging_memory_manager COMMAND test_staging_memory_manager)
 
+add_executable(test_texture_loader_staging test_texture_loader_staging.cpp)
+target_link_libraries(test_texture_loader_staging
+    PRIVATE
+        kale_resource
+        kale_device
+)
+# 将 fixtures 复制到 build/tests，便于直接运行可执行文件时找到
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/fixtures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_test(NAME test_texture_loader_staging COMMAND test_texture_loader_staging)
+set_tests_properties(test_texture_loader_staging PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
+
 add_executable(test_draw_resource_check test_draw_resource_check.cpp)
 target_link_libraries(test_draw_resource_check
     PRIVATE
