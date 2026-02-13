@@ -1,4 +1,10 @@
 === 2026-02-13 (session) ===
+功能：phase2-2.1 资源句柄与描述符类型（验证）
+状态：已完成
+- 验证：编译通过，ctest 通过，句柄与描述符类型由 rdi_types 定义、全项目引用正常
+- feature_list.json 中 phase2-2.1 的 status 更新为 completed
+
+=== 2026-02-13 (session) ===
 功能：phase1-1.9 async_load API（验证）
 状态：已完成
 - 验证：编译通过，ctest 通过（test_executor_future 含 async_load / then 测试全部通过）
