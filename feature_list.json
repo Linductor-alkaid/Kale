@@ -2557,7 +2557,7 @@
         "验证无每帧 WaitIdle，仅使用 Fence 同步",
         "调优：减少 GL 状态切换、Vulkan 命令缓冲复用"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase5-5.10"],
       "hold": null

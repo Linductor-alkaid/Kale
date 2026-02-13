@@ -701,6 +701,16 @@ target_link_libraries(test_frame_pipeline
 )
 add_test(NAME test_frame_pipeline COMMAND test_frame_pipeline)
 
+add_executable(test_device_performance_validation test_device_performance_validation.cpp)
+target_link_libraries(test_device_performance_validation
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+        kale_executor
+)
+add_test(NAME test_device_performance_validation COMMAND test_device_performance_validation)
+
 add_executable(test_frame_sync_completion test_frame_sync_completion.cpp)
 target_link_libraries(test_frame_sync_completion
     PRIVATE

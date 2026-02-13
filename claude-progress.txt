@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.9 设备抽象层性能测试与调优
+状态：已完成
+- 实现：新增 test_device_performance_validation：Mock 设备统计 WaitIdle 调用；验证帧循环（多帧 Execute）中无 WaitIdle、多 DrawCall（100 次 SubmitRenderable + 5 帧 Execute）无 WaitIdle、多线程录制（SetScheduler + 8 帧 Execute）无 WaitIdle；确认仅使用 Fence 同步、多 DrawCall 与多线程录制不崩溃。
+- 验证：编译通过，ctest 90/90 通过。phase13-13.9 status=completed，hold=null。device_abstraction_layer_todolist 5.5 性能测试与调优三项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.7 OpenGL 状态缓存
 状态：已完成
 - 实现：OpenGLRenderDevice 增加 GLStateCache（boundProgram、boundArrayBuffer、boundElementArrayBuffer、boundUniformBuffer、boundFramebuffer、activeTextureUnit、boundTexture2D[8]）；ApplyProgram/ApplyTexture2D/ApplyBuffer/ApplyFramebuffer 仅在状态变化时调用 GL；DestroyBuffer/DestroyTexture/DestroyPipeline 时调用 Invalidate*InCache 避免绑定已删对象；OpenGLCommandList 录制路径与 CreateTexture/UpdateBuffer/MapBuffer/UnmapBuffer/UpdateTexture 均经 Apply* 走缓存。
