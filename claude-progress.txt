@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.20 渲染管线层应用层集成
+状态：已完成
+- 实现：RenderEngine::Initialize 中创建 renderGraph 后调用 SetResolution(config.width, config.height)；应用层 OnRender 流程已由 render_demo 与 design 对齐（ClearSubmitted → SubmitVisibleToRenderGraph → Execute，Run 中 OnRender 后 Present）。新增 test_render_pipeline_app_integration：Initialize → SetResolution/SetupForwardOnlyRenderGraph/Compile → 最小场景（占位符 mesh/material + 相机）→ Run 一帧（OnRender 内 ClearSubmitted/SubmitVisibleToRenderGraph/Execute）→ RequestQuit，验证无崩溃且 renderCount>=1。
+- 验证：编译通过，ctest 82/82 通过。phase13-13.20 status=completed，hold=null。rendering_pipeline_layer_todolist 应用层 OnRender 流程、Execute 完整流程、RenderEngine::Run 主循环、RenderEngine 初始化共 10 项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.19 帧流水线同步完善
 状态：已完成
 - 实现：帧同步交由设备负责。RenderGraph 移除 frameFences_/currentFrameIndex_；Execute 仅调用 AcquireNextImage（设备内 Wait 上一帧 Fence、Reset、Acquire、signal imageAvailable）再 Submit(cmdLists, {}, {}, FenceHandle{})，设备使用帧 Fence 与 imageAvailable/renderFinished 信号；RDI Submit 已支持 (cmdLists, waitSemaphores, signalSemaphores, fence)。

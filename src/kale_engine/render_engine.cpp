@@ -135,6 +135,7 @@ bool RenderEngine::Initialize(const Config& config) {
     // 9. renderGraph（注入 scheduler 以支持多线程 RecordPasses）
     impl.renderGraph = std::make_unique<kale::pipeline::RenderGraph>();
     impl.renderGraph->SetScheduler(sched);
+    impl.renderGraph->SetResolution(config.width, config.height);
 
     return true;
 }

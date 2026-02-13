@@ -289,18 +289,18 @@
 
 ### 应用层 OnRender 流程
 
-- [ ] 应用层 OnRender 中：`CullScene(camera)` → `rg->ClearSubmitted()` → 遍历 visibleNodes → `SubmitRenderable(r, worldMatrix, passFlags)` → `Execute(renderDevice)`
-- [ ] 与 SceneManager 的 CullScene 输出对齐
-- [ ] Present 由 Run 在 Execute 返回后调用，不在 Execute 内部
+- [x] 应用层 OnRender 中：`CullScene(camera)` → `rg->ClearSubmitted()` → 遍历 visibleNodes → `SubmitRenderable(r, worldMatrix, passFlags)` → `Execute(renderDevice)`
+- [x] 与 SceneManager 的 CullScene 输出对齐
+- [x] Present 由 Run 在 Execute 返回后调用，不在 Execute 内部
 
 ### Execute 完整流程
 
-- [ ] `WaitForFence(frameFence)` → `ResetFence(frameFence)` → `AcquireNextImage()` → `BuildFrameDrawList()` → `RecordPasses()` → `Submit(cmdLists, waitSem, signalSem, fence)` → `ReleaseFrameResources()` → `currentFrameIndex_` 轮转
+- [x] `WaitForFence(frameFence)` → `ResetFence(frameFence)` → `AcquireNextImage()` → `BuildFrameDrawList()` → `RecordPasses()` → `Submit(cmdLists, waitSem, signalSem, fence)` → `ReleaseFrameResources()` → `currentFrameIndex_` 轮转
 
 ### RenderEngine::Run 主循环
 
-- [ ] 主循环中：`app->OnRender()` 内部调用 `rg->Execute()`，之后 `renderDevice_->Present()`
-- [ ] 与 Run 主循环集成
+- [x] 主循环中：`app->OnRender()` 内部调用 `rg->Execute()`，之后 `renderDevice_->Present()`
+- [x] 与 Run 主循环集成
 
 ---
 
@@ -308,11 +308,11 @@
 
 ### RenderEngine 初始化
 
-- [ ] `renderGraph_ = std::make_unique<RenderGraph>(scheduler_.get())` 或 `SetScheduler`
-- [ ] `renderGraph_->SetResolution(config.width, config.height)`
-- [ ] `SetupRenderGraph(*renderGraph_)` 应用层或引擎初始化时调用
-- [ ] `renderGraph_->Compile(renderDevice_.get())` 初始化完成时调用
-- [ ] 分辨率变化时重新 Compile
+- [x] `renderGraph_ = std::make_unique<RenderGraph>(scheduler_.get())` 或 `SetScheduler`
+- [x] `renderGraph_->SetResolution(config.width, config.height)`
+- [x] `SetupRenderGraph(*renderGraph_)` 应用层或引擎初始化时调用
+- [x] `renderGraph_->Compile(renderDevice_.get())` 初始化完成时调用
+- [x] 分辨率变化时重新 Compile
 
 ### 依赖关系
 

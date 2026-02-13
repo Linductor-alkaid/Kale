@@ -2753,7 +2753,7 @@
         "SetupRenderGraph(*renderGraph_) 应用层或引擎初始化时调用",
         "renderGraph_->Compile(renderDevice_.get()) 初始化完成时调用"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase10-10.9"],
       "hold": null
