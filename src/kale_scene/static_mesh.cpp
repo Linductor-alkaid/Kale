@@ -28,7 +28,8 @@ const kale::resource::Material* StaticMesh::GetMaterial() const {
     return resourceManager_->Get<kale::resource::Material>(materialHandle_);
 }
 
-void StaticMesh::Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform) {
+void StaticMesh::Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform,
+                      kale_device::IRenderDevice* device) {
     if (!resourceManager_) return;
 
     // Mesh：确保有句柄（GetOrCreatePlaceholder），未就绪则用占位符；仅在新创建占位条目时触发 LoadAsync，避免重复
@@ -49,13 +50,15 @@ void StaticMesh::Draw(kale_device::CommandList& cmd, const glm::mat4& worldTrans
         if (created)
             resourceManager_->LoadAsync<kale::resource::Material>(materialPath_);
     }
-    const kale::resource::Material* material = nullptr;
+    kale::resource::Material* material = nullptr;
     if (materialHandle_.IsValid())
-        material = resourceManager_->Get<kale::resource::Material>(materialHandle_);
+        material = const_cast<kale::resource::Material*>(
+            resourceManager_->Get<kale::resource::Material>(materialHandle_));
     if (!material)
         material = resourceManager_->GetPlaceholderMaterial();
 
-    (void)material;  // 当前 Material 为空结构，后续 phase 用于绑定管线/描述符
+    if (material)
+        material->BindForDraw(cmd, device, &worldTransform, sizeof(glm::mat4));
 
     if (!mesh) return;
 
@@ -66,6 +69,7 @@ void StaticMesh::Draw(kale_device::CommandList& cmd, const glm::mat4& worldTrans
 
     if (!mesh->vertexBuffer.IsValid()) return;
 
+    cmd.SetPushConstants(&worldTransform, sizeof(glm::mat4), 0);
     cmd.BindVertexBuffer(0, mesh->vertexBuffer, 0);
     if (mesh->indexBuffer.IsValid() && mesh->indexCount > 0) {
         cmd.BindIndexBuffer(mesh->indexBuffer, 0, false);

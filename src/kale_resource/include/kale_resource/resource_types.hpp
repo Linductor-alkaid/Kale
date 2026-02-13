@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <vector>
@@ -16,6 +17,11 @@
 #include <glm/glm.hpp>
 #include <glm/vec3.hpp>
 #include <kale_device/rdi_types.hpp>
+
+namespace kale_device {
+class CommandList;
+class IRenderDevice;
+}
 
 namespace kale::resource {
 
@@ -105,6 +111,21 @@ struct Material {
     virtual ~Material() = default;
     /** 帧末回收：由 RenderGraph::ReleaseFrameResources 通过 Renderable 调用；默认空实现。 */
     virtual void ReleaseFrameResources() {}
+
+    /**
+     * 绘制前绑定：Pipeline、材质级 DescriptorSet(set 0)、实例级 DescriptorSet(set 1)。
+     * 子类（如 kale::pipeline::Material）实现具体绑定；默认空实现。
+     * @param device 可为 nullptr，此时不绑定实例级 set。
+     */
+    virtual void BindForDraw(kale_device::CommandList& cmd,
+                            kale_device::IRenderDevice* device,
+                            const void* instanceData,
+                            std::size_t instanceSize) {
+        (void)cmd;
+        (void)device;
+        (void)instanceData;
+        (void)instanceSize;
+    }
 };
 
 }  // namespace kale::resource

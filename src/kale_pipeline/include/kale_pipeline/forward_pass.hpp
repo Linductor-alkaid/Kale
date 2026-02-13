@@ -23,7 +23,7 @@ inline void ExecuteForwardPass(const RenderPassContext& ctx, kale_device::Comman
     auto draws = ctx.GetDrawsForPass(kale::scene::PassFlags::All);
     for (const auto& draw : draws) {
         if (draw.renderable)
-            draw.renderable->Draw(cmd, draw.worldTransform);
+            draw.renderable->Draw(cmd, draw.worldTransform, ctx.GetDevice());
     }
 }
 

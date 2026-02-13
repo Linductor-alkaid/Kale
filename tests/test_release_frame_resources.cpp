@@ -117,7 +117,7 @@ public:
         return b;
     }
     const kale::resource::Material* GetMaterial() const override { return material_; }
-    void Draw(kale_device::CommandList&, const glm::mat4&) override {}
+    void Draw(kale_device::CommandList&, const glm::mat4&, kale_device::IRenderDevice*) override {}
 
     void ReleaseFrameResources() override {
         if (material_)

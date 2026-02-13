@@ -131,12 +131,12 @@
 
 ### 2.6 Renderable::Draw 与 Material 绑定
 
-- [ ] 实现 `StaticMesh::Draw(CommandList& cmd, const glm::mat4& worldTransform)`
-- [ ] Draw 中：`cmd.BindPipeline(material_->GetPipeline())`
-- [ ] Draw 中：`cmd.BindDescriptorSet(0, material_->GetMaterialDescriptorSet())`
-- [ ] Draw 中：`material_->AcquireInstanceDescriptorSet(&worldTransform, sizeof(glm::mat4))` 并 BindDescriptorSet(1)
-- [ ] Draw 中：`cmd.SetPushConstants`、`BindVertexBuffer`、`BindIndexBuffer`、`DrawIndexed`
-- [ ] 确保 Renderable 持有 Material 非占有指针
+- [x] 实现 `StaticMesh::Draw(CommandList& cmd, const glm::mat4& worldTransform)`
+- [x] Draw 中：`cmd.BindPipeline(material_->GetPipeline())`
+- [x] Draw 中：`cmd.BindDescriptorSet(0, material_->GetMaterialDescriptorSet())`
+- [x] Draw 中：`material_->AcquireInstanceDescriptorSet(&worldTransform, sizeof(glm::mat4))` 并 BindDescriptorSet(1)
+- [x] Draw 中：`cmd.SetPushConstants`、`BindVertexBuffer`、`BindIndexBuffer`、`DrawIndexed`
+- [x] 确保 Renderable 持有 Material 非占有指针
 
 ---
 

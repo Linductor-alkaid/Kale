@@ -9,6 +9,7 @@
 #pragma once
 
 #include <kale_device/command_list.hpp>
+#include <kale_device/render_device.hpp>
 #include <kale_resource/resource_types.hpp>
 #include <glm/glm.hpp>
 
@@ -32,8 +33,12 @@ public:
     /** 返回材质资源，无材质时返回 nullptr */
     virtual const kale::resource::Material* GetMaterial() const { return nullptr; }
 
-    /** 向命令列表录制绘制命令，worldTransform 为节点世界矩阵 */
-    virtual void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform) = 0;
+    /**
+     * 向命令列表录制绘制命令，worldTransform 为节点世界矩阵。
+     * @param device 可选；非空时用于绑定实例级 DescriptorSet（如 Material::AcquireInstanceDescriptorSet），由 RenderPassContext::GetDevice() 传入。
+     */
+    virtual void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform,
+                      kale_device::IRenderDevice* device = nullptr) = 0;
 
     /** 帧末由 RenderGraph::ReleaseFrameResources 调用，用于回收实例级 DescriptorSet 等；默认空实现。 */
     virtual void ReleaseFrameResources() {}

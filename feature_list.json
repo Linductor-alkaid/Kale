@@ -1534,7 +1534,7 @@
         "Draw 中：cmd.SetPushConstants、BindVertexBuffer、BindIndexBuffer、DrawIndexed",
         "确保 Renderable 持有 Material 非占有指针"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.9", "phase5-5.10"],
       "test_verification": "Renderable 正确绑定材质并绘制",

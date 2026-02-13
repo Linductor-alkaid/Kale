@@ -171,3 +171,13 @@ target_link_libraries(test_pbr_material
         kale_resource
 )
 add_test(NAME test_pbr_material COMMAND test_pbr_material)
+
+add_executable(test_draw_material_binding test_draw_material_binding.cpp)
+target_link_libraries(test_draw_material_binding
+    PRIVATE
+        kale_pipeline
+        kale_scene
+        kale_resource
+        kale_device
+)
+add_test(NAME test_draw_material_binding COMMAND test_draw_material_binding)

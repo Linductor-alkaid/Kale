@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase7-7.12 Renderable::Draw 与 Material 绑定
+状态：已完成
+- 实现：resource::Material 增加 BindForDraw(cmd, device, instanceData, size) 虚函数（默认空）；pipeline::Material 重写 BindForDraw 调用 BindPipeline、BindDescriptorSet(0 材质级)、AcquireInstanceDescriptorSet + BindDescriptorSet(1)。RenderPassContext 增加 device 与 GetDevice()；RecordPasses 传入 device；Renderable::Draw 增加可选第三参数 IRenderDevice* device；ExecuteForwardPass 调用 Draw(cmd, worldTransform, ctx.GetDevice())；StaticMesh::Draw 调用 material->BindForDraw(cmd, device, &worldTransform, sizeof(glm::mat4))，并 SetPushConstants、BindVertexBuffer、BindIndexBuffer、DrawIndexed。
+- 验证：编译通过，ctest 23/23 通过（新增 test_draw_material_binding：BindForDraw 有 device 时 BindPipeline/BindDescriptorSet(0)/(1)、无 device 时不绑定 set1、RenderPassContext::GetDevice）。test_release_frame_resources 中 Draw 签名已更新。rendering_pipeline_layer_todolist 2.6 已勾选。
+- feature_list.json 中 phase7-7.12 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase7-7.11 PBRMaterial
 状态：已完成
 - 实现：PBRMaterial : public Material（pbr_material.hpp），SetAlbedo/SetNormal/SetAO/SetEmissive 委托 SetTexture("albedo"|"normal"|"ao"|"emissive")，SetMetallic/SetRoughness 委托 SetParameter，GetAlbedo/GetNormal/GetAO/GetEmissive 委托 GetTexture，GetMetallic/GetRoughness 从 GetParameter 读取 float（默认 0 / 0.5）。

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <kale_device/render_device.hpp>
 #include <kale_scene/renderable.hpp>
 #include <kale_scene/scene_types.hpp>
 #include <glm/glm.hpp>
@@ -29,7 +30,10 @@ struct SubmittedDraw {
  */
 class RenderPassContext {
 public:
-    explicit RenderPassContext(const std::vector<SubmittedDraw>* draws) : draws_(draws) {}
+    /** @param draws 本帧已提交的绘制项；@param device 当前渲染设备，供 Draw 时绑定实例级 DescriptorSet，可为 nullptr */
+    explicit RenderPassContext(const std::vector<SubmittedDraw>* draws,
+                              kale_device::IRenderDevice* device = nullptr)
+        : draws_(draws), device_(device) {}
 
     /** 返回本帧所有已提交的绘制项（只读）。 */
     const std::vector<SubmittedDraw>& GetSubmittedDraws() const {
@@ -50,8 +54,12 @@ public:
         return result;
     }
 
+    /** 返回当前渲染设备，供 Renderable::Draw 绑定实例级 DescriptorSet；可为 nullptr。 */
+    kale_device::IRenderDevice* GetDevice() const { return device_; }
+
 private:
     const std::vector<SubmittedDraw>* draws_ = nullptr;
+    kale_device::IRenderDevice* device_ = nullptr;
     static inline const std::vector<SubmittedDraw> empty_{};
 };
 

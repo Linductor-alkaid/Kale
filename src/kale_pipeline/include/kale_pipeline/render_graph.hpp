@@ -429,7 +429,7 @@ inline std::vector<kale_device::CommandList*> RenderGraph::RecordPasses(kale_dev
     std::vector<kale_device::CommandList*> cmdLists;
     if (!device || topologicalOrder_.empty()) return cmdLists;
 
-    RenderPassContext ctx(&submittedDraws_);
+    RenderPassContext ctx(&submittedDraws_, device);
 
     for (RenderPassHandle passIdx : topologicalOrder_) {
         if (passIdx >= passes_.size()) continue;

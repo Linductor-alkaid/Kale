@@ -37,7 +37,8 @@ public:
     kale::resource::BoundingBox GetBounds() const override;
     const kale::resource::Mesh* GetMesh() const override;
     const kale::resource::Material* GetMaterial() const override;
-    void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform) override;
+    void Draw(kale_device::CommandList& cmd, const glm::mat4& worldTransform,
+          kale_device::IRenderDevice* device = nullptr) override;
     void ReleaseFrameResources() override;
 
 private:

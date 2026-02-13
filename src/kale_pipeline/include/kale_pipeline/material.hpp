@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <kale_device/command_list.hpp>
 #include <kale_device/rdi_types.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_resource/resource_types.hpp>
@@ -165,6 +166,23 @@ public:
 
     /** 帧末由 RenderGraph::ReleaseFrameResources 通过 Renderable 调用。 */
     void ReleaseFrameResources() override { ReleaseAllInstanceDescriptorSets(); }
+
+    /** 绘制前绑定：Pipeline、材质级 set(0)、实例级 set(1)；device 为空时仅绑定 pipeline 与材质级 set。 */
+    void BindForDraw(kale_device::CommandList& cmd,
+                     kale_device::IRenderDevice* device,
+                     const void* instanceData,
+                     std::size_t instanceSize) override {
+        if (pipeline_.IsValid())
+            cmd.BindPipeline(pipeline_);
+        if (materialDescriptorSet_.IsValid())
+            cmd.BindDescriptorSet(0, materialDescriptorSet_);
+        if (device && instanceData && instanceSize > 0) {
+            kale_device::DescriptorSetHandle instanceSet =
+                AcquireInstanceDescriptorSet(device, instanceData, instanceSize);
+            if (instanceSet.IsValid())
+                cmd.BindDescriptorSet(1, instanceSet);
+        }
+    }
 
 protected:
     kale::resource::Shader* shader_ = nullptr;
