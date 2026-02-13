@@ -79,9 +79,14 @@ public:
     void DestroyEntity(Entity entity);
     bool IsAlive(Entity entity) const;
 
-    /**
+/**
      * 每帧调用：根据各 System::GetDependencies() 构建 DAG，按拓扑序执行系统。
      * 有 scheduler 时提交任务并 WaitAll；无 scheduler 时主线程顺序执行。
+     *
+     * 并行语义（phase9-9.9）：
+     * - 只读组件：无依赖的多系统并行读取，无需额外同步。
+     * - 写组件：通过 GetDependencies() 声明依赖，任务依赖保证同一实体不被并发写。
+     * - 系统间数据：可通过 GetVisibleObjectsFrameData() 的 write_buffer/end_frame 与 read_buffer 共享帧快照。
      */
     void Update(float deltaTime);
 

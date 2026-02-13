@@ -144,10 +144,10 @@
 
 ### 5.4 ECS 并行系统集成
 
-- [ ] 只读组件：多系统并行读取，无需额外同步
-- [ ] 写组件：通过任务依赖保证同一实体不被多个系统并发写
-- [ ] 系统间数据：通过 TaskData 输出槽或 FrameData 共享当前帧快照
-- [ ] EntityManager 根据 `System::GetDependencies()` 构建 DAG 后提交
+- [x] 只读组件：多系统并行读取，无需额外同步
+- [x] 写组件：通过任务依赖保证同一实体不被多个系统并发写
+- [x] 系统间数据：通过 TaskData 输出槽或 FrameData 共享当前帧快照
+- [x] EntityManager 根据 `System::GetDependencies()` 构建 DAG 后提交
 
 ### 5.5 Render Graph 并行录制集成
 

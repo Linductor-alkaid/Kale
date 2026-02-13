@@ -128,6 +128,14 @@ target_link_libraries(test_ecs_executor_integration
 )
 add_test(NAME test_ecs_executor_integration COMMAND test_ecs_executor_integration)
 
+add_executable(test_ecs_parallel_system_integration test_ecs_parallel_system_integration.cpp)
+target_link_libraries(test_ecs_parallel_system_integration
+    PRIVATE
+        kale_scene
+        kale_executor
+)
+add_test(NAME test_ecs_parallel_system_integration COMMAND test_ecs_parallel_system_integration)
+
 add_executable(test_writeback_flow test_writeback_flow.cpp)
 target_link_libraries(test_writeback_flow
     PRIVATE

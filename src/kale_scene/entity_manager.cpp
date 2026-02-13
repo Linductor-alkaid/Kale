@@ -124,7 +124,7 @@ std::vector<size_t> EntityManager::BuildSystemOrder() const {
 }
 
 void EntityManager::Update(float deltaTime) {
-    std::vector<size_t> order = BuildSystemOrder();
+    std::vector<size_t> order = BuildSystemOrder();  // DAG 拓扑序
     if (order.empty()) return;
 
     if (!scheduler_) {

@@ -1890,7 +1890,7 @@
         "系统间数据：通过 TaskData 输出槽或 FrameData 共享当前帧快照",
         "EntityManager 根据 System::GetDependencies() 构建 DAG 后提交"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.5"],
       "test_verification": "ECS 并行系统正确集成",

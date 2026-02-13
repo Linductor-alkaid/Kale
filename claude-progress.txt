@@ -1,3 +1,10 @@
+=== 2026-02-13 14:58:25 ===
+功能：phase9-9.9 ECS 并行系统集成
+状态：已完成
+- 实现：EntityManager::Update 已按 GetDependencies() 构建 DAG 并 SubmitRenderTask 与 WaitAll（phase7-7.5）；本会话在 entity_manager 中补充并行语义注释（只读/写/系统间 FrameData），新增 test_ecs_parallel_system_integration：DAG 顺序（A/B 无依赖、C 依赖 A 与 B 验证 C 读到 A/B 结果）、FrameData 写系统 end_frame、读系统依赖写系统并从 read_buffer 读取。
+- 验证：编译通过，ctest 44/44 通过（含 test_ecs_parallel_system_integration）。
+- feature_list.json 中 phase9-9.9 的 status 更新为 completed，hold=null。executor_layer_todolist 5.4 已勾选。
+
 === 2026-02-13 14:54:05 ===
 功能：phase2-2.2 IRenderDevice 接口定义（验证）
 状态：已完成
