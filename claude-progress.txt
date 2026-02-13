@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase9-9.7 Render Graph 并行录制集成
+状态：已完成
+- 实现：executor 层与 Render Graph 并行录制集成已由 phase9-9.5 在 RenderGraph::RecordPasses 中完成（按 GetTopologicalGroups 分组、SubmitRenderTask 依赖 prevLevelFutures、每任务写 result[topoPos]、主线程收集 CommandList* 提交）。本会话在 executor 层新增 test_render_graph_parallel_record_integration：验证 DAG 提交与按序收集模式（两层级 0→1,2、三层级 0→1,2→3、同层多任务并行），勾选 executor_layer_todolist 5.5。
+- 验证：编译通过，ctest 43/43 通过（含 test_render_graph_parallel_record_integration）。
+- feature_list.json 中 phase9-9.7 的 status 更新为 completed，hold=null。executor_layer_todolist 5.5 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase9-9.8 资源管理集成
 状态：已完成
 - 实现：ResourceLoadedEvent 增加 type_id（std::type_index）供主线程派发回调时构造 ResourceHandleAny；LoadAsync 成功路径在 scheduler 非空时向 GetResourceLoadedChannel() try_send(ResourceLoadedEvent{path, handle.id, typeid(T)})，否则走 EnqueueLoaded；ResourceManager 新增 ProcessLoadedResources() 从 channel try_recv 并派发已注册 LoadedCallback；ProcessLoadedCallbacks() 先调用 ProcessLoadedResources() 再处理 pendingLoaded_（同步路径）。

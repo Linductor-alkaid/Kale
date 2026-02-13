@@ -1853,7 +1853,7 @@
         "通过 std::future 收集各 Pass 的 CommandList*",
         "RDI：BeginCommandList(threadIndex) 每线程独立 CommandPool"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase9-9.5"],
       "test_verification": "Render Graph 并行录制正确",

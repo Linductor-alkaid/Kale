@@ -53,6 +53,13 @@ target_link_libraries(test_render_task_scheduler
 )
 add_test(NAME test_render_task_scheduler COMMAND test_render_task_scheduler)
 
+add_executable(test_render_graph_parallel_record_integration test_render_graph_parallel_record_integration.cpp)
+target_link_libraries(test_render_graph_parallel_record_integration
+    PRIVATE
+        kale_executor
+)
+add_test(NAME test_render_graph_parallel_record_integration COMMAND test_render_graph_parallel_record_integration)
+
 add_executable(test_resource_loader test_resource_loader.cpp)
 target_link_libraries(test_resource_loader
     PRIVATE

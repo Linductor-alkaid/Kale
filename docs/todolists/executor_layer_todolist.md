@@ -151,11 +151,11 @@
 
 ### 5.5 Render Graph 并行录制集成
 
-- [ ] 每个 Pass 对应一个任务，依赖由 Render Graph 的 DAG 决定
-- [ ] 每个 Pass 写自己的 Command List，无共享写
-- [ ] 最后提交阶段由主线程或单一任务汇总
-- [ ] 通过 `std::future` 收集各 Pass 的 CommandList*
-- [ ] RDI：`BeginCommandList(threadIndex)` 每线程独立 CommandPool
+- [x] 每个 Pass 对应一个任务，依赖由 Render Graph 的 DAG 决定
+- [x] 每个 Pass 写自己的 Command List，无共享写
+- [x] 最后提交阶段由主线程或单一任务汇总
+- [x] 通过 `std::future` 收集各 Pass 的 CommandList*
+- [x] RDI：`BeginCommandList(threadIndex)` 每线程独立 CommandPool
 
 ### 5.6 性能与验证
 
