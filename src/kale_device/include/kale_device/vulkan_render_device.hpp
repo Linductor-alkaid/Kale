@@ -143,7 +143,7 @@ public:
     const DeviceCapabilities& GetCapabilities() const override;
 
     /// 窗口 resize 时由应用调用，以便下次重建 Swapchain 使用新尺寸
-    void SetExtent(std::uint32_t width, std::uint32_t height);
+    void SetExtent(std::uint32_t width, std::uint32_t height) override;
 
     /// 仅供内部/测试：获取底层 Vulkan 上下文
     VulkanContext* GetContext() { return &context_; }

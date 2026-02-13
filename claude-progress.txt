@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase11-11.1 窗口 Resize 与 Swapchain
+状态：已完成
+- 实现：IRenderDevice 增加 SetExtent(width, height) 虚函数（默认空实现）；VulkanRenderDevice::SetExtent override 更新 width_/height_ 供 RecreateSwapchain 使用。RenderEngine::Run 中每帧从 GetWindowSystem() 取当前 GetWidth/GetHeight，若 w>0&&h>0 且与上次不同则 device->SetExtent(w,h)；若 GetWidth()==0 或 GetHeight()==0 则跳过 OnRender 与 Present（最小化空帧）。Vulkan 侧 AcquireNextImage/Present 遇 OUT_OF_DATE_KHR 时 RecreateSwapchain 已存在。
+- 验证：编译通过，ctest 27/27 通过（新增 test_window_resize_swapchain：WindowSystem Resize/GetWidth/GetHeight、Run 后 Resize 再 Run 不崩溃、最小化时跳过渲染不崩溃）。device_abstraction_layer_todolist 4.1 已勾选。
+- feature_list.json 中 phase11-11.1 的 status 更新为 completed，hold=null。
+
+=== 2026-02-13 (session) ===
 功能：phase11-11.9 主循环 Run()
 状态：已完成
 - 实现：IApplication 接口（OnUpdate(deltaTime)、OnRender()）；RenderEngine::Run(IApplication* app) 主循环：inputManager->Update() → entityManager->Update(deltaTime) → sceneManager->Update(deltaTime) → app->OnUpdate(deltaTime) → app->OnRender() → renderDevice->Present()；RequestQuit() 供应用层请求退出；deltaTime 用 std::chrono::steady_clock 计算。hello_kale 改为使用 RenderEngine::Initialize + Run(HelloKaleApp)。

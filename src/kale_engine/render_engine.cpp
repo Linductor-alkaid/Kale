@@ -193,7 +193,11 @@ void RenderEngine::Run(IApplication* app) {
     kale::scene::EntityManager* entityManager = impl.entityManager.get();
     kale::scene::SceneManager* sceneManager = impl.sceneManager.get();
     kale_device::IRenderDevice* device = impl.renderDevice.get();
+    kale_device::WindowSystem* windowSystem = impl.windowSystem.get();
     if (!inputManager || !device) return;
+
+    std::uint32_t lastWidth = 0;
+    std::uint32_t lastHeight = 0;
 
     using Clock = std::chrono::steady_clock;
     auto tPrev = Clock::now();
@@ -203,11 +207,26 @@ void RenderEngine::Run(IApplication* app) {
         tPrev = tNow;
 
         inputManager->Update();
+
+        if (windowSystem) {
+            std::uint32_t w = windowSystem->GetWidth();
+            std::uint32_t h = windowSystem->GetHeight();
+            if (w > 0 && h > 0 && (w != lastWidth || h != lastHeight)) {
+                device->SetExtent(w, h);
+                lastWidth = w;
+                lastHeight = h;
+            }
+        }
+
         if (entityManager) entityManager->Update(deltaTime);
         if (sceneManager) sceneManager->Update(deltaTime);
         app->OnUpdate(deltaTime);
-        app->OnRender();
-        device->Present();
+
+        bool skipRender = windowSystem && (windowSystem->GetWidth() == 0 || windowSystem->GetHeight() == 0);
+        if (!skipRender) {
+            app->OnRender();
+            device->Present();
+        }
     }
 }
 

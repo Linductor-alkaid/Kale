@@ -166,10 +166,10 @@
 
 ### 4.1 窗口 Resize 与 Swapchain
 
-- [ ] 实现 `WindowSystem::Resize()` 通知尺寸变化
-- [ ] Vulkan：检测 `VK_ERROR_OUT_OF_DATE_KHR`，重建 Swapchain
-- [ ] 在 `AcquireNextImage` 或 `Present` 时检测并处理
-- [ ] 最小化时：可暂停 Present 或使用空帧
+- [x] 实现 `WindowSystem::Resize()` 通知尺寸变化
+- [x] Vulkan：检测 `VK_ERROR_OUT_OF_DATE_KHR`，重建 Swapchain
+- [x] 在 `AcquireNextImage` 或 `Present` 时检测并处理
+- [x] 最小化时：可暂停 Present 或使用空帧
 
 ### 4.2 手柄支持
 

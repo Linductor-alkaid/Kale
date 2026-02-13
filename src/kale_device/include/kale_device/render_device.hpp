@@ -122,6 +122,9 @@ public:
     virtual TextureHandle GetBackBuffer() = 0;
     virtual std::uint32_t GetCurrentFrameIndex() const = 0;
 
+    /** 窗口 resize 时由引擎调用，以便下次重建 Swapchain 使用新尺寸；默认空实现。 */
+    virtual void SetExtent(std::uint32_t width, std::uint32_t height) { (void)width; (void)height; }
+
     // --- 查询 ---
     virtual const DeviceCapabilities& GetCapabilities() const = 0;
 };

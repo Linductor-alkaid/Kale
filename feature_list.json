@@ -2081,7 +2081,7 @@
         "在 AcquireNextImage 或 Present 时检测并处理",
         "最小化时：可暂停 Present 或使用空帧"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.6"],
       "test_verification": "窗口 Resize 时 Swapchain 正确重建",
