@@ -426,6 +426,15 @@ target_link_libraries(test_executor_engine_integration
 add_test(NAME test_executor_engine_integration COMMAND test_executor_engine_integration)
 set_tests_properties(test_executor_engine_integration PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_scene_layer_render_engine_integration test_scene_layer_render_engine_integration.cpp)
+target_link_libraries(test_scene_layer_render_engine_integration
+    PRIVATE
+        kale_engine
+        kale_scene
+)
+add_test(NAME test_scene_layer_render_engine_integration COMMAND test_scene_layer_render_engine_integration)
+set_tests_properties(test_scene_layer_render_engine_integration PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_resource_manager_render_engine_integration test_resource_manager_render_engine_integration.cpp)
 target_link_libraries(test_resource_manager_render_engine_integration
     PRIVATE

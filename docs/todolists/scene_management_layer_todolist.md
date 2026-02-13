@@ -215,8 +215,8 @@
 
 ### 应用层 OnRender 流程
 
-- [ ] 应用层 OnRender 中：`CullScene(camera)` → `rg->ClearSubmitted()` → 遍历 visibleNodes → `SubmitRenderable(r, worldMatrix, passFlags)` → `Execute(renderDevice)`
-- [ ] 与 Render Graph 的 SubmitRenderable 接口对齐
+- [x] 应用层 OnRender 中：`CullScene(camera)` → `rg->ClearSubmitted()` → 遍历 visibleNodes → `SubmitRenderable(r, worldMatrix, passFlags)` → `Execute(renderDevice)`
+- [x] 与 Render Graph 的 SubmitRenderable 接口对齐
 
 ### 场景切换流程
 
@@ -226,8 +226,8 @@
 
 ### 统一更新顺序
 
-- [ ] 主循环 Run() 中顺序：`inputManager->Update()` → `entityManager->Update(deltaTime)` → `sceneManager->Update(deltaTime)` → `app->OnUpdate(deltaTime)` → `app->OnRender()` → `renderDevice->Present()`
-- [ ] 与 RenderEngine 主循环集成
+- [x] 主循环 Run() 中顺序：`inputManager->Update()` → `entityManager->Update(deltaTime)` → `sceneManager->Update(deltaTime)` → `app->OnUpdate(deltaTime)` → `app->OnRender()` → `renderDevice->Present()`
+- [x] 与 RenderEngine 主循环集成
 
 ---
 
@@ -235,9 +235,9 @@
 
 ### RenderEngine 初始化
 
-- [ ] `sceneManager_ = std::make_unique<SceneManager>()`
-- [ ] `entityManager_ = std::make_unique<EntityManager>(scheduler_.get(), sceneManager_.get())`
-- [ ] 注册系统：`RegisterSystem(PhysicsSystem)`、`RegisterSystem(AnimationSystem)` 等
+- [x] `sceneManager_ = std::make_unique<SceneManager>()`
+- [x] `entityManager_ = std::make_unique<EntityManager>(scheduler_.get(), sceneManager_.get())`
+- [x] 注册系统：`RegisterSystem(PhysicsSystem)`、`RegisterSystem(AnimationSystem)` 等
 
 ### 依赖关系
 

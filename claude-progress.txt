@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.24 场景管理层 RenderEngine 集成
+状态：已完成
+- 实现：RenderEngine 已具备 sceneManager → entityManager(scheduler, sceneManager) 初始化顺序与主循环 entityManager->Update → sceneManager->Update → OnUpdate → OnRender → Present；应用层通过 GetEntityManager()->RegisterSystem() 注册系统。新增 test_scene_layer_render_engine_integration：初始化后 GetSceneManager/GetEntityManager 非空且 entityManager->GetSceneManager()==GetSceneManager()、RegisterSystem 后 Run 一帧、System::Update 在本帧被调用且 OnUpdate/OnRender 顺序正确。
+- 验证：编译通过，ctest 85/85 通过。phase13-13.24 status=completed，hold=null。scene_management_layer_todolist 统一更新顺序、RenderEngine 初始化、应用层 OnRender 流程共 7 项已勾选。
+
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.4 Executor 库集成与引擎初始化
 状态：已完成
 - 实现：确认 executor 通过 find_package/add_subdirectory 集成、kale_executor 扩展为独立库；TaskGraph::submit 内部调用 Executor::submit 已存在；RenderEngine 初始化顺序 scheduler → sceneManager → entityManager(scheduler, sceneManager) / resourceManager(scheduler) / renderGraph、EntityManager 持有 SceneManager 指针已存在。新增 test_executor_engine_integration：useExecutor=true 时 GetScheduler/GetExecutor 非空、GetEntityManager()->GetSceneManager()==GetSceneManager()、TaskGraph 经 SubmitTaskGraph 执行、useExecutor=false 时 GetScheduler 为空且 EntityManager 仍持 SceneManager。

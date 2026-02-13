@@ -2823,7 +2823,7 @@
         "entityManager_ = std::make_unique<EntityManager>(scheduler_.get(), sceneManager_.get())",
         "注册系统：RegisterSystem(PhysicsSystem)、RegisterSystem(AnimationSystem) 等"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase7-7.6"],
       "hold": null
