@@ -67,6 +67,13 @@ target_link_libraries(test_resource_loader
 )
 add_test(NAME test_resource_loader COMMAND test_resource_loader)
 
+add_executable(test_bounding_box test_bounding_box.cpp)
+target_link_libraries(test_bounding_box
+    PRIVATE
+        kale_resource
+)
+add_test(NAME test_bounding_box COMMAND test_bounding_box)
+
 add_executable(test_load_async test_load_async.cpp)
 target_link_libraries(test_load_async
     PRIVATE
