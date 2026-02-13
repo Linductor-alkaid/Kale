@@ -193,7 +193,7 @@
         "返回 ExecutorFuture<std::invoke_result_t<F, T>>",
         "避免阻塞当前线程，由 executor 调度续接任务"
       ],
-      "status": "verifying",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase1-1.7"],
       "test_verification": "链式异步操作正确执行，不阻塞主线程"
