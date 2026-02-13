@@ -143,6 +143,15 @@ target_link_libraries(test_compressed_texture_ktx
 add_test(NAME test_compressed_texture_ktx COMMAND test_compressed_texture_ktx)
 set_tests_properties(test_compressed_texture_ktx PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
 
+add_executable(test_mipmap_chain_upload test_mipmap_chain_upload.cpp)
+target_link_libraries(test_mipmap_chain_upload
+    PRIVATE
+        kale_resource
+        kale_device
+)
+add_test(NAME test_mipmap_chain_upload COMMAND test_mipmap_chain_upload)
+set_tests_properties(test_mipmap_chain_upload PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests)
+
 add_executable(test_draw_resource_check test_draw_resource_check.cpp)
 target_link_libraries(test_draw_resource_check
     PRIVATE

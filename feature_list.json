@@ -2608,7 +2608,7 @@
       "steps": [
         "支持 Mipmap 链上传（逐级 Copy）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase3-3.7"],
       "hold": null

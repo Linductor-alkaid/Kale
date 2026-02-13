@@ -1,3 +1,9 @@
+=== 2026-02-13 (session) agent_1770984760_1139874 ===
+功能：phase13-13.12 Mipmap 链上传
+状态：已完成
+- 实现：TextureLoader LoadSTB 有 Staging 时计算 mipLevels（MipLevelCount）、GenerateMipChain 生成 box 下采样链，逐 mip Allocate/SubmitUpload/FlushUploads/Free；LoadKTX 读取所有 mip（imageSize+data 循环），逐级 Staging 上传。无 Staging 时 STB 仍单 mip、KTX 仅 mip0。
+- 验证：编译通过，ctest 78/78 通过（新增 test_mipmap_chain_upload：STB 1x1 单 mip、CreateTexture mipLevels=1、CopyBufferToTexture 调用 1 次）。phase13-13.12 status=completed，hold=null。resource_management_layer_todolist 3.3 Mipmap 链上传已勾选。
+
 === 2026-02-13 20:22:42 (session) agent_1770984760_1139874 ===
 功能：phase13-13.14 资源依赖解析
 状态：已完成

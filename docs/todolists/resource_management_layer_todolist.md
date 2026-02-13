@@ -149,7 +149,7 @@
 - [x] 将解码后的像素数据写入 mappedPtr
 - [x] 通过 SubmitUpload 提交 Copy 到 GPU Texture
 - [x] 等待 GPU 完成后 Free StagingAllocation
-- [ ] 支持 Mipmap 链上传（逐级 Copy）
+- [x] 支持 Mipmap 链上传（逐级 Copy）
 
 ### 3.5 ModelLoader 集成 Staging 上传
 

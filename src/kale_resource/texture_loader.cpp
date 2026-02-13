@@ -56,6 +56,64 @@ std::size_t BytesPerPixel(kale_device::Format format) {
     }
 }
 
+/** 计算完整 mip 链层数：1 + floor(log2(min(w,h))) */
+std::uint32_t MipLevelCount(std::uint32_t w, std::uint32_t h) {
+    std::uint32_t m = (w < h) ? w : h;
+    if (m == 0) return 1;
+    std::uint32_t levels = 1;
+    while (m > 1) {
+        m /= 2;
+        ++levels;
+    }
+    return levels;
+}
+
+/**
+ * 生成未压缩格式的 mip 链（box 2x2 下采样）。
+ * 返回 mipLevels 个 (width, height, data)；data 为连续像素，行优先。
+ */
+void GenerateMipChain(std::uint32_t w, std::uint32_t h, std::size_t bpp,
+                      const void* baseData,
+                      std::vector<std::pair<std::uint32_t, std::uint32_t>>& mipSizes,
+                      std::vector<std::vector<std::uint8_t>>& mipData) {
+    mipSizes.clear();
+    mipData.clear();
+    std::uint32_t cw = w, ch = h;
+    const std::uint8_t* src = static_cast<const std::uint8_t*>(baseData);
+    while (cw >= 1 && ch >= 1) {
+        mipSizes.push_back({cw, ch});
+        std::size_t size = static_cast<std::size_t>(cw) * ch * bpp;
+        std::vector<std::uint8_t> level(size);
+        if (cw == w && ch == h) {
+            std::memcpy(level.data(), src, size);
+        } else {
+            const std::uint32_t prevW = mipSizes.size() >= 2
+                ? mipSizes[static_cast<size_t>(mipSizes.size()) - 2].first
+                : w;
+            const std::uint32_t prevH = mipSizes.size() >= 2
+                ? mipSizes[static_cast<size_t>(mipSizes.size()) - 2].second
+                : h;
+            const std::uint8_t* prev = mipData.back().data();
+            for (std::uint32_t y = 0; y < ch; ++y) {
+                for (std::uint32_t x = 0; x < cw; ++x) {
+                    for (std::size_t c = 0; c < bpp; ++c) {
+                        std::uint32_t px = x * 2, py = y * 2;
+                        std::uint64_t sum = 0;
+                        for (int dy = 0; dy < 2 && py + dy < prevH; ++dy)
+                            for (int dx = 0; dx < 2 && px + dx < prevW; ++dx)
+                                sum += prev[((py + dy) * prevW + (px + dx)) * bpp + c];
+                        level[(y * cw + x) * bpp + c] = static_cast<std::uint8_t>(sum / 4);
+                    }
+                }
+            }
+        }
+        mipData.push_back(std::move(level));
+        if (cw == 1 && ch == 1) break;
+        cw = std::max(1u, cw / 2);
+        ch = std::max(1u, ch / 2);
+    }
+}
+
 }  // namespace
 
 bool TextureLoader::Supports(const std::string& path) const {
@@ -111,20 +169,33 @@ std::unique_ptr<Texture> TextureLoader::LoadSTB(const std::string& path, Resourc
         format = kale_device::Format::RGBA8_UNORM;
     }
 
+    std::uint32_t uw = static_cast<std::uint32_t>(w);
+    std::uint32_t uh = static_cast<std::uint32_t>(h);
+    std::uint32_t mipLevels = 1;
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> mipSizes;
+    std::vector<std::vector<std::uint8_t>> mipData;
+    std::size_t bpp = BytesPerPixel(format);
+
+    if (ctx.stagingMgr && ctx.device) {
+        mipLevels = MipLevelCount(uw, uh);
+        GenerateMipChain(uw, uh, bpp, uploadData, mipSizes, mipData);
+    }
+
     kale_device::TextureDesc desc;
-    desc.width = static_cast<std::uint32_t>(w);
-    desc.height = static_cast<std::uint32_t>(h);
+    desc.width = uw;
+    desc.height = uh;
     desc.depth = 1;
-    desc.mipLevels = 1;
+    desc.mipLevels = mipLevels;
     desc.arrayLayers = 1;
     desc.format = format;
-    desc.usage = kale_device::TextureUsage::Sampled;
+    desc.usage = kale_device::TextureUsage::Sampled
+        | (ctx.stagingMgr ? kale_device::TextureUsage::Transfer : static_cast<kale_device::TextureUsage>(0));
     desc.isCube = false;
 
     kale_device::TextureHandle handle;
 
     if (ctx.stagingMgr && ctx.device) {
-        /* Staging 路径：CreateTexture(desc, nullptr) + Allocate + SubmitUpload + FlushUploads + Free(alloc, fence) */
+        /* Staging 路径：CreateTexture(desc, nullptr) + 逐 mip Allocate + SubmitUpload + FlushUploads + Free */
         handle = ctx.device->CreateTexture(desc, nullptr);
         if (!handle.IsValid()) {
             if (pixels) stbi_image_free(pixels);
@@ -133,26 +204,36 @@ std::unique_ptr<Texture> TextureLoader::LoadSTB(const std::string& path, Resourc
             }
             return nullptr;
         }
-        std::size_t bpp = BytesPerPixel(format);
-        std::size_t uploadSize = static_cast<std::size_t>(w) * static_cast<std::size_t>(h) * desc.depth * bpp;
-        StagingAllocation staging = ctx.stagingMgr->Allocate(uploadSize);
-        if (!staging.IsValid()) {
+        std::vector<StagingAllocation> stagings;
+        stagings.reserve(mipData.size());
+        bool failed = false;
+        for (size_t mip = 0; mip < mipData.size(); ++mip) {
+            std::size_t uploadSize = mipData[mip].size();
+            StagingAllocation staging = ctx.stagingMgr->Allocate(uploadSize);
+            if (!staging.IsValid()) {
+                if (ctx.resourceManager) {
+                    ctx.resourceManager->SetLastError("Staging Allocate failed for mip " + std::to_string(mip) + ": " + path);
+                }
+                failed = true;
+                break;
+            }
+            std::memcpy(staging.mappedPtr, mipData[mip].data(), uploadSize);
+            std::uint32_t mw = mipSizes[mip].first;
+            std::uint32_t mh = mipSizes[mip].second;
+            ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, static_cast<std::uint32_t>(mip), mw, mh, 1);
+            stagings.push_back(staging);
+        }
+        if (failed) {
+            for (const auto& s : stagings) ctx.stagingMgr->Free(s);
             ctx.device->DestroyTexture(handle);
             if (pixels) stbi_image_free(pixels);
-            if (ctx.resourceManager) {
-                ctx.resourceManager->SetLastError("Staging Allocate failed for: " + path);
-            }
             return nullptr;
         }
-        std::memcpy(staging.mappedPtr, uploadData, uploadSize);
-        ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, 0,
-                                    static_cast<std::uint32_t>(w), static_cast<std::uint32_t>(h), 1);
         kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
         if (fence.IsValid()) {
             ctx.device->WaitForFence(fence);
         }
-        /* 上传已完成，直接回收到池（无需延迟 Free(alloc, fence)） */
-        ctx.stagingMgr->Free(staging);
+        for (const auto& s : stagings) ctx.stagingMgr->Free(s);
         if (pixels) stbi_image_free(pixels);
     } else {
         /* 无 Staging 时回退：直接 CreateTexture(desc, data) */
@@ -168,10 +249,10 @@ std::unique_ptr<Texture> TextureLoader::LoadSTB(const std::string& path, Resourc
 
     auto tex = std::make_unique<Texture>();
     tex->handle = handle;
-    tex->width = static_cast<std::uint32_t>(w);
-    tex->height = static_cast<std::uint32_t>(h);
+    tex->width = uw;
+    tex->height = uh;
     tex->format = format;
-    tex->mipLevels = 1;
+    tex->mipLevels = desc.mipLevels;
     return tex;
 }
 
@@ -282,23 +363,31 @@ std::unique_ptr<Texture> TextureLoader::LoadKTX(const std::string& path, Resourc
         }
     }
 
-    /* 读 mip0：imageSize (4 bytes) + data */
-    std::uint32_t imageSize = readU32();
-    if (imageSize == 0) {
-        if (ctx.resourceManager) ctx.resourceManager->SetLastError("KTX mip0 size 0: " + path);
-        return nullptr;
-    }
-    std::vector<std::uint8_t> mip0Data(imageSize);
-    if (!f.read(reinterpret_cast<char*>(mip0Data.data()), imageSize)) {
-        if (ctx.resourceManager) ctx.resourceManager->SetLastError("KTX mip0 read failed: " + path);
-        return nullptr;
+    const std::uint32_t numMips = numberOfMipmapLevels > 0 ? numberOfMipmapLevels : 1;
+    /* 读取所有 mip：KTX1 每级为 imageSize (4 bytes) + data，无额外 padding */
+    std::vector<std::vector<std::uint8_t>> mipLevelData(numMips);
+    std::vector<std::uint32_t> mipWidths(numMips);
+    std::vector<std::uint32_t> mipHeights(numMips);
+    for (std::uint32_t mip = 0; mip < numMips; ++mip) {
+        std::uint32_t imageSize = readU32();
+        if (imageSize == 0) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("KTX mip " + std::to_string(mip) + " size 0: " + path);
+            return nullptr;
+        }
+        mipLevelData[mip].resize(imageSize);
+        if (!f.read(reinterpret_cast<char*>(mipLevelData[mip].data()), imageSize)) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("KTX mip " + std::to_string(mip) + " read failed: " + path);
+            return nullptr;
+        }
+        mipWidths[mip] = std::max(1u, pixelWidth >> mip);
+        mipHeights[mip] = std::max(1u, pixelHeight >> mip);
     }
 
     kale_device::TextureDesc desc;
     desc.width = pixelWidth;
     desc.height = pixelHeight;
     desc.depth = 1;
-    desc.mipLevels = numberOfMipmapLevels > 0 ? numberOfMipmapLevels : 1;
+    desc.mipLevels = numMips;
     desc.arrayLayers = 1;
     desc.format = format;
     desc.usage = kale_device::TextureUsage::Sampled | kale_device::TextureUsage::Transfer;
@@ -311,24 +400,36 @@ std::unique_ptr<Texture> TextureLoader::LoadKTX(const std::string& path, Resourc
             if (ctx.resourceManager) ctx.resourceManager->SetLastError("CreateTexture failed for KTX: " + path);
             return nullptr;
         }
-        StagingAllocation staging = ctx.stagingMgr->Allocate(imageSize);
-        if (!staging.IsValid()) {
+        std::vector<StagingAllocation> stagings;
+        stagings.reserve(numMips);
+        bool failed = false;
+        for (std::uint32_t mip = 0; mip < numMips; ++mip) {
+            std::size_t sz = mipLevelData[mip].size();
+            StagingAllocation staging = ctx.stagingMgr->Allocate(sz);
+            if (!staging.IsValid()) {
+                if (ctx.resourceManager) ctx.resourceManager->SetLastError("Staging Allocate failed for KTX mip " + std::to_string(mip) + ": " + path);
+                failed = true;
+                break;
+            }
+            std::memcpy(staging.mappedPtr, mipLevelData[mip].data(), sz);
+            ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, mip, mipWidths[mip], mipHeights[mip], 1);
+            stagings.push_back(staging);
+        }
+        if (failed) {
+            for (const auto& s : stagings) ctx.stagingMgr->Free(s);
             ctx.device->DestroyTexture(handle);
-            if (ctx.resourceManager) ctx.resourceManager->SetLastError("Staging Allocate failed for KTX: " + path);
             return nullptr;
         }
-        std::memcpy(staging.mappedPtr, mip0Data.data(), imageSize);
-        ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, 0, pixelWidth, pixelHeight, 1);
         kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
         if (fence.IsValid()) ctx.device->WaitForFence(fence);
-        ctx.stagingMgr->Free(staging);
+        for (const auto& s : stagings) ctx.stagingMgr->Free(s);
     } else {
-        /* 无 Staging：仅 RGBA8 可走 CreateTexture(desc, data)；压缩格式必须提供 StagingMgr */
+        /* 无 Staging：仅 RGBA8 可走 CreateTexture(desc, data)（仅填 mip0）；压缩格式必须提供 StagingMgr */
         if (format != kale_device::Format::RGBA8_UNORM) {
             if (ctx.resourceManager) ctx.resourceManager->SetLastError("KTX compressed format requires Staging: " + path);
             return nullptr;
         }
-        handle = ctx.device->CreateTexture(desc, mip0Data.data());
+        handle = ctx.device->CreateTexture(desc, mipLevelData[0].data());
         if (!handle.IsValid()) {
             if (ctx.resourceManager) ctx.resourceManager->SetLastError("CreateTexture failed for KTX: " + path);
             return nullptr;
