@@ -575,6 +575,17 @@ endif()
 add_test(NAME test_opengl_backend COMMAND test_opengl_backend)
 set_tests_properties(test_opengl_backend PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_opengl_state_cache test_opengl_state_cache.cpp)
+target_link_libraries(test_opengl_state_cache
+    PRIVATE
+        kale_device
+)
+if(TARGET SDL3::SDL3)
+    target_link_libraries(test_opengl_state_cache PRIVATE SDL3::SDL3)
+endif()
+add_test(NAME test_opengl_state_cache COMMAND test_opengl_state_cache)
+set_tests_properties(test_opengl_state_cache PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_shadow_pass test_shadow_pass.cpp)
 target_link_libraries(test_shadow_pass
     PRIVATE

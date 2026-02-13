@@ -146,21 +146,16 @@ void OpenGLCommandList::BeginRenderPass(const std::vector<TextureHandle>& colorA
                                         TextureHandle depthAttachment) {
     Push([this, colorAttachments, depthAttachment]() {
         if (!device_) return;
-        bool useDefaultFb = true;
-        for (const auto& th : colorAttachments) {
-            if (th.id != kBackBufferTextureId && th.id != 0) { useDefaultFb = false; break; }
-        }
-        if (depthAttachment.id != 0 && depthAttachment.id != kBackBufferTextureId) useDefaultFb = false;
-        if (useDefaultFb) {
-            pfn_BindFramebuffer(GL_FRAMEBUFFER, 0);
-        } else {
-            pfn_BindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
+        (void)colorAttachments;
+        (void)depthAttachment;
+        device_->ApplyFramebuffer(GL_FRAMEBUFFER, 0);
     });
 }
 
 void OpenGLCommandList::EndRenderPass() {
-    Push([]() { pfn_BindFramebuffer(GL_FRAMEBUFFER, 0); });
+    Push([this]() {
+        if (device_) device_->ApplyFramebuffer(GL_FRAMEBUFFER, 0);
+    });
 }
 
 void OpenGLCommandList::BindPipeline(PipelineHandle pipeline) {
@@ -168,7 +163,7 @@ void OpenGLCommandList::BindPipeline(PipelineHandle pipeline) {
         if (!device_ || !pipeline.IsValid()) return;
         auto it = device_->pipelines_.find(pipeline.id);
         if (it != device_->pipelines_.end())
-            pfn_UseProgram(it->second.glProgram);
+            device_->ApplyProgram(it->second.glProgram);
     });
 }
 
@@ -183,8 +178,7 @@ void OpenGLCommandList::BindDescriptorSet(std::uint32_t set, DescriptorSetHandle
             if (tex.id == kBackBufferTextureId) continue;
             auto tit = device_->textures_.find(tex.id);
             if (tit != device_->textures_.end()) {
-                glActiveTexture(GL_TEXTURE0 + unit);
-                pfn_BindTexture(GL_TEXTURE_2D, tit->second.glTexture);
+                device_->ApplyTexture2D(unit, tit->second.glTexture);
                 unit++;
             }
         }
@@ -192,18 +186,20 @@ void OpenGLCommandList::BindDescriptorSet(std::uint32_t set, DescriptorSetHandle
             if (!p.first.IsValid()) continue;
             auto bit = device_->buffers_.find(p.first.id);
             if (bit != device_->buffers_.end())
-                pfn_BindBuffer(GL_UNIFORM_BUFFER, bit->second.glBuffer);
+                device_->ApplyBuffer(GL_UNIFORM_BUFFER, bit->second.glBuffer);
         }
     });
+    (void)set;
 }
 
 void OpenGLCommandList::BindVertexBuffer(std::uint32_t binding, BufferHandle buffer, std::size_t offset) {
     (void)offset;
-    Push([this, binding, buffer]() {
+    (void)binding;
+    Push([this, buffer]() {
         if (!device_ || !buffer.IsValid()) return;
         auto it = device_->buffers_.find(buffer.id);
         if (it != device_->buffers_.end())
-            pfn_BindBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
+            device_->ApplyBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
     });
 }
 
@@ -213,7 +209,7 @@ void OpenGLCommandList::BindIndexBuffer(BufferHandle buffer, std::size_t offset,
         if (!device_ || !buffer.IsValid()) return;
         auto it = device_->buffers_.find(buffer.id);
         if (it != device_->buffers_.end()) {
-            pfn_BindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.glBuffer);
+            device_->ApplyBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.glBuffer);
             (void)is16Bit;
         }
     });
@@ -357,6 +353,62 @@ void OpenGLRenderDevice::EnsureContext() {
     MakeCurrent();
 }
 
+void OpenGLRenderDevice::ApplyProgram(unsigned int program) {
+    if (glStateCache_.boundProgram == program) return;
+    glStateCache_.boundProgram = program;
+    pfn_UseProgram(static_cast<GLuint>(program));
+}
+
+void OpenGLRenderDevice::ApplyTexture2D(int unit, unsigned int texture) {
+    if (unit < 0 || unit >= GLStateCache::kMaxTextureUnits) return;
+    if (glStateCache_.boundTexture2D[unit] == texture) return;
+    glStateCache_.boundTexture2D[unit] = texture;
+    if (glStateCache_.activeTextureUnit != unit) {
+        glStateCache_.activeTextureUnit = unit;
+        glActiveTexture(GL_TEXTURE0 + unit);
+    }
+    pfn_BindTexture(GL_TEXTURE_2D, static_cast<GLuint>(texture));
+}
+
+void OpenGLRenderDevice::ApplyBuffer(unsigned int target, unsigned int buffer) {
+    if (target == GL_ARRAY_BUFFER) {
+        if (glStateCache_.boundArrayBuffer == buffer) return;
+        glStateCache_.boundArrayBuffer = buffer;
+    } else if (target == GL_ELEMENT_ARRAY_BUFFER) {
+        if (glStateCache_.boundElementArrayBuffer == buffer) return;
+        glStateCache_.boundElementArrayBuffer = buffer;
+    } else if (target == GL_UNIFORM_BUFFER) {
+        if (glStateCache_.boundUniformBuffer == buffer) return;
+        glStateCache_.boundUniformBuffer = buffer;
+    } else {
+        pfn_BindBuffer(static_cast<GLenum>(target), static_cast<GLuint>(buffer));
+        return;
+    }
+    pfn_BindBuffer(static_cast<GLenum>(target), static_cast<GLuint>(buffer));
+}
+
+void OpenGLRenderDevice::ApplyFramebuffer(unsigned int target, unsigned int framebuffer) {
+    if (glStateCache_.boundFramebuffer == framebuffer) return;
+    glStateCache_.boundFramebuffer = framebuffer;
+    pfn_BindFramebuffer(static_cast<GLenum>(target), static_cast<GLuint>(framebuffer));
+}
+
+void OpenGLRenderDevice::InvalidateBufferInCache(unsigned int glBuffer) {
+    if (glStateCache_.boundArrayBuffer == glBuffer) glStateCache_.boundArrayBuffer = 0;
+    if (glStateCache_.boundElementArrayBuffer == glBuffer) glStateCache_.boundElementArrayBuffer = 0;
+    if (glStateCache_.boundUniformBuffer == glBuffer) glStateCache_.boundUniformBuffer = 0;
+}
+
+void OpenGLRenderDevice::InvalidateTextureInCache(unsigned int glTexture) {
+    for (int i = 0; i < GLStateCache::kMaxTextureUnits; ++i) {
+        if (glStateCache_.boundTexture2D[i] == glTexture) glStateCache_.boundTexture2D[i] = 0;
+    }
+}
+
+void OpenGLRenderDevice::InvalidateProgramInCache(unsigned int glProgram) {
+    if (glStateCache_.boundProgram == glProgram) glStateCache_.boundProgram = 0;
+}
+
 bool OpenGLRenderDevice::Initialize(const DeviceConfig& config) {
     if (!config.windowHandle || config.width == 0 || config.height == 0) {
         lastError_ = "OpenGL: invalid config (window or size)";
@@ -455,6 +507,9 @@ BufferHandle OpenGLRenderDevice::CreateBuffer(const BufferDesc& desc, const void
     pfn_BindBuffer(target, glBuf);
     pfn_BufferData(target, static_cast<GLsizeiptr>(desc.size), data, ToGLBufferUsage(desc.usage));
     pfn_BindBuffer(target, 0);
+    if (target == GL_ARRAY_BUFFER) glStateCache_.boundArrayBuffer = 0;
+    else if (target == GL_ELEMENT_ARRAY_BUFFER) glStateCache_.boundElementArrayBuffer = 0;
+    else if (target == GL_UNIFORM_BUFFER) glStateCache_.boundUniformBuffer = 0;
 
     std::uint64_t id = NextId();
     buffers_[id] = { glBuf, desc.size, desc.cpuVisible };
@@ -472,13 +527,13 @@ TextureHandle OpenGLRenderDevice::CreateTexture(const TextureDesc& desc, const v
     unsigned int glTex = 0;
     pfn_GenTextures(1, &glTex);
     if (!glTex) return TextureHandle{};
-    pfn_BindTexture(GL_TEXTURE_2D, glTex);
+    ApplyTexture2D(0, glTex);
     pfn_TexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(internalFormat),
                    static_cast<GLsizei>(desc.width), static_cast<GLsizei>(desc.height), 0,
                    external, type, data);
     pfn_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     pfn_TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    pfn_BindTexture(GL_TEXTURE_2D, 0);
+    ApplyTexture2D(0, 0);
 
     std::uint64_t id = NextId();
     textures_[id] = { glTex, desc.width, desc.height };
@@ -580,7 +635,10 @@ void OpenGLRenderDevice::DestroyBuffer(BufferHandle handle) {
     if (!handle.IsValid()) return;
     auto it = buffers_.find(handle.id);
     if (it != buffers_.end()) {
-        if (it->second.glBuffer) pfn_DeleteBuffers(1, &it->second.glBuffer);
+        if (it->second.glBuffer) {
+            InvalidateBufferInCache(it->second.glBuffer);
+            pfn_DeleteBuffers(1, &it->second.glBuffer);
+        }
         buffers_.erase(it);
     }
 }
@@ -589,7 +647,10 @@ void OpenGLRenderDevice::DestroyTexture(TextureHandle handle) {
     if (!handle.IsValid() || handle.id == kBackBufferTextureId) return;
     auto it = textures_.find(handle.id);
     if (it != textures_.end()) {
-        if (it->second.glTexture) pfn_DeleteTextures(1, &it->second.glTexture);
+        if (it->second.glTexture) {
+            InvalidateTextureInCache(it->second.glTexture);
+            pfn_DeleteTextures(1, &it->second.glTexture);
+        }
         textures_.erase(it);
     }
 }
@@ -607,7 +668,10 @@ void OpenGLRenderDevice::DestroyPipeline(PipelineHandle handle) {
     if (!handle.IsValid()) return;
     auto it = pipelines_.find(handle.id);
     if (it != pipelines_.end()) {
-        if (it->second.glProgram) pfn_DeleteProgram(it->second.glProgram);
+        if (it->second.glProgram) {
+            InvalidateProgramInCache(it->second.glProgram);
+            pfn_DeleteProgram(it->second.glProgram);
+        }
         pipelines_.erase(it);
     }
 }
@@ -622,9 +686,9 @@ void OpenGLRenderDevice::UpdateBuffer(BufferHandle handle, const void* data, std
     auto it = buffers_.find(handle.id);
     if (it == buffers_.end()) return;
     EnsureContext();
-    pfn_BindBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
+    ApplyBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
     pfn_BufferSubData(GL_ARRAY_BUFFER, static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(size), data);
-    pfn_BindBuffer(GL_ARRAY_BUFFER, 0);
+    ApplyBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void* OpenGLRenderDevice::MapBuffer(BufferHandle handle, std::size_t offset, std::size_t size) {
@@ -632,9 +696,9 @@ void* OpenGLRenderDevice::MapBuffer(BufferHandle handle, std::size_t offset, std
     auto it = buffers_.find(handle.id);
     if (it == buffers_.end() || !it->second.cpuVisible) return nullptr;
     EnsureContext();
-    pfn_BindBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
+    ApplyBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
     void* ptr = pfn_MapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-    pfn_BindBuffer(GL_ARRAY_BUFFER, 0);
+    ApplyBuffer(GL_ARRAY_BUFFER, 0);
     return ptr ? static_cast<char*>(ptr) + offset : nullptr;
 }
 
@@ -643,9 +707,9 @@ void OpenGLRenderDevice::UnmapBuffer(BufferHandle handle) {
     auto it = buffers_.find(handle.id);
     if (it == buffers_.end()) return;
     EnsureContext();
-    pfn_BindBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
+    ApplyBuffer(GL_ARRAY_BUFFER, it->second.glBuffer);
     pfn_UnmapBuffer(GL_ARRAY_BUFFER);
-    pfn_BindBuffer(GL_ARRAY_BUFFER, 0);
+    ApplyBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void OpenGLRenderDevice::UpdateTexture(TextureHandle handle, const void* data, std::uint32_t mipLevel) {
@@ -653,11 +717,11 @@ void OpenGLRenderDevice::UpdateTexture(TextureHandle handle, const void* data, s
     auto it = textures_.find(handle.id);
     if (it == textures_.end()) return;
     EnsureContext();
-    pfn_BindTexture(GL_TEXTURE_2D, it->second.glTexture);
+    ApplyTexture2D(0, it->second.glTexture);
     pfn_TexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(mipLevel), 0, 0,
                       static_cast<GLsizei>(it->second.width), static_cast<GLsizei>(it->second.height),
                       GL_RGBA, GL_UNSIGNED_BYTE, data);
-    pfn_BindTexture(GL_TEXTURE_2D, 0);
+    ApplyTexture2D(0, 0);
 }
 
 CommandList* OpenGLRenderDevice::BeginCommandList(std::uint32_t threadIndex) {

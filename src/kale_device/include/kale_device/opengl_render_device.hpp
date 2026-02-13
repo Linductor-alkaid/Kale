@@ -155,10 +155,30 @@ public:
     std::unordered_map<std::uint64_t, DescriptorSetRes> descriptorSets_;
     std::unordered_map<std::uint64_t, FenceRes> fences_;
 
+    /** 供 OpenGLCommandList::Execute 使用：状态缓存，仅在状态变化时调用 GL API */
+    void ApplyProgram(unsigned int program);
+    void ApplyTexture2D(int unit, unsigned int texture);
+    void ApplyBuffer(unsigned int target, unsigned int buffer);
+    void ApplyFramebuffer(unsigned int target, unsigned int framebuffer);
+    void InvalidateBufferInCache(unsigned int glBuffer);
+    void InvalidateTextureInCache(unsigned int glTexture);
+    void InvalidateProgramInCache(unsigned int glProgram);
+
     /** 供 OpenGLCommandList::Execute 使用 */
     void EnsureContext();
 
 private:
+    struct GLStateCache {
+        unsigned int boundProgram = 0;
+        unsigned int boundArrayBuffer = 0;
+        unsigned int boundElementArrayBuffer = 0;
+        unsigned int boundUniformBuffer = 0;
+        unsigned int boundFramebuffer = 0;
+        int activeTextureUnit = -1;
+        static constexpr int kMaxTextureUnits = 8;
+        unsigned int boundTexture2D[kMaxTextureUnits] = {0};
+    };
+    GLStateCache glStateCache_;
     bool MakeCurrent();
 
     void* window_ = nullptr;

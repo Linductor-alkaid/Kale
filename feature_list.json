@@ -2525,7 +2525,7 @@
         "仅在状态变化时调用 GL API",
         "缓存当前 bound pipeline、descriptor sets、vertex/index buffers"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase2-2.9"],
       "hold": null

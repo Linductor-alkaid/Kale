@@ -150,9 +150,9 @@
 
 ### 3.3 状态缓存
 
-- [ ] 实现 OpenGL 状态缓存（减少冗余 glBindTexture、glUseProgram 等）
-- [ ] 仅在状态变化时调用 GL API
-- [ ] 缓存当前 bound pipeline、descriptor sets、vertex/index buffers
+- [x] 实现 OpenGL 状态缓存（减少冗余 glBindTexture、glUseProgram 等）
+- [x] 仅在状态变化时调用 GL API
+- [x] 缓存当前 bound pipeline、descriptor sets、vertex/index buffers
 
 ### 3.4 同步与多线程
 
