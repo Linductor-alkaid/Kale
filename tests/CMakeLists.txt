@@ -338,6 +338,15 @@ target_link_libraries(test_draw_material_binding
 )
 add_test(NAME test_draw_material_binding COMMAND test_draw_material_binding)
 
+add_executable(test_instanced_draw test_instanced_draw.cpp)
+target_link_libraries(test_instanced_draw
+    PRIVATE
+        kale_pipeline
+        kale_resource
+        kale_device
+)
+add_test(NAME test_instanced_draw COMMAND test_instanced_draw)
+
 add_executable(test_material_loader test_material_loader.cpp)
 target_link_libraries(test_material_loader
     PRIVATE

@@ -226,11 +226,11 @@
 
 ### 4.4 GPU Instancing 支持
 
-- [ ] 实现批量渲染相同 Mesh 的多个实例
-- [ ] 创建 Instance Buffer 存储 per-instance 数据（modelMatrix、color 等）
-- [ ] 实现 `BindVertexBuffer(1, instanceBuffer)` 实例属性
-- [ ] 实现 `DrawIndexed(indexCount, instanceCount)` 实例绘制
-- [ ] 与 Material 的 AcquireInstanceDescriptorSet 配合或替代方案（大实例数时用 Storage Buffer）
+- [x] 实现批量渲染相同 Mesh 的多个实例
+- [x] 创建 Instance Buffer 存储 per-instance 数据（modelMatrix、color 等）
+- [x] 实现 `BindVertexBuffer(1, instanceBuffer)` 实例属性
+- [x] 实现 `DrawIndexed(indexCount, instanceCount)` 实例绘制
+- [x] 与 Material 的 AcquireInstanceDescriptorSet 配合或替代方案（大实例数时用 Storage Buffer）
 
 ### 4.5 帧流水线同步完善
 

@@ -5,6 +5,7 @@
 add_library(kale_pipeline STATIC
     placeholder.cpp
     material_loader.cpp
+    instanced_draw.cpp
     # 待实现：render_graph.cpp, material.cpp, shader_manager.cpp, passes/*
 )
 

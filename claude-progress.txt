@@ -1,5 +1,11 @@
 
 === 2026-02-13 (session) ===
+功能：phase10-10.6 GPU Instancing
+状态：已完成
+- 实现：kale_pipeline 新增 instanced_draw.hpp/cpp：CreateInstanceBuffer(device, data, size) 创建 Vertex 用途的实例缓冲；DrawInstanced(cmd, device, mesh, material, instanceBuffer, offset, instanceCount) 绑定 material（仅 pipeline+set0）、BindVertexBuffer(0, mesh)、BindVertexBuffer(1, instanceBuffer)、DrawIndexed(indexCount, instanceCount) 或 Draw(vertexCount, instanceCount)。与 Material 的 AcquireInstanceDescriptorSet 替代方案：实例数据走 binding 1，不绑定 set 1。
+- 验证：编译通过，ctest 66/66 通过（新增 test_instanced_draw：CreateInstanceBuffer null/零 size 返回无效、有效创建返回有效句柄；DrawInstanced instanceCount=0 不绘制、null mesh/instanceBuffer 不绑定、成功路径 BindVertexBuffer(1) 与 DrawIndexed(..., instanceCount) 被调用、非索引 mesh 走 Draw(vertexCount, instanceCount)）。phase10-10.6 status=completed，hold=null。rendering_pipeline_layer_todolist 4.4 GPU Instancing 五项已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase10-10.5 LOD Manager 集成
 状态：已完成
 - 实现：LODManager 类（lod_manager.hpp/cpp）SelectLOD(node, camera) 按相机与节点距离选档，SetDistanceThresholds 默认 {20,80,300}；Renderable 增加 GetLODCount()/SetCurrentLOD()；StaticMesh 增加 currentLOD_、meshLODHandles_、SetLODHandles、GetMesh() 按 currentLOD_ 返回；SceneManager 增加 SetLODManager/GetLODManager，CullScene 内视锥通过后调用 lodManager_->SelectLOD(node, camera)。

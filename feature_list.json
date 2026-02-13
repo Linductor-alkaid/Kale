@@ -2001,7 +2001,7 @@
         "实现 DrawIndexed(indexCount, instanceCount) 实例绘制",
         "与 Material 的 AcquireInstanceDescriptorSet 配合或替代方案（大实例数时用 Storage Buffer）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase7-7.12"],
       "test_verification": "GPU 实例化正确渲染",
