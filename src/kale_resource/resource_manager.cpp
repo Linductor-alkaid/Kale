@@ -30,7 +30,7 @@ std::string ensureTrailingSlash(const std::string& path) {
 
 }  // namespace
 
-ResourceManager::ResourceManager(RenderTaskScheduler* scheduler,
+ResourceManager::ResourceManager(kale::executor::RenderTaskScheduler* scheduler,
                                  kale_device::IRenderDevice* device,
                                  StagingMemoryManager* stagingMgr)
     : scheduler_(scheduler), device_(device), stagingMgr_(stagingMgr) {}

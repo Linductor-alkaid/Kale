@@ -59,3 +59,11 @@ target_link_libraries(test_resource_loader
         kale_resource
 )
 add_test(NAME test_resource_loader COMMAND test_resource_loader)
+
+add_executable(test_load_async test_load_async.cpp)
+target_link_libraries(test_load_async
+    PRIVATE
+        kale_resource
+        kale_executor
+)
+add_test(NAME test_load_async COMMAND test_load_async)

@@ -15,6 +15,8 @@
 #include <vector>
 
 #include <kale_device/render_device.hpp>
+#include <kale_executor/executor_future.hpp>
+#include <kale_executor/render_task_scheduler.hpp>
 #include <kale_resource/resource_cache.hpp>
 #include <kale_resource/resource_handle.hpp>
 #include <kale_resource/resource_loader.hpp>
@@ -22,12 +24,6 @@
 namespace kale::resource {
 
 class StagingMemoryManager;
-
-/**
- * @brief 渲染任务调度器前向声明（与 executor 层协作，LoadAsync 时使用）
- * 具体类型由上层或 executor 层定义。
- */
-struct RenderTaskScheduler;
 
 /**
  * @brief 资源管理器：统一入口，Loader 注册、路径解析、缓存委托
@@ -39,11 +35,11 @@ class ResourceManager {
 public:
     /**
      * @brief 构造
-     * @param scheduler 任务调度器（LoadAsync 用，可为 nullptr）
+     * @param scheduler 任务调度器（LoadAsync 用，可为 nullptr；为 null 时 LoadAsync 退化为同步加载并返回就绪 Future）
      * @param device 渲染设备（Loader 创建 GPU 资源）
      * @param stagingMgr 暂存内存管理（上传用，可为 nullptr）
      */
-    explicit ResourceManager(RenderTaskScheduler* scheduler,
+    explicit ResourceManager(kale::executor::RenderTaskScheduler* scheduler,
                              kale_device::IRenderDevice* device,
                              StagingMemoryManager* stagingMgr = nullptr);
 
@@ -88,6 +84,15 @@ public:
     ResourceHandle<T> Load(const std::string& path);
 
     /**
+     * @brief 异步加载资源（不阻塞主线程）
+     * @tparam T 资源类型（Mesh、Texture、Material 等）
+     * @param path 资源路径（相对 assetPath 或带别名）
+     * @return ExecutorFuture<ResourceHandle<T>>；若已缓存则返回已就绪的 Future；无 scheduler 时退化为同步加载后返回就绪 Future；失败时 Future.get() 返回空句柄
+     */
+    template <typename T>
+    kale::executor::ExecutorFuture<ResourceHandle<T>> LoadAsync(const std::string& path);
+
+    /**
      * @brief 获取最后一次错误信息（如 Load 失败原因）
      */
     std::string GetLastError() const;
@@ -105,12 +110,12 @@ public:
 
     kale_device::IRenderDevice* GetDevice() const { return device_; }
     StagingMemoryManager* GetStagingMgr() const { return stagingMgr_; }
-    RenderTaskScheduler* GetScheduler() const { return scheduler_; }
+    kale::executor::RenderTaskScheduler* GetScheduler() const { return scheduler_; }
 
 private:
     ResourceCache cache_;
     std::vector<std::unique_ptr<IResourceLoader>> loaders_;
-    RenderTaskScheduler* scheduler_ = nullptr;
+    kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
     kale_device::IRenderDevice* device_ = nullptr;
     StagingMemoryManager* stagingMgr_ = nullptr;
     std::string assetPath_;
@@ -169,6 +174,78 @@ ResourceHandle<T> ResourceManager::Load(const std::string& path) {
     }
 
     return cache_.Register<T>(resolved, ptr, true);
+}
+
+// -----------------------------------------------------------------------------
+// LoadAsync 模板实现（phase4-4.3）
+// -----------------------------------------------------------------------------
+template <typename T>
+kale::executor::ExecutorFuture<ResourceHandle<T>> ResourceManager::LoadAsync(
+    const std::string& path) {
+    const std::string resolved = ResolvePath(path);
+    const std::type_index typeId = typeid(T);
+
+    // 检查缓存：若已存在且就绪则 AddRef 并返回已就绪的 Future
+    if (auto existing = cache_.FindByPath(resolved, typeId)) {
+        ResourceHandle<T> handle{existing->id};
+        if (cache_.IsReady(handle)) {
+            cache_.AddRef(*existing);
+            kale::executor::ExecutorPromise<ResourceHandle<T>> p;
+            p.set_value(handle);
+            return p.get_future();
+        }
+        // 占位符已存在，下面 RegisterPlaceholder 会返回同一 handle
+    }
+
+    // 预注册占位条目（若已存在则返回已有句柄）
+    ResourceHandle<T> handle = cache_.RegisterPlaceholder<T>(resolved);
+
+    auto load_task = [this, resolved, typeId, handle]() -> ResourceHandle<T> {
+        if (cache_.IsReady(handle))
+            return handle;
+        IResourceLoader* loader = FindLoader(resolved, typeId);
+        if (!loader) {
+            SetLastError("No loader found for path: " + resolved);
+            cache_.Release(ToAny(handle));
+            return ResourceHandle<T>{};
+        }
+        ResourceLoadContext ctx{device_, stagingMgr_, this};
+        std::any result = loader->Load(resolved, ctx);
+        if (!result.has_value()) {
+            if (GetLastError().empty())
+                SetLastError("Load failed: " + resolved);
+            cache_.Release(ToAny(handle));
+            return ResourceHandle<T>{};
+        }
+        T* ptr = nullptr;
+        try {
+            if (auto* u = std::any_cast<std::unique_ptr<T>>(&result))
+                ptr = u->release();
+            else if (auto* p = std::any_cast<T*>(&result))
+                ptr = *p;
+        } catch (const std::bad_any_cast&) {
+            SetLastError("Loader returned invalid type for: " + resolved);
+            cache_.Release(ToAny(handle));
+            return ResourceHandle<T>{};
+        }
+        if (!ptr) {
+            SetLastError("Loader returned null for: " + resolved);
+            cache_.Release(ToAny(handle));
+            return ResourceHandle<T>{};
+        }
+        cache_.SetResource(ToAny(handle), std::any(ptr));
+        cache_.SetReady(ToAny(handle));
+        return handle;
+    };
+
+    if (scheduler_) {
+        return scheduler_->LoadResourceAsync<ResourceHandle<T>>(std::move(load_task));
+    }
+    // 无 scheduler：同步执行后返回就绪 Future
+    ResourceHandle<T> result = load_task();
+    kale::executor::ExecutorPromise<ResourceHandle<T>> p;
+    p.set_value(result);
+    return p.get_future();
 }
 
 }  // namespace kale::resource

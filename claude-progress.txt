@@ -1,3 +1,10 @@
+=== 2026-02-13 (session) ===
+功能：phase4-4.3 LoadAsync 与 executor 集成
+状态：已完成
+- 实现：ResourceManager::LoadAsync<T>(path) 模板方法；检查缓存已就绪则 AddRef 并返回 ExecutorPromise 就绪 Future；预注册 RegisterPlaceholder<T>；通过 scheduler_->LoadResourceAsync<ResourceHandle<T>>(load_task) 提交；任务内 FindLoader → Load → SetResource/SetReady，失败时 Release 占位符并返回空句柄；无 scheduler 时同步执行后返回就绪 Future
+- 验证：编译通过，ctest 通过（新增 test_load_async：无 scheduler 同步路径、有 scheduler 异步路径、已缓存就绪 Future、无 loader 返回无效句柄、占位符异步填充）；ExecutorPromise<void>::get_future 增加 inline 修复 ODR
+- feature_list.json 中 phase4-4.3 的 status 更新为 completed，hold=null；resource_management_layer_todolist 2.1 已勾选
+
 === 2026-02-13 12:00:00 ===
 功能：phase4-4.2 新扩展接口
 状态：已完成

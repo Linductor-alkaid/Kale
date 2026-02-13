@@ -89,12 +89,12 @@
 
 ### 2.1 LoadAsync 与 executor 集成
 
-- [ ] 实现 `LoadAsync<T>(path)` 模板方法
-- [ ] 检查缓存：若已存在则 `MakeReadyFuture(handle)` 返回
-- [ ] 预注册占位条目：`RegisterPlaceholder<T>(path)`
-- [ ] 提交异步任务：`scheduler_->Submit([...]() -> ResourceHandle<T>)`
-- [ ] 任务内：FindLoader → Load → SetResource → SetReady
-- [ ] 返回 `Future<ResourceHandle<T>>`
+- [x] 实现 `LoadAsync<T>(path)` 模板方法
+- [x] 检查缓存：若已存在则 `MakeReadyFuture(handle)` 返回
+- [x] 预注册占位条目：`RegisterPlaceholder<T>(path)`
+- [x] 提交异步任务：`scheduler_->Submit([...]() -> ResourceHandle<T>)`
+- [x] 任务内：FindLoader → Load → SetResource → SetReady
+- [x] 返回 `Future<ResourceHandle<T>>`
 
 ### 2.2 Future 返回与回调
 

@@ -101,7 +101,7 @@ ExecutorFuture<T> ExecutorPromise<T>::get_future() {
     return ExecutorFuture<T>(promise_.get_future());
 }
 
-ExecutorFuture<void> ExecutorPromise<void>::get_future() {
+inline ExecutorFuture<void> ExecutorPromise<void>::get_future() {
     return ExecutorFuture<void>(promise_.get_future());
 }
 
