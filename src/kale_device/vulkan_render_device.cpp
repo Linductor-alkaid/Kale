@@ -27,6 +27,7 @@ VulkanRenderDevice::~VulkanRenderDevice() {
 }
 
 bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
+    lastError_.clear();
     VulkanConfig vkConfig;
     vkConfig.windowHandle = config.windowHandle;
     vkConfig.width = config.width;
@@ -43,14 +44,17 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
     maxRecordingThreads_ = (config.maxRecordingThreads > 0u) ? config.maxRecordingThreads : 1u;
 
     if (!CreateUploadCommandPoolAndBuffer()) {
+        lastError_ = "VulkanRenderDevice: CreateUploadCommandPoolAndBuffer failed";
         Shutdown();
         return false;
     }
     if (!CreateFrameSyncObjects() || !CreateCommandPoolsAndBuffers()) {
+        lastError_ = "VulkanRenderDevice: CreateFrameSyncObjects or CreateCommandPoolsAndBuffers failed";
         Shutdown();
         return false;
     }
     if (!CreateDefaultSampler()) {
+        lastError_ = "VulkanRenderDevice: CreateDefaultSampler failed";
         Shutdown();
         return false;
     }
@@ -64,6 +68,7 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
         vmaInfo.vulkanApiVersion = VK_API_VERSION_1_0;
         VmaAllocator alloc = nullptr;
         if (vmaCreateAllocator(&vmaInfo, &alloc) != VK_SUCCESS) {
+            lastError_ = "VulkanRenderDevice: VMA allocator creation failed";
             Shutdown();
             return false;
         }
@@ -110,7 +115,8 @@ void VulkanRenderDevice::Shutdown() {
 
     VkDevice dev = context_.GetDevice();
 
-    // 先销毁依赖 texture 的 framebuffers 和 render passes
+    // 销毁顺序：先依赖资源的资源，再底层资源（phase13-13.10）
+    // 1) 依赖 texture 的 framebuffers 和 render passes
     for (auto& [id, fb] : depthFramebuffers_) {
         if (fb != VK_NULL_HANDLE) vkDestroyFramebuffer(dev, fb, nullptr);
     }
@@ -201,6 +207,7 @@ void VulkanRenderDevice::Shutdown() {
 }
 
 const std::string& VulkanRenderDevice::GetLastError() const {
+    if (!lastError_.empty()) return lastError_;
     return context_.GetLastError();
 }
 

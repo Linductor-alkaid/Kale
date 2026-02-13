@@ -269,18 +269,18 @@
 
 ### 初始化失败
 
-- [ ] `IRenderDevice::Initialize()` 返回 `false` 时，`GetLastError()` 返回详细原因
-- [ ] 调用方不继续调用其他接口，必要时调用 `Shutdown()` 清理
+- [x] `IRenderDevice::Initialize()` 返回 `false` 时，`GetLastError()` 返回详细原因
+- [x] 调用方不继续调用其他接口，必要时调用 `Shutdown()` 清理
 
 ### 资源生命周期
 
-- [ ] 句柄无效：`Handle::IsValid()` 返回 false 时，调用方不得使用
-- [ ] 销毁顺序：先销毁依赖资源的资源（如 Pipeline 依赖 Shader），再销毁底层资源
+- [x] 句柄无效：`Handle::IsValid()` 返回 false 时，调用方不得使用
+- [x] 销毁顺序：先销毁依赖资源的资源（如 Pipeline 依赖 Shader），再销毁底层资源
 
 ### 窗口与 Swapchain 重建
 
-- [ ] 窗口 resize 时正确处理 `VK_ERROR_OUT_OF_DATE_KHR`
-- [ ] 最小化时策略（暂停 Present 或空帧）
+- [x] 窗口 resize 时正确处理 `VK_ERROR_OUT_OF_DATE_KHR`
+- [x] 最小化时策略（暂停 Present 或空帧）
 
 ---
 

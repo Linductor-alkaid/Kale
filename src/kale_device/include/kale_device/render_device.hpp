@@ -56,7 +56,11 @@ enum class Backend {
 // 渲染设备接口
 // =============================================================================
 
-/** 渲染设备抽象接口：资源、命令、同步、交换链 */
+/**
+ * 渲染设备抽象接口：资源、命令、同步、交换链。
+ * 生命周期与错误处理：Initialize() 返回 false 时调用 GetLastError() 获取详细原因；句柄无效（Handle::IsValid() 为 false）时
+ * 调用方不得使用该句柄；销毁顺序由实现保证（先销毁依赖资源的资源，再销毁底层资源）。
+ */
 class IRenderDevice {
 public:
     virtual ~IRenderDevice() = default;
@@ -65,7 +69,7 @@ public:
     virtual bool Initialize(const DeviceConfig& config) = 0;
     virtual void Shutdown() = 0;
 
-    /** 初始化失败时的详细错误信息 */
+    /** 初始化失败时的详细错误信息；初始化成功后可能为空或上一错误。 */
     virtual const std::string& GetLastError() const = 0;
 
     // --- 资源创建 ---

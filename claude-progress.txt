@@ -1,4 +1,10 @@
 === 2026-02-13 (session) agent_1770982211_1091062 ===
+功能：phase13-13.10 设备抽象层错误处理与生命周期
+状态：已完成
+- 实现：VulkanRenderDevice 增加 lastError_，Initialize 各失败路径（CreateUploadCommandPoolAndBuffer、CreateFrameSyncObjects/CommandPools、CreateDefaultSampler、VMA 创建）设置详细错误；GetLastError() 优先返回 lastError_。IRenderDevice 注释明确句柄无效不得使用、销毁顺序由实现保证；Shutdown 注释销毁顺序（先 framebuffers/render passes 再 VMA/资源）。OUT_OF_DATE 与最小化由现有 AcquireNextImage/Present 与 Run(skipRender 当 width/height==0) 覆盖。
+- 验证：编译通过，ctest 76/76 通过（新增 test_device_error_lifecycle：无效 config 导致 Initialize 失败且 GetLastError 非空、有效设备上无效句柄 Destroy* 不崩溃）。phase13-13.10 status=completed，hold=null。device_abstraction_layer_todolist 错误处理与生命周期五项已勾选。
+
+=== 2026-02-13 (session) agent_1770982211_1091062 ===
 功能：phase13-13.5 集成 VMA
 状态：已完成
 - 实现：根 CMake 在 Vulkan 可用时集成 VulkanMemoryAllocator（third_party 或 FetchContent v3.0.1）；kale_device 链接 VulkanMemoryAllocator 并定义 KALE_USE_VMA。VulkanRenderDevice：Initialize 中创建 VmaAllocator，Shutdown 中先销毁 depthFramebuffers_/depthOnlyRenderPasses_，再按 bufferAllocations_/textureAllocations_ 用 vmaDestroyBuffer/vmaDestroyImage 释放并 vmaDestroyAllocator。CreateVmaOrAllocBuffer、CreateTextureInternal 在 outVmaAllocation 非空时走 vmaCreateBuffer/vmaCreateImage（含 staging 上传与 MAPPED_BIT）；CreateBuffer/CreateTexture 保存 allocation 到 bufferAllocations_/textureAllocations_，cpuVisible 时通过 vmaGetAllocationInfo 取 pMappedData。DestroyBuffer/DestroyTexture 对 VMA 分配走 vmaUnmapMemory+vmaDestroyBuffer、vmaDestroyImage。

@@ -187,6 +187,8 @@ private:
     void DestroyCommandPoolsAndBuffers();
 
     VulkanContext context_;
+    /** 设备层初始化失败时的详细错误（如 CreateFrameSyncObjects 等）；空时由 context_.GetLastError() 提供 */
+    std::string lastError_;
     DeviceCapabilities capabilities_{};
     std::uint32_t currentImageIndex_ = 0;
     std::uint32_t currentFrameIndex_ = 0;

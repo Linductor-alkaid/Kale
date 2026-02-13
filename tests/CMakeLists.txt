@@ -489,6 +489,11 @@ target_link_libraries(test_vma_integration PRIVATE kale_device)
 add_test(NAME test_vma_integration COMMAND test_vma_integration)
 set_tests_properties(test_vma_integration PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
 
+add_executable(test_device_error_lifecycle test_device_error_lifecycle.cpp)
+target_link_libraries(test_device_error_lifecycle PRIVATE kale_device)
+add_test(NAME test_device_error_lifecycle COMMAND test_device_error_lifecycle)
+set_tests_properties(test_device_error_lifecycle PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_opengl_backend test_opengl_backend.cpp)
 target_link_libraries(test_opengl_backend
     PRIVATE

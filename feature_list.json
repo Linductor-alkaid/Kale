@@ -2576,7 +2576,7 @@
         "窗口 resize 时正确处理 VK_ERROR_OUT_OF_DATE_KHR",
         "最小化时策略（暂停 Present 或空帧）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.2"],
       "hold": null
