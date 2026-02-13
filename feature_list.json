@@ -1659,7 +1659,7 @@
         "Execute 中全屏三角形 + PBR 光照计算（光照 UBO）",
         "依赖 GBuffer Pass 完成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.5"],
       "test_verification": "光照正确计算",

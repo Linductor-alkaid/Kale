@@ -162,12 +162,12 @@
 
 ### 3.3 Lighting Pass
 
-- [ ] 声明 Lighting 结果纹理：`DeclareTexture("Lighting", {1920, 1080, Format::RGBA16F})`
-- [ ] 实现 Lighting Pass：`AddPass("LightingPass", setup, execute)`
-- [ ] Setup 中 ReadTexture：gbufferAlbedo、gbufferNormal、gbufferDepth、shadowMap
-- [ ] Setup 中 WriteColor(0, lightingResult)
-- [ ] Execute 中全屏三角形 + PBR 光照计算（光照 UBO）
-- [ ] 依赖 GBuffer Pass 完成
+- [x] 声明 Lighting 结果纹理：`DeclareTexture("Lighting", {1920, 1080, Format::RGBA16F})`
+- [x] 实现 Lighting Pass：`AddPass("LightingPass", setup, execute)`
+- [x] Setup 中 ReadTexture：gbufferAlbedo、gbufferNormal、gbufferDepth、shadowMap
+- [x] Setup 中 WriteColor(0, lightingResult)
+- [x] Execute 中全屏三角形 + PBR 光照计算（光照 UBO）
+- [x] 依赖 GBuffer Pass 完成
 
 ### 3.4 Post-Process Pass
 
