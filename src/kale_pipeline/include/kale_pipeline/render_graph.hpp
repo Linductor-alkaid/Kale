@@ -159,6 +159,13 @@ public:
     const std::vector<RenderPassHandle>& GetTopologicalOrder() const { return topologicalOrder_; }
 
     /**
+     * 按依赖分组：同组内 Pass 无依赖可并行录制，组间按拓扑序串行。
+     * 仅 Compile 后有效；未 Compile 或存在环时返回空。
+     * @return 各组为 std::vector<RenderPassHandle>，groups[i] 为第 i 层，同层可并行。
+     */
+    std::vector<std::vector<RenderPassHandle>> GetTopologicalGroups() const;
+
+    /**
      * 将 RG 纹理句柄解析为 RDI TextureHandle（仅 Compile 成功后有效）。
      * 若 handle 对应 Buffer 或无效，返回 id=0 的 TextureHandle。
      */
@@ -212,6 +219,8 @@ public:
 private:
     /** Pass 依赖分析：根据 compiledPassInfo_ 的读写构建有向边，返回拓扑序；若存在环则返回空。 */
     std::vector<RenderPassHandle> BuildTopologicalOrder() const;
+    /** 按依赖分层：同层内无依赖，层间按拓扑序。仅 Compile 后有效。 */
+    std::vector<std::vector<RenderPassHandle>> BuildTopologicalGroups() const;
     /** 整理本帧绘制列表（当前为 submittedDraws_ 的引用，预留排序等扩展）。 */
     void BuildFrameDrawList();
     /** 按拓扑序单线程录制所有 Pass，返回本帧的 CommandList 列表。 */
@@ -414,6 +423,71 @@ inline std::vector<RenderPassHandle> RenderGraph::BuildTopologicalOrder() const 
 
     if (order.size() != n) return {};  // 存在环
     return order;
+}
+
+inline std::vector<std::vector<RenderPassHandle>> RenderGraph::GetTopologicalGroups() const {
+    if (!IsCompiled() || topologicalOrder_.empty()) return {};
+    return BuildTopologicalGroups();
+}
+
+inline std::vector<std::vector<RenderPassHandle>> RenderGraph::BuildTopologicalGroups() const {
+    const size_t n = passes_.size();
+    if (n == 0 || compiledPassInfo_.size() != n) return {};
+
+    auto writersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (const auto& p : info.colorOutputs) if (p.second == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+            if (info.depthOutput == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+    auto readersOf = [this](RGResourceHandle h) -> std::vector<RenderPassHandle> {
+        std::vector<RenderPassHandle> out;
+        for (size_t i = 0; i < compiledPassInfo_.size(); ++i) {
+            const auto& info = compiledPassInfo_[i];
+            for (RGResourceHandle r : info.readTextures) if (r == h) { out.push_back(static_cast<RenderPassHandle>(i)); break; }
+        }
+        return out;
+    };
+
+    std::set<std::pair<RenderPassHandle, RenderPassHandle>> edges;
+    for (size_t i = 0; i < resources_.size(); ++i) {
+        RGResourceHandle h = static_cast<RGResourceHandle>(i + 1);
+        std::vector<RenderPassHandle> writers = writersOf(h);
+        std::vector<RenderPassHandle> readers = readersOf(h);
+        for (RenderPassHandle w : writers)
+            for (RenderPassHandle r : readers)
+                if (w != r) edges.insert({w, r});
+    }
+
+    std::vector<std::vector<RenderPassHandle>> inEdges(n);
+    for (const auto& e : edges)
+        inEdges[e.second].push_back(e.first);
+
+    std::vector<int> level(static_cast<size_t>(n), 0);
+    for (RenderPassHandle passIdx : topologicalOrder_) {
+        const auto& preds = inEdges[passIdx];
+        if (preds.empty())
+            level[passIdx] = 0;
+        else {
+            int maxPred = -1;
+            for (RenderPassHandle p : preds) {
+                int lp = level[p];
+                if (lp > maxPred) maxPred = lp;
+            }
+            level[passIdx] = maxPred + 1;
+        }
+    }
+
+    int maxLevel = -1;
+    for (int l : level) if (l > maxLevel) maxLevel = l;
+    std::vector<std::vector<RenderPassHandle>> groups(static_cast<size_t>(maxLevel + 1));
+    for (size_t i = 0; i < n; ++i)
+        groups[static_cast<size_t>(level[i])].push_back(static_cast<RenderPassHandle>(i));
+
+    return groups;
 }
 
 inline void RenderGraph::BuildFrameDrawList() {

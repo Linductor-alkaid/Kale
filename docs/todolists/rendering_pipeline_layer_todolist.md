@@ -202,10 +202,10 @@
 
 ### 4.1 Pass DAG 拓扑序分组
 
-- [ ] 实现 `GetTopologicalGroups()` 按依赖分组
-- [ ] 同组内 Pass 无依赖，可并行录制
-- [ ] 组间按拓扑序串行执行
-- [ ] 示例：Shadow 先执行；GBuffer 依赖 Shadow；Lighting 依赖 GBuffer 等
+- [x] 实现 `GetTopologicalGroups()` 按依赖分组
+- [x] 同组内 Pass 无依赖，可并行录制
+- [x] 组间按拓扑序串行执行
+- [x] 示例：Shadow 先执行；GBuffer 依赖 Shadow；Lighting 依赖 GBuffer 等
 
 ### 4.2 多线程命令录制
 

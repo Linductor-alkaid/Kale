@@ -292,6 +292,15 @@ target_link_libraries(test_setup_render_graph
 )
 add_test(NAME test_setup_render_graph COMMAND test_setup_render_graph)
 
+add_executable(test_topological_groups test_topological_groups.cpp)
+target_link_libraries(test_topological_groups
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_topological_groups COMMAND test_topological_groups)
+
 add_executable(test_full_model_loader test_full_model_loader.cpp)
 target_link_libraries(test_full_model_loader
     PRIVATE

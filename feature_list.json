@@ -1792,7 +1792,7 @@
         "组间按拓扑序串行执行",
         "示例：Shadow 先执行；GBuffer 依赖 Shadow；Lighting 依赖 GBuffer 等"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.9"],
       "test_verification": "Pass 正确分组并行",
