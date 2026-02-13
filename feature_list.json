@@ -1736,7 +1736,7 @@
         "与 RenderTaskScheduler::ParallelRecordCommands 集成",
         "验证 ParallelRecordCommands 时每线程独立录制无竞争"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase2-2.5"],
       "test_verification": "多线程命令录制无竞争",

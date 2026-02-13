@@ -30,6 +30,8 @@ struct DeviceConfig {
     bool enableValidation = false;
     bool vsync = true;
     std::uint32_t backBufferCount = 3;
+    /** 多线程命令录制时预分配的 CommandPool 数量（Vulkan 每线程独立 Pool，至少 1） */
+    std::uint32_t maxRecordingThreads = 4;
 };
 
 /** 设备能力查询结果 */

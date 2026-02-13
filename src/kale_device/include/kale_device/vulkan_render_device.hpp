@@ -190,6 +190,7 @@ private:
     std::uint32_t currentFrameIndex_ = 0;
     std::uint32_t width_ = 0;
     std::uint32_t height_ = 0;
+    std::uint32_t maxRecordingThreads_ = 1;
     static constexpr std::uint32_t kMaxFramesInFlight = 3;
 
     // 资源表（Phase 2.4）

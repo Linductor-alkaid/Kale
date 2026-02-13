@@ -34,6 +34,7 @@ bool VulkanRenderDevice::Initialize(const DeviceConfig& config) {
     }
     width_ = config.width;
     height_ = config.height;
+    maxRecordingThreads_ = (config.maxRecordingThreads > 0u) ? config.maxRecordingThreads : 1u;
 
     if (!CreateUploadCommandPoolAndBuffer()) {
         Shutdown();
@@ -1358,7 +1359,7 @@ void VulkanRenderDevice::DestroyDefaultSampler() {
 bool VulkanRenderDevice::CreateCommandPoolsAndBuffers() {
     VkDevice dev = context_.GetDevice();
     std::uint32_t queueFamily = context_.GetGraphicsQueueFamilyIndex();
-    const std::uint32_t maxThreads = 1u;
+    const std::uint32_t maxThreads = (maxRecordingThreads_ > 0u) ? maxRecordingThreads_ : 1u;
     commandPools_.resize(maxThreads);
     commandBuffers_.resize(maxThreads);
     commandListPool_.resize(maxThreads);

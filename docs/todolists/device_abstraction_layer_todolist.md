@@ -208,11 +208,11 @@
 
 ### 5.1 Vulkan 多线程 CommandPool
 
-- [ ] 预分配每线程独立 CommandPool（`std::vector<VkCommandPool> commandPools_`）
-- [ ] `BeginCommandList(threadIndex)` 从 `commandPools_[threadIndex]` 分配
-- [ ] Submit 时按拓扑序合并多个 CommandList
+- [x] 预分配每线程独立 CommandPool（`std::vector<VkCommandPool> commandPools_`）
+- [x] `BeginCommandList(threadIndex)` 从 `commandPools_[threadIndex]` 分配
+- [x] Submit 时按拓扑序合并多个 CommandList
 - [ ] 与 `RenderTaskScheduler::ParallelRecordCommands` 集成
-- [ ] 验证 `ParallelRecordCommands` 时每线程独立录制无竞争
+- [x] 验证 `ParallelRecordCommands` 时每线程独立录制无竞争
 
 ### 5.2 DescriptorSet 池化
 

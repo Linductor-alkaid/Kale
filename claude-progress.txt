@@ -1,4 +1,11 @@
 === 2026-02-13 (session) ===
+功能：phase9-9.1 Vulkan 多线程 CommandPool
+状态：已完成
+- 实现：DeviceConfig 增加 maxRecordingThreads（默认 4）；VulkanRenderDevice 在 Initialize 中保存并用于 CreateCommandPoolsAndBuffers，预分配多线程独立 CommandPool；BeginCommandList(threadIndex) 从 commandPools_[threadIndex] 分配，threadIndex >= maxRecordingThreads 返回 nullptr；Submit 已支持多 CommandList 按序合并。
+- 验证：编译通过，ctest 39/39 通过（新增 test_vulkan_multithread_command_pool：config 默认值、4 池 Begin/End/Submit、越界返回 nullptr、单线程池兼容）。
+- feature_list.json 中 phase9-9.1 的 status 更新为 completed，hold=null。device_abstraction_layer_todolist 5.1 已勾选。
+
+=== 2026-02-13 (session) ===
 功能：phase9-9.4 Pass DAG 拓扑序分组
 状态：已完成
 - 实现：RenderGraph::GetTopologicalGroups() 按依赖分层：与 BuildTopologicalOrder 相同读写建边，构建 inEdges，按拓扑序计算每 Pass 的 level（无前驱为 0，否则 1+max(前驱 level)），按 level 分组返回 std::vector<std::vector<RenderPassHandle>>；未 Compile 或空图返回空。同组内 Pass 无依赖可并行录制，组间按拓扑序串行。

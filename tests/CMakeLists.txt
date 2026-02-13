@@ -238,6 +238,14 @@ target_link_libraries(test_gamepad_support
 )
 add_test(NAME test_gamepad_support COMMAND test_gamepad_support)
 
+add_executable(test_vulkan_multithread_command_pool test_vulkan_multithread_command_pool.cpp)
+target_link_libraries(test_vulkan_multithread_command_pool
+    PRIVATE
+        kale_device
+)
+add_test(NAME test_vulkan_multithread_command_pool COMMAND test_vulkan_multithread_command_pool)
+set_tests_properties(test_vulkan_multithread_command_pool PROPERTIES ENVIRONMENT "SDL_VIDEODRIVER=dummy")
+
 add_executable(test_shadow_pass test_shadow_pass.cpp)
 target_link_libraries(test_shadow_pass
     PRIVATE
