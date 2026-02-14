@@ -630,9 +630,9 @@ inline kale_device::CommandList* RenderGraph::RecordOnePass(kale_device::IRender
             auto th = GetCompiledTexture(p.second);
             if (th.IsValid()) colorAttachments.push_back(th);
         }
-        if (info.depthOutput != kInvalidRGResourceHandle)
-            depthAttachment = GetCompiledTexture(info.depthOutput);
     }
+    if (info.depthOutput != kInvalidRGResourceHandle)
+        depthAttachment = GetCompiledTexture(info.depthOutput);
 
     const bool hasRenderTarget = !colorAttachments.empty() || depthAttachment.IsValid();
     if (hasRenderTarget) {

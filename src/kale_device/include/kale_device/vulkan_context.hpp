@@ -79,6 +79,9 @@ public:
     /// 获取 Swapchain 第 index 张图像的 VkImage（0 <= index < GetSwapchainImageCount()）
     VkImage GetSwapchainImage(uint32_t index) const;
 
+    /// 获取 Swapchain 第 index 张图像的 VkImageView（供 color+depth framebuffer 创建使用）
+    VkImageView GetSwapchainImageView(uint32_t index) const;
+
     /// Swapchain 图像格式（VkFormat，用于 Render Pass、Framebuffer）
     uint32_t GetSwapchainFormat() const { return swapchainFormat_; }
 

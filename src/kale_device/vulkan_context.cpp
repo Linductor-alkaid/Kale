@@ -322,6 +322,11 @@ VkImage VulkanContext::GetSwapchainImage(uint32_t index) const {
     return swapchainImages_[index];
 }
 
+VkImageView VulkanContext::GetSwapchainImageView(uint32_t index) const {
+    if (index >= swapchainImageViews_.size()) return nullptr;
+    return swapchainImageViews_[index];
+}
+
 VkFramebuffer VulkanContext::GetFramebuffer(uint32_t imageIndex) const {
     if (imageIndex >= framebuffers_.size()) return nullptr;
     return framebuffers_[imageIndex];

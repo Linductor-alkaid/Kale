@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -179,6 +180,11 @@ private:
     VkRenderPass GetOrCreateDepthOnlyRenderPass(VkFormat depthFormat);
     /** 深度仅 Pass：按纹理句柄缓存 VkFramebuffer */
     VkFramebuffer GetOrCreateDepthFramebuffer(TextureHandle depthTex);
+    /** Color+Depth Pass：swapchain + depth，按 (colorFormat, depthFormat) 缓存 */
+    VkRenderPass GetOrCreateColorDepthRenderPass(VkFormat colorFormat, VkFormat depthFormat);
+    /** Swapchain+Depth Framebuffer：按 (imageIndex, depthTexId) 缓存；swapchain 重建时需清空 */
+    VkFramebuffer GetOrCreateSwapchainFramebufferWithDepth(std::uint32_t imageIndex, TextureHandle depthTex);
+    void ClearSwapchainFramebuffersWithDepth();
     bool CreateUploadCommandPoolAndBuffer();
     void DestroyUploadCommandPoolAndBuffer();
     bool CreateFrameSyncObjects();
@@ -208,6 +214,8 @@ private:
     VkSampler defaultSampler_ = VK_NULL_HANDLE;  // 材质纹理 WriteDescriptorSetTexture 用
     std::map<VkFormat, VkRenderPass> depthOnlyRenderPasses_;
     std::unordered_map<std::uint64_t, VkFramebuffer> depthFramebuffers_;
+    std::map<std::pair<VkFormat, VkFormat>, VkRenderPass> colorDepthRenderPasses_;
+    std::map<std::pair<std::uint32_t, std::uint64_t>, VkFramebuffer> swapchainFramebuffersWithDepth_;
     std::uint64_t nextBufferId_ = 1;
     std::uint64_t nextTextureId_ = 1;
     std::uint64_t nextShaderId_ = 1;

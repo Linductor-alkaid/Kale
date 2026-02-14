@@ -164,10 +164,8 @@ std::unique_ptr<kale::pipeline::Material> CreateCubeMaterial(
     pipelineDesc.topology = kale_device::PrimitiveTopology::TriangleList;
     pipelineDesc.rasterization.cullEnable = true;
     pipelineDesc.rasterization.frontFaceCCW = true;
-    // 当前 Vulkan BeginRenderPass 在 writesSwapchain 时忽略 depth attachment，无深度缓冲。
-    // 禁用 depth test 以显示立方体；后续需在设备层支持 color+depth 的 render pass。
-    pipelineDesc.depthStencil.depthTestEnable = false;
-    pipelineDesc.depthStencil.depthWriteEnable = false;
+    pipelineDesc.depthStencil.depthTestEnable = true;
+    pipelineDesc.depthStencil.depthWriteEnable = true;
     pipelineDesc.colorAttachmentFormats = {kale_device::Format::RGBA8_SRGB};
     pipelineDesc.depthAttachmentFormat = kale_device::Format::D24S8;
 
@@ -235,7 +233,7 @@ int main() {
     config.height = 768;
     config.title = "Kale Render Demo - 完整渲染示例";
     config.enableValidation = false;
-    config.useExecutor = false;  // 禁用 executor 避免关闭时阻塞
+    config.useExecutor = true; 
 
     if (!engine.Initialize(config)) {
         std::cerr << "RenderEngine::Initialize failed: " << engine.GetLastError() << "\n";
