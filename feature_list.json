@@ -2846,6 +2846,65 @@
       "priority": "high",
       "dependencies": ["phase7-7.6"],
       "hold": null
+    },
+    {
+      "id": "phase14-14.1",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "14",
+      "title": "Tone Mapping 实现",
+      "description": "在 Post-Process Pass 中实现 HDR 到 LDR 的色调映射",
+      "steps": [
+        "编写 tone_mapping.vert / tone_mapping.frag 全屏三角形着色器",
+        "实现 ACES 或 Reinhard 等 Tone Mapping 算法",
+        "ExecutePostProcessPass 中 BindPipeline、BindDescriptorSet(Lighting 纹理)、Draw(3)",
+        "支持曝光等可调参数（可选：通过 PushConstant 或 UBO 传入）"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase8-8.7", "phase8-8.3"],
+      "test_verification": "Tone Mapping 正确将 HDR Lighting 输出映射到 LDR FinalColor",
+      "hold": null
+    },
+    {
+      "id": "phase14-14.2",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "14",
+      "title": "Bloom 实现",
+      "description": "在 Post-Process 管线中实现泛光效果",
+      "steps": [
+        "声明 Bloom 中间纹理（亮度提取、水平/垂直模糊、合成）",
+        "实现亮度提取 Pass：阈值提取高亮区域",
+        "实现高斯模糊 Pass：双 Pass 分离（水平 + 垂直）或单 Pass",
+        "实现合成 Pass：原图 + Bloom 纹理混合",
+        "将 Bloom 链接入 PostProcess Pass 或拆分为多 Pass（ExtractBrightness → BlurH → BlurV → Composite）",
+        "支持 Bloom 强度、阈值等可调参数"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase14-14.1"],
+      "test_verification": "Bloom 正确提取高亮并模糊合成",
+      "hold": null
+    },
+    {
+      "id": "phase14-14.3",
+      "category": "functional",
+      "layer": "rendering_pipeline_layer",
+      "phase": "14",
+      "title": "FXAA 实现",
+      "description": "在 Post-Process 中实现快速近似抗锯齿",
+      "steps": [
+        "编写 FXAA 着色器（或与 Tone Mapping 合并为单 Pass）",
+        "实现 FXAA 边缘检测与混合算法",
+        "在 Tone Mapping 之后或与 Tone Mapping 合并应用 FXAA",
+        "支持质量预设（低/中/高）或可调参数"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase14-14.1"],
+      "test_verification": "FXAA 正确平滑锯齿边缘",
+      "hold": null
     }
   ]
 }
