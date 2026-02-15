@@ -2881,7 +2881,7 @@
         "将 Bloom 链接入 PostProcess Pass 或拆分为多 Pass（ExtractBrightness → BlurH → BlurV → Composite）",
         "支持 Bloom 强度、阈值等可调参数"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase14-14.1"],
       "test_verification": "Bloom 正确提取高亮并模糊合成",

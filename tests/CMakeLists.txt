@@ -672,6 +672,15 @@ target_link_libraries(test_tone_mapping
 )
 add_test(NAME test_tone_mapping COMMAND test_tone_mapping)
 
+add_executable(test_bloom test_bloom.cpp)
+target_link_libraries(test_bloom
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_bloom COMMAND test_bloom)
+
 add_executable(test_output_to_swapchain_pass test_output_to_swapchain_pass.cpp)
 target_link_libraries(test_output_to_swapchain_pass
     PRIVATE

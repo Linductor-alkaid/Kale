@@ -176,6 +176,7 @@
 - [x] Setup 中 ReadTexture(lightingResult)、WriteColor(0, finalColor)
 - [x] Execute 中实现 Bloom、Tone Mapping、FXAA（占位，完整实现待 ShaderCompiler 接入）
 - [x] Tone Mapping 完整实现（phase14-14.1）：tone_mapping.vert/frag、Reinhard + 曝光 PushConstant、SetToneMappingShaderDirectory、BindPipeline/BindDescriptorSet(Lighting)/Draw(3)
+- [x] Bloom 完整实现（phase14-14.2）：ExtractBrightness → BloomBlurH → BloomBlurV → Composite+ToneMap，SetBloomEnabled/Threshold/Strength，半分辨率 RGBA16F 中间纹理
 - [x] 依赖 Lighting Pass 完成
 
 ### 3.5 OutputToSwapchain Pass

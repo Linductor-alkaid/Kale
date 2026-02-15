@@ -1,4 +1,10 @@
 === 2026-02-15 (session) agent_1771129221_52308 ===
+功能：phase14-14.2 Bloom 实现
+状态：已完成
+- 实现：Bloom 可选（SetBloomEnabled/IsBloomEnabled），SetBloomThreshold/GetBloomThreshold、SetBloomStrength/GetBloomStrength；SetupPostProcessPass 启用时声明 BloomBright/BloomBlurA/BloomBlurB（半分辨率 RGBA16F），AddPass ExtractBrightness、BloomBlurH、BloomBlurV、PostProcess（Composite+ToneMap）；着色器 extract_brightness.vert/frag、blur.vert/frag、composite_tone_map.vert/frag；ExecuteExtractBrightnessPass、ExecuteBloomBlurHPass、ExecuteBloomBlurVPass、ExecutePostProcessPass(ctx, cmd, lighting, bloom) 分支 composite 或仅 Tone Mapping。
+- 验证：编译通过，ctest 97/97 通过。新增 test_bloom：Bloom API、SetupPostProcessPass 启用时声明三纹理与四 Pass、Execute 空/无效句柄不崩溃、禁用时单 Pass 且无 Bloom 纹理。rendering_pipeline_layer_todolist 3.4 Bloom 完整实现已勾选。
+
+=== 2026-02-15 (session) agent_1771129221_52308 ===
 功能：phase14-14.1 Tone Mapping 实现
 状态：已完成
 - 实现：tone_mapping.vert/frag 全屏三角形 + Reinhard 色调映射、曝光 PushConstant；PipelineDesc 增加 descriptorSetLayouts，Vulkan CreatePipeline 支持多 DescriptorSetLayout；post_process_pass.cpp 中 SetToneMappingShaderDirectory、EnsureToneMappingPipeline（懒加载 .spv）、ExecutePostProcessPass(ctx, cmd, lightingResult) 中 BindPipeline/BindDescriptorSet(Lighting)/SetPushConstants/Draw(3)；SetupPostProcessPass 将 lightingResult 传入 execute。
