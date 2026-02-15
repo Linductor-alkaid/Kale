@@ -1,3 +1,8 @@
+=== 2026-02-15 13:00:00 (session) agent_1771129221_52308 ===
+功能：phase15-15.1 示例：窗口与标题可见性验证
+状态：已完成
+- 验证：复用 hello_kale（config.title = \"Hello Kale - Run()\"，800x600）；编译通过，ctest 101/101 通过；后台运行 hello_kale，使用 MCP capture_screen 截屏、describe_image_from_file 识别画面；MCP 确认：窗口存在、标题为 \"Hello Kale - Run()\"、窗口为较小窗口尺寸协调。feature_list.json phase15-15.1 status=completed、hold=null。device_abstraction_layer_todolist 新增 Phase 15 示例画面验证项已勾选。
+
 === 2026-02-15 12:56:30 ===
 功能：phase13-13.22 写回冲突检测（可选）
 状态：已完成

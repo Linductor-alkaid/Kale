@@ -2919,7 +2919,7 @@
         "使用读取屏幕输出的 MCP（如 describe_screen 或 capture_screen + describe_image）截取当前画面",
         "根据 MCP 返回的画面描述，确认：窗口存在、窗口标题与配置一致（如 \"Hello Kale - Run()\"）、窗口尺寸与配置一致（如 800x600）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase1-1.1"],
       "test_verification": "Agent 必须使用读取屏幕输出的 MCP（describe_screen / capture_screen + describe_image）查阅实际画面，确认窗口存在、标题与尺寸符合预期。",
@@ -2938,11 +2938,11 @@
         "使用读取屏幕输出的 MCP 截取当前画面并获取描述",
         "根据画面描述确认：窗口中可见一个三角形、颜色与着色器预期一致（如纯色或渐变）、无黑屏或闪屏、三角形大致位于视口内"
       ],
-      "status": "pending",
+      "status": "inprogress",
       "priority": "medium",
       "dependencies": ["phase1-1.3"],
       "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认三角形可见且外观符合预期。",
-      "hold": null
+      "hold": "agent_1771129221_52308"
     },
     {
       "id": "phase15-15.3",

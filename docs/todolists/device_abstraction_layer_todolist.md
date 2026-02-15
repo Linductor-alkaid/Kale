@@ -284,6 +284,12 @@
 
 ---
 
+## Phase 15：示例画面验证
+
+- [x] 示例：窗口与标题可见性验证（hello_kale 运行后 MCP 截屏确认窗口存在、标题 "Hello Kale - Run()"、尺寸协调）
+
+---
+
 ## 参考文档
 
 - [device_abstraction_layer_design.md](../design/device_abstraction_layer_design.md) - 设备抽象层完整设计

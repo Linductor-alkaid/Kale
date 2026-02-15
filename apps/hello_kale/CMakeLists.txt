@@ -15,28 +15,34 @@ if(GLSLC)
         OUTPUT
             ${SHADER_OUT_DIR}/triangle.vert.spv
             ${SHADER_OUT_DIR}/triangle.frag.spv
+            ${SHADER_OUT_DIR}/triangle_mesh.vert.spv
         COMMAND ${GLSLC} -o ${SHADER_OUT_DIR}/triangle.vert.spv ${SHADER_DIR}/triangle.vert
         COMMAND ${GLSLC} -o ${SHADER_OUT_DIR}/triangle.frag.spv ${SHADER_DIR}/triangle.frag
-        DEPENDS ${SHADER_DIR}/triangle.vert ${SHADER_DIR}/triangle.frag
+        COMMAND ${GLSLC} -o ${SHADER_OUT_DIR}/triangle_mesh.vert.spv ${SHADER_DIR}/triangle_mesh.vert
+        DEPENDS ${SHADER_DIR}/triangle.vert ${SHADER_DIR}/triangle.frag ${SHADER_DIR}/triangle_mesh.vert
         COMMENT "Compiling GLSL to SPIR-V (glslc)"
     )
     add_custom_target(hello_kale_shaders ALL DEPENDS
         ${SHADER_OUT_DIR}/triangle.vert.spv
         ${SHADER_OUT_DIR}/triangle.frag.spv
+        ${SHADER_OUT_DIR}/triangle_mesh.vert.spv
     )
 elseif(GLSLANG_VALIDATOR)
     add_custom_command(
         OUTPUT
             ${SHADER_OUT_DIR}/triangle.vert.spv
             ${SHADER_OUT_DIR}/triangle.frag.spv
+            ${SHADER_OUT_DIR}/triangle_mesh.vert.spv
         COMMAND ${GLSLANG_VALIDATOR} -V -o ${SHADER_OUT_DIR}/triangle.vert.spv ${SHADER_DIR}/triangle.vert
         COMMAND ${GLSLANG_VALIDATOR} -V -o ${SHADER_OUT_DIR}/triangle.frag.spv ${SHADER_DIR}/triangle.frag
-        DEPENDS ${SHADER_DIR}/triangle.vert ${SHADER_DIR}/triangle.frag
+        COMMAND ${GLSLANG_VALIDATOR} -V -o ${SHADER_OUT_DIR}/triangle_mesh.vert.spv ${SHADER_DIR}/triangle_mesh.vert
+        DEPENDS ${SHADER_DIR}/triangle.vert ${SHADER_DIR}/triangle.frag ${SHADER_DIR}/triangle_mesh.vert
         COMMENT "Compiling GLSL to SPIR-V (glslangValidator)"
     )
     add_custom_target(hello_kale_shaders ALL DEPENDS
         ${SHADER_OUT_DIR}/triangle.vert.spv
         ${SHADER_OUT_DIR}/triangle.frag.spv
+        ${SHADER_OUT_DIR}/triangle_mesh.vert.spv
     )
 else()
     message(WARNING "glslc/glslangValidator not found. Install Vulkan SDK (glslc) or glslang-tools (glslangValidator). Shaders must be in runtime path.")
