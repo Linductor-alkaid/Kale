@@ -9,6 +9,7 @@
 #include <vulkan/vulkan.h>
 
 #include <unordered_map>
+#include <vector>
 
 namespace kale_device {
 
@@ -50,6 +51,8 @@ struct VulkanShaderRes {
 struct VulkanPipelineRes {
     VkPipeline pipeline = VK_NULL_HANDLE;
     VkPipelineLayout layout = VK_NULL_HANDLE;
+    /** 由 CreatePipeline 从 PipelineDesc::descriptorSetLayouts 创建的 set layout，销毁 pipeline 时一并销毁 */
+    std::vector<VkDescriptorSetLayout> ownedSetLayouts;
 };
 
 struct VulkanDescriptorSetRes {

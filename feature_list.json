@@ -2,7 +2,7 @@
   "project": "Kale Rendering Engine",
   "version": "0.1.0",
   "description": "Vulkan + SDL3 rendering engine with modular layered architecture",
-  "last_updated": "2026-02-13",
+  "last_updated": "2026-02-15",
   "status_enum": [
     "pending",
     "inprogress",
@@ -2860,7 +2860,7 @@
         "ExecutePostProcessPass 中 BindPipeline、BindDescriptorSet(Lighting 纹理)、Draw(3)",
         "支持曝光等可调参数（可选：通过 PushConstant 或 UBO 传入）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "high",
       "dependencies": ["phase8-8.7", "phase8-8.3"],
       "test_verification": "Tone Mapping 正确将 HDR Lighting 输出映射到 LDR FinalColor",
@@ -2904,6 +2904,291 @@
       "priority": "medium",
       "dependencies": ["phase14-14.1"],
       "test_verification": "FXAA 正确平滑锯齿边缘",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.1",
+      "category": "verification",
+      "layer": "device_abstraction_layer",
+      "phase": "15",
+      "title": "示例：窗口与标题可见性验证",
+      "description": "编写或复用最小窗口示例（如 Hello Kale），运行后通过屏幕输出验证窗口与标题是否符合预期",
+      "steps": [
+        "确保存在可运行的最小窗口示例（如 hello_kale），或新建一个仅创建窗口、不渲染几何的示例",
+        "运行示例，使窗口处于前台可见状态",
+        "使用读取屏幕输出的 MCP（如 describe_screen 或 capture_screen + describe_image）截取当前画面",
+        "根据 MCP 返回的画面描述，确认：窗口存在、窗口标题与配置一致（如 \"Hello Kale - Run()\"）、窗口尺寸与配置一致（如 800x600）"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase1-1.1"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP（describe_screen / capture_screen + describe_image）查阅实际画面，确认窗口存在、标题与尺寸符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.2",
+      "category": "verification",
+      "layer": "device_abstraction_layer",
+      "phase": "15",
+      "title": "示例：三角形渲染画面验证",
+      "description": "运行最小三角形渲染示例，通过屏幕输出验证三角形是否正确显示",
+      "steps": [
+        "确保存在可运行的“简单三角形”示例（或基于 phase1-1.3 的三角形渲染流程编写最小示例）",
+        "运行示例，使渲染窗口处于前台可见",
+        "使用读取屏幕输出的 MCP 截取当前画面并获取描述",
+        "根据画面描述确认：窗口中可见一个三角形、颜色与着色器预期一致（如纯色或渐变）、无黑屏或闪屏、三角形大致位于视口内"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase1-1.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认三角形可见且外观符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.3",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：立方体 Forward 渲染画面验证",
+      "description": "运行完整 Forward 渲染示例（如 render_demo），通过屏幕输出验证立方体、相机与光照",
+      "steps": [
+        "确保 render_demo（或等价立方体 + 场景图 + Forward Pass 示例）可构建并运行",
+        "运行示例，使窗口处于前台，等待至少一帧相机旋转后的稳定画面",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：可见立方体（或明显 3D 几何）、相机在旋转时视角变化合理、无严重撕裂或闪烁、深度/背面剔除表现正常"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase13-13.20"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认立方体与 Forward 渲染效果符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.4",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：多物体场景渲染画面验证",
+      "description": "编写或扩展示例，在场景中放置多个 mesh（如多个立方体或简单模型），通过屏幕输出验证多物体渲染与遮挡",
+      "steps": [
+        "在现有 render_demo 或新示例中放置至少 2 个以上 mesh（不同位置/缩放），确保均被 Submit 到 RenderGraph",
+        "运行示例，使多个物体在视口内可见",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：多个物体均可见、相对位置与预期一致、前后遮挡（深度）正确、无 z-fighting 或明显错误"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认多物体可见、位置与遮挡符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.5",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：窗口 Resize 后画面验证",
+      "description": "在运行中的渲染示例上执行窗口缩放，通过屏幕输出验证 Resize 后画面与视口是否正确",
+      "steps": [
+        "运行任意已能正确渲染的示例（如 render_demo），确保窗口可调整大小",
+        "将窗口调整为至少两种不同尺寸（如 800x600 与 1024x768），每次调整后等待渲染稳定",
+        "使用读取屏幕输出的 MCP 分别截取两种尺寸下的画面并获取描述",
+        "根据描述确认：画面随窗口缩放而变化、无黑边或拉伸比例严重异常、内容仍完整可见且比例合理"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅 Resize 前后的实际画面，确认视口与比例符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.6",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：PBR 材质渲染画面验证",
+      "description": "运行使用 PBR 材质的示例（含 Albedo/Normal 等），通过屏幕输出验证 PBR 光照与材质表现",
+      "steps": [
+        "确保存在使用 PBRMaterial 的示例（如加载 glTF 模型或程序化 mesh + PBR 贴图），或扩展现有 demo 接入 PBR",
+        "运行示例，使 PBR 物体在合适光照下可见",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：物体具有漫反射/高光等 PBR 光照表现、法线/粗糙度等效果合理、无全黑/全白或明显错误"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase7-7.11", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认 PBR 材质与光照符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.7",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：阴影渲染画面验证",
+      "description": "运行启用 Shadow Pass 的示例，通过屏幕输出验证阴影是否正确投射与采样",
+      "steps": [
+        "确保存在使用完整 Deferred/Forward+Shadow 管线的示例（SetupRenderGraph 含 Shadow Pass），或扩展现有 demo 启用阴影",
+        "运行示例，场景中至少包含投射阴影的光源与接收阴影的物体",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：物体上可见阴影、阴影方向与光源一致、阴影边缘或软硬程度合理、无严重锯齿或漏影"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase8-8.4", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认阴影投射与显示符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.8",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：Deferred 管线（G-Buffer + Lighting）画面验证",
+      "description": "运行完整 Deferred 管线示例（Shadow → GBuffer → Lighting → PostProcess → Output），通过屏幕输出验证最终画面",
+      "steps": [
+        "确保存在使用 SetupRenderGraph 完整 Deferred 管线的示例（或可切换至 Deferred 的 demo）",
+        "运行示例，使场景以 Deferred 路径渲染并呈现到窗口",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：场景光照正确、与 Forward 结果视觉一致或符合 Deferred 预期、无 G-Buffer 错位或光照错乱"
+      ],
+      "status": "pending",
+      "priority": "high",
+      "dependencies": ["phase8-8.9", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认 Deferred 管线输出符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.9",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：多视口/多相机画面验证",
+      "description": "运行多相机或多视口示例（如分屏、小地图、多机位），通过屏幕输出验证各视口内容正确",
+      "steps": [
+        "确保存在多视口/多相机示例（如左右分屏、画中画、多 RenderTarget），或扩展现有 demo 增加第二视口",
+        "运行示例，使多个视口同时可见于同一窗口或不同区域",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：各视口均有正确渲染内容、视角/裁剪与各自相机一致、无重叠错乱或黑屏视口"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase12-12.6", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际画面，确认多视口/多相机渲染符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.10",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：GPU 实例化渲染画面验证",
+      "description": "运行使用 GPU Instancing 的示例（同 Mesh 多实例），通过屏幕输出验证实例数量与变换正确",
+      "steps": [
+        "确保存在使用 GPU Instancing 的示例（同一 Mesh 多次绘制、不同 world 变换），或扩展现有 demo 增加实例化绘制",
+        "运行示例，使多个实例在视口内可见（如网格、阵列）",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：多个相同几何体可见、位置/朝向/缩放符合实例数据、无重复叠在同一位置或缺失实例"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase10-10.6", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认 GPU 实例化数量与布局符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.11",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：透明物体渲染画面验证",
+      "description": "运行含透明物体（Alpha 混合）的示例，通过屏幕输出验证透明叠加与排序正确",
+      "steps": [
+        "确保存在使用 Transparent Pass 的示例（如半透明玻璃、粒子、UI 层），或扩展现有 demo 增加透明物体",
+        "运行示例，使透明物体与不透明物体同时可见并存在重叠",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：透明物体可见且具有透明感、与背景/不透明物体混合合理、排序正确（无明显前后错乱或穿帮）"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase10-10.7", "phase15-15.3"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认透明物体混合与顺序符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.12",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：多光源阴影画面验证",
+      "description": "运行启用多光源阴影的示例（如方向光 + 点光源阴影），通过屏幕输出验证多阴影正确",
+      "steps": [
+        "确保存在多光源 Shadow Pass 示例（多 ShadowMap 或 Cascade），或扩展现有阴影 demo 增加第二光源阴影",
+        "运行示例，场景中多个光源均投射阴影",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：可见来自不同光源的阴影、方向/强度与各光源一致、多阴影叠加或并存无错乱"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase12-12.7", "phase15-15.7"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际渲染画面，确认多光源阴影符合预期。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.13",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：Tone Mapping 画面验证",
+      "description": "在实现 Tone Mapping 后，运行 HDR 场景示例，通过屏幕输出验证色调映射效果（若功能已实现）",
+      "steps": [
+        "若 phase14-14.1（Tone Mapping）已实现：确保 PostProcess 管线中启用 Tone Mapping，并存在高动态范围场景或强光源",
+        "运行示例，使 HDR 输出经 Tone Mapping 后呈现到屏幕",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：高亮不过曝、暗部可见、整体色调与 ACES/Reinhard 等预期一致；若功能未实现则任务可保持 pending"
+      ],
+      "status": "pending",
+      "priority": "medium",
+      "dependencies": ["phase14-14.1", "phase15-15.8"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际画面，确认 Tone Mapping 效果符合预期（若已实现）。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.14",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：Bloom 泛光画面验证",
+      "description": "在实现 Bloom 后，运行含高亮区域的示例，通过屏幕输出验证泛光效果（若功能已实现）",
+      "steps": [
+        "若 phase14-14.2（Bloom）已实现：确保 PostProcess 管线中启用 Bloom，场景中存在高亮光源或反射",
+        "运行示例，使 Bloom 叠加到最终画面",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：高亮区域周围有可见光晕/泛光、强度与阈值合理、无严重拖影或全屏过亮；若功能未实现则任务可保持 pending"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase14-14.2", "phase15-15.13"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际画面，确认 Bloom 效果符合预期（若已实现）。",
+      "hold": null
+    },
+    {
+      "id": "phase15-15.15",
+      "category": "verification",
+      "layer": "rendering_pipeline_layer",
+      "phase": "15",
+      "title": "示例：FXAA 抗锯齿画面验证",
+      "description": "在实现 FXAA 后，运行含锐利边缘的场景，通过屏幕输出验证锯齿平滑效果（若功能已实现）",
+      "steps": [
+        "若 phase14-14.3（FXAA）已实现：确保 PostProcess 管线中启用 FXAA，场景中存在斜线/细几何边缘",
+        "运行示例，使 FXAA 应用于最终输出",
+        "使用读取屏幕输出的 MCP 截取画面并获取描述",
+        "根据描述确认：边缘锯齿较未开启时减轻、无严重模糊或细节丢失；若功能未实现则任务可保持 pending"
+      ],
+      "status": "pending",
+      "priority": "low",
+      "dependencies": ["phase14-14.3", "phase15-15.13"],
+      "test_verification": "Agent 必须使用读取屏幕输出的 MCP 查阅实际画面，确认 FXAA 抗锯齿效果符合预期（若已实现）。",
       "hold": null
     }
   ]

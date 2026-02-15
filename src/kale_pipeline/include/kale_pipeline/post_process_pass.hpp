@@ -2,10 +2,10 @@
  * @file post_process_pass.hpp
  * @brief Post-Process Pass：声明 FinalColor 纹理，ReadTexture(Lighting)，WriteColor(FinalColor)
  *
- * 与 rendering_pipeline_layer_design.md 2.1、phase8-8.7 对齐。
+ * 与 rendering_pipeline_layer_design.md 2.1、phase8-8.7、phase14-14.1 对齐。
  * 依赖 Lighting Pass 完成（通过 ReadTexture("Lighting") 声明依赖）。
- * Execute：占位实现（无绘制，依赖 Render Pass 的 load op 清屏）；
- * 完整 Bloom、Tone Mapping、FXAA 需 ShaderCompiler（phase8-8.3）提供着色器后接入。
+ * Execute：Tone Mapping（Reinhard + 可选曝光），全屏三角形 BindPipeline/BindDescriptorSet(Lighting)/Draw(3)。
+ * 应用层需在 Compile 前调用 SetToneMappingShaderDirectory 指向含 tone_mapping.vert.spv / tone_mapping.frag.spv 的目录。
  */
 
 #pragma once
@@ -13,18 +13,26 @@
 #include <kale_pipeline/render_graph.hpp>
 #include <kale_pipeline/render_pass_builder.hpp>
 #include <kale_pipeline/render_pass_context.hpp>
+#include <kale_pipeline/rg_types.hpp>
 #include <kale_device/command_list.hpp>
 #include <kale_device/rdi_types.hpp>
+#include <string>
 
 namespace kale::pipeline {
 
 /**
- * 执行 Post-Process Pass：当前为占位实现（无绘制，依赖 Render Pass 的 load op 清屏）。
- * 完整 Bloom、Tone Mapping、FXAA 需在 phase8-8.3 ShaderCompiler 就绪后接入着色器与 Pipeline。
+ * 设置 Tone Mapping 着色器目录（含 tone_mapping.vert.spv、tone_mapping.frag.spv）。
+ * 未设置或目录无效时 ExecutePostProcessPass 不绘制。
  */
-inline void ExecutePostProcessPass(const RenderPassContext& /*ctx*/, kale_device::CommandList& /*cmd*/) {
-    // 占位：全屏三角形 + Bloom/ToneMapping/FXAA 需 ShaderCompiler 提供着色器后在此 BindPipeline / BindDescriptorSet / Draw(3)
-}
+void SetToneMappingShaderDirectory(const std::string& directory);
+
+/**
+ * 执行 Post-Process Pass：Tone Mapping（Reinhard，曝光 1.0），BindPipeline、BindDescriptorSet(Lighting)、Draw(3)。
+ * lightingTextureHandle 为 Lighting 的 RGResourceHandle，由 SetupPostProcessPass 传入。
+ */
+void ExecutePostProcessPass(const RenderPassContext& ctx,
+                            kale_device::CommandList& cmd,
+                            RGResourceHandle lightingTextureHandle);
 
 /**
  * 向 RenderGraph 添加 Post-Process Pass。
@@ -53,8 +61,8 @@ inline void SetupPostProcessPass(RenderGraph& rg) {
             if (lightingResult != kInvalidRGResourceHandle)
                 b.ReadTexture(lightingResult);
         },
-        [](const RenderPassContext& ctx, kale_device::CommandList& cmd) {
-            ExecutePostProcessPass(ctx, cmd);
+        [lightingResult](const RenderPassContext& ctx, kale_device::CommandList& cmd) {
+            ExecutePostProcessPass(ctx, cmd, lightingResult);
         });
 }
 

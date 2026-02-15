@@ -1,3 +1,9 @@
+=== 2026-02-15 (session) agent_1771129221_52308 ===
+功能：phase14-14.1 Tone Mapping 实现
+状态：已完成
+- 实现：tone_mapping.vert/frag 全屏三角形 + Reinhard 色调映射、曝光 PushConstant；PipelineDesc 增加 descriptorSetLayouts，Vulkan CreatePipeline 支持多 DescriptorSetLayout；post_process_pass.cpp 中 SetToneMappingShaderDirectory、EnsureToneMappingPipeline（懒加载 .spv）、ExecutePostProcessPass(ctx, cmd, lightingResult) 中 BindPipeline/BindDescriptorSet(Lighting)/SetPushConstants/Draw(3)；SetupPostProcessPass 将 lightingResult 传入 execute。
+- 验证：编译通过，ctest 96/96 通过。新增 test_tone_mapping：SetToneMappingShaderDirectory、ExecutePostProcessPass 无 device/无效 Lighting 不崩溃、无 shader 目录不绘制。rendering_pipeline_layer_todolist 3.4 Tone Mapping 完整实现已勾选。
+
 === 2026-02-13 (session) agent_1770984760_1139874 ===
 功能：phase13-13.11 ModelLoader 可选格式与 LOD
 状态：已完成

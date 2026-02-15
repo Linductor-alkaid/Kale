@@ -189,6 +189,8 @@ void VulkanRenderDevice::Shutdown() {
     for (auto& [id, res] : pipelines_) {
         if (res.pipeline != VK_NULL_HANDLE) vkDestroyPipeline(dev, res.pipeline, nullptr);
         if (res.layout != VK_NULL_HANDLE) vkDestroyPipelineLayout(dev, res.layout, nullptr);
+        for (VkDescriptorSetLayout l : res.ownedSetLayouts)
+            if (l != VK_NULL_HANDLE) vkDestroyDescriptorSetLayout(dev, l, nullptr);
     }
     pipelines_.clear();
 
@@ -997,6 +999,32 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     }
     if (stages.empty()) return PipelineHandle{};
 
+    std::vector<VkDescriptorSetLayout> ownedSetLayouts;
+    if (!desc.descriptorSetLayouts.empty()) {
+        for (const auto& layoutDesc : desc.descriptorSetLayouts) {
+            if (layoutDesc.bindings.empty()) continue;
+            std::vector<VkDescriptorSetLayoutBinding> vkBindings;
+            for (const auto& b : layoutDesc.bindings) {
+                VkDescriptorSetLayoutBinding vb = {};
+                vb.binding = b.binding;
+                vb.descriptorType = ToVkDescriptorType(b.type);
+                vb.descriptorCount = b.count;
+                vb.stageFlags = ToVkShaderStage(b.visibility);
+                vkBindings.push_back(vb);
+            }
+            VkDescriptorSetLayoutCreateInfo dslInfo = {};
+            dslInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            dslInfo.bindingCount = static_cast<uint32_t>(vkBindings.size());
+            dslInfo.pBindings = vkBindings.data();
+            VkDescriptorSetLayout dsl = VK_NULL_HANDLE;
+            if (vkCreateDescriptorSetLayout(dev, &dslInfo, nullptr, &dsl) != VK_SUCCESS) {
+                for (VkDescriptorSetLayout l : ownedSetLayouts) vkDestroyDescriptorSetLayout(dev, l, nullptr);
+                return PipelineHandle{};
+            }
+            ownedSetLayouts.push_back(dsl);
+        }
+    }
+
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkPushConstantRange pushConstantRange = {};
     pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -1004,11 +1032,14 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     pushConstantRange.size = 256;  // glm::mat4 + padding, 与 kInstanceDescriptorDataSize 对齐
     VkPipelineLayoutCreateInfo layoutInfo = {};
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutInfo.setLayoutCount = 0;
+    layoutInfo.setLayoutCount = static_cast<uint32_t>(ownedSetLayouts.size());
+    layoutInfo.pSetLayouts = ownedSetLayouts.empty() ? nullptr : ownedSetLayouts.data();
     layoutInfo.pushConstantRangeCount = 1;
     layoutInfo.pPushConstantRanges = &pushConstantRange;
-    if (vkCreatePipelineLayout(dev, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+    if (vkCreatePipelineLayout(dev, &layoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+        for (VkDescriptorSetLayout l : ownedSetLayouts) vkDestroyDescriptorSetLayout(dev, l, nullptr);
         return PipelineHandle{};
+    }
 
     std::vector<VkVertexInputBindingDescription> bindings;
     std::vector<VkVertexInputAttributeDescription> attrs;
@@ -1109,6 +1140,7 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     }
     if (!rp) {
         vkDestroyPipelineLayout(dev, pipelineLayout, nullptr);
+        for (VkDescriptorSetLayout l : ownedSetLayouts) vkDestroyDescriptorSetLayout(dev, l, nullptr);
         return PipelineHandle{};
     }
     pipelineInfo.renderPass = rp;
@@ -1119,11 +1151,12 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     VkResult err = vkCreateGraphicsPipelines(dev, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
     if (err != VK_SUCCESS) {
         vkDestroyPipelineLayout(dev, pipelineLayout, nullptr);
+        for (VkDescriptorSetLayout l : ownedSetLayouts) vkDestroyDescriptorSetLayout(dev, l, nullptr);
         return PipelineHandle{};
     }
 
     std::uint64_t id = nextPipelineId_++;
-    pipelines_[id] = VulkanPipelineRes{ pipeline, pipelineLayout };
+    pipelines_[id] = VulkanPipelineRes{ pipeline, pipelineLayout, std::move(ownedSetLayouts) };
     PipelineHandle h;
     h.id = id;
     return h;
@@ -1268,6 +1301,8 @@ void VulkanRenderDevice::DestroyPipeline(PipelineHandle handle) {
     VkDevice dev = context_.GetDevice();
     if (it->second.pipeline != VK_NULL_HANDLE) vkDestroyPipeline(dev, it->second.pipeline, nullptr);
     if (it->second.layout != VK_NULL_HANDLE) vkDestroyPipelineLayout(dev, it->second.layout, nullptr);
+    for (VkDescriptorSetLayout l : it->second.ownedSetLayouts)
+        if (l != VK_NULL_HANDLE) vkDestroyDescriptorSetLayout(dev, l, nullptr);
     pipelines_.erase(it);
 }
 

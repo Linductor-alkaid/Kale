@@ -283,6 +283,8 @@ struct PipelineDesc {
     std::vector<BlendState> blendStates;
     std::vector<Format> colorAttachmentFormats;
     Format depthAttachmentFormat = Format::Undefined;
+    /** 可选：管线布局使用的 DescriptorSet 布局，空则 pipeline layout 无 set。 */
+    std::vector<DescriptorSetLayoutDesc> descriptorSetLayouts;
 };
 
 }  // namespace kale_device

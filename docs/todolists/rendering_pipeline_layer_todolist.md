@@ -175,6 +175,7 @@
 - [x] 实现 PostProcess Pass：`AddPass("PostProcess", setup, execute)`
 - [x] Setup 中 ReadTexture(lightingResult)、WriteColor(0, finalColor)
 - [x] Execute 中实现 Bloom、Tone Mapping、FXAA（占位，完整实现待 ShaderCompiler 接入）
+- [x] Tone Mapping 完整实现（phase14-14.1）：tone_mapping.vert/frag、Reinhard + 曝光 PushConstant、SetToneMappingShaderDirectory、BindPipeline/BindDescriptorSet(Lighting)/Draw(3)
 - [x] 依赖 Lighting Pass 完成
 
 ### 3.5 OutputToSwapchain Pass

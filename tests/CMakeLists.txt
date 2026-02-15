@@ -664,6 +664,14 @@ target_link_libraries(test_post_process_pass
 )
 add_test(NAME test_post_process_pass COMMAND test_post_process_pass)
 
+add_executable(test_tone_mapping test_tone_mapping.cpp)
+target_link_libraries(test_tone_mapping
+    PRIVATE
+        kale_pipeline
+        kale_device
+)
+add_test(NAME test_tone_mapping COMMAND test_tone_mapping)
+
 add_executable(test_output_to_swapchain_pass test_output_to_swapchain_pass.cpp)
 target_link_libraries(test_output_to_swapchain_pass
     PRIVATE
