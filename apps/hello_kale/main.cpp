@@ -4,6 +4,7 @@
 #include <kale_engine/render_engine.hpp>
 #include <kale_device/input_manager.hpp>
 #include <kale_device/rdi_types.hpp>
+#include <kale_device/window_system.hpp>
 #include <kale_pipeline/forward_pass.hpp>
 #include <kale_pipeline/render_graph.hpp>
 #include <kale_pipeline/material.hpp>
@@ -38,15 +39,17 @@ struct PlaceholderVertex {
     float u, v;
 };
 
-/** 仅绑定 pipeline，无 descriptor set，用于占位三角形 */
+/** 与 render_demo 的 SimplePushConstantMaterial 一致：绑定 pipeline 并设置 push constant（MVP） */
 class TrianglePlaceholderMaterial : public kale::pipeline::Material {
 public:
     void BindForDraw(kale_device::CommandList& cmd,
                     kale_device::IRenderDevice* /*device*/,
-                    const void* /*instanceData*/,
-                    std::size_t /*instanceSize*/) override {
+                    const void* instanceData,
+                    std::size_t instanceSize) override {
         if (GetPipeline().IsValid())
             cmd.BindPipeline(GetPipeline());
+        if (instanceData && instanceSize > 0)
+            cmd.SetPushConstants(instanceData, instanceSize, 0);
     }
 };
 
@@ -68,10 +71,15 @@ struct HelloKaleApp : kale::IApplication {
         if (!engine) return;
         kale::pipeline::RenderGraph* rg = engine->GetRenderGraph();
         kale_device::IRenderDevice* device = engine->GetRenderDevice();
-        if (!rg || !device) return;
+        kale_device::WindowSystem* windowSystem = engine->GetWindowSystem();
+        if (!rg || !device || !windowSystem) return;
+        std::uint32_t w = windowSystem->GetWidth();
+        std::uint32_t h = windowSystem->GetHeight();
+        if (w > 0 && h > 0) rg->SetResolution(w, h);
+        rg->SetViewProjection(glm::mat4(1.f), glm::mat4(1.f));
         rg->ClearSubmitted();
         if (triangleRenderable)
-            rg->SubmitRenderable(triangleRenderable.get(), glm::mat4(1.f), kale::scene::PassFlags::All);
+            rg->SubmitRenderable(triangleRenderable.get(), glm::mat4(1.f), kale::scene::PassFlags::Opaque);
         rg->Execute(device);
         ++frames;
         if (frames <= 3 || frames % 60 == 0)
@@ -141,7 +149,11 @@ int main() {
         {2, 0, kale_device::Format::RG32F, offsetof(PlaceholderVertex, u)},
     };
     pipelineDesc.topology = kale_device::PrimitiveTopology::TriangleList;
+    pipelineDesc.rasterization.cullEnable = false;
+    pipelineDesc.depthStencil.depthTestEnable = false;
+    pipelineDesc.depthStencil.depthWriteEnable = false;
     pipelineDesc.colorAttachmentFormats = {kale_device::Format::RGBA8_SRGB};
+    pipelineDesc.depthAttachmentFormat = kale_device::Format::D24S8;
 
     auto pipeline = device->CreatePipeline(pipelineDesc);
     if (!pipeline.IsValid()) {
@@ -158,7 +170,7 @@ int main() {
         placeholderMesh, static_cast<kale::resource::Material*>(triangleMaterial.get()));
 
     rg->SetResolution(800, 600);
-    kale::pipeline::SetupForwardOnlyRenderGraph(*rg);
+    kale::pipeline::SetupForwardPassWithCamera(*rg);
     if (!rg->Compile(device)) {
         std::cerr << "RenderGraph::Compile failed: " << rg->GetLastError() << "\n";
         engine.Shutdown();

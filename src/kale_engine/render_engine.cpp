@@ -137,6 +137,11 @@ bool RenderEngine::Initialize(const Config& config) {
     impl.renderGraph->SetScheduler(sched);
     impl.renderGraph->SetResolution(config.width, config.height);
 
+    // 统一设置退出回调：AcquireNextImage 等待 fence 时轮询事件并检查退出，避免无法正常退出
+    auto pumpQuit = [this]() { return PumpEventsAndCheckQuit(); };
+    impl.renderGraph->SetQuitCallback(pumpQuit);
+    impl.renderDevice->SetQuitCallback(pumpQuit);
+
     return true;
 }
 

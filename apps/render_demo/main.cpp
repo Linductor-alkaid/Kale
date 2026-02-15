@@ -216,7 +216,7 @@ struct RenderDemoApp : kale::IApplication {
 
         if (camera) {
             float aspect = static_cast<float>(w) / static_cast<float>(std::max(1u, h));
-            camera->UpdateViewProjection(aspect, true);  // true = Vulkan NDC Y 翻转
+            camera->UpdateViewProjection(aspect);  // Y 轴适配由设备层 Vulkan SetViewport 统一处理
             rg->SetViewProjection(camera->viewMatrix, camera->projectionMatrix);
         }
 
@@ -295,10 +295,6 @@ int main() {
 
     // 配置 Render Graph（Forward Pass）
     rg->SetResolution(config.width, config.height);
-    auto pumpQuit = [&engine]() { return engine.PumpEventsAndCheckQuit(); };
-    rg->SetQuitCallback(pumpQuit);
-    device->SetQuitCallback(pumpQuit);
-    // useExecutor=false 时 rg 已无 scheduler
     kale::pipeline::SetupForwardPassWithCamera(*rg);
     if (!rg->Compile(device)) {
         std::cerr << "RenderGraph::Compile failed: " << rg->GetLastError() << "\n";

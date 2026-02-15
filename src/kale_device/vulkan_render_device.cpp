@@ -2385,7 +2385,15 @@ void VulkanCommandList::ClearDepth(TextureHandle texture, float depth, std::uint
 void VulkanCommandList::SetViewport(float x, float y, float width, float height,
                                     float minDepth, float maxDepth) {
     if (!commandBuffer_) return;
-    VkViewport vp = { x, y, width, height, minDepth, maxDepth };
+    // Vulkan NDC 为 Y 向下，上层统一使用 Y-up（GLM/OpenGL 习惯）。在设备层做适配：
+    // viewport 使用 y + height、height 取负，使 NDC y=+1 映射到 framebuffer 顶部。
+    VkViewport vp = {};
+    vp.x = x;
+    vp.y = y + height;
+    vp.width = width;
+    vp.height = -height;
+    vp.minDepth = minDepth;
+    vp.maxDepth = maxDepth;
     vkCmdSetViewport(commandBuffer_, 0, 1, &vp);
 }
 
