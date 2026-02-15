@@ -681,6 +681,15 @@ target_link_libraries(test_bloom
 )
 add_test(NAME test_bloom COMMAND test_bloom)
 
+add_executable(test_fxaa test_fxaa.cpp)
+target_link_libraries(test_fxaa
+    PRIVATE
+        kale_pipeline
+        kale_device
+        kale_scene
+)
+add_test(NAME test_fxaa COMMAND test_fxaa)
+
 add_executable(test_output_to_swapchain_pass test_output_to_swapchain_pass.cpp)
 target_link_libraries(test_output_to_swapchain_pass
     PRIVATE

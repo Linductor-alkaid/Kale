@@ -32,8 +32,25 @@ float GetBloomThreshold();
 /** 获取当前 Bloom 强度。 */
 float GetBloomStrength();
 
+/** 启用/禁用 FXAA（默认关闭）。须在 SetupPostProcessPass 前调用。 */
+void SetFXAAEnabled(bool enable);
+/** 是否启用 FXAA。 */
+bool IsFXAAEnabled();
+/** FXAA 质量：0=低、1=中、2=高。 */
+void SetFXAAQuality(int quality);
+/** 获取当前 FXAA 质量（0/1/2）。 */
+int GetFXAAQuality();
+
 /**
- * 设置 Tone Mapping 着色器目录（含 tone_mapping、extract_brightness、blur、composite_tone_map 的 .vert.spv/.frag.spv）。
+ * 执行 FXAA Pass：从 postProcessTextureHandle 读入，输出到当前 RenderPass 的 color 0。
+ * 须在 SetupPostProcessPass 启用 FXAA 时由 FXAA Pass 的 execute 调用。
+ */
+void ExecuteFXAAPass(const RenderPassContext& ctx,
+                     kale_device::CommandList& cmd,
+                     RGResourceHandle postProcessTextureHandle);
+
+/**
+ * 设置 Tone Mapping 着色器目录（含 tone_mapping、extract_brightness、blur、composite_tone_map、fxaa 的 .vert.spv/.frag.spv）。
  * 未设置或目录无效时 ExecutePostProcessPass 不绘制。
  */
 void SetToneMappingShaderDirectory(const std::string& directory);
@@ -63,7 +80,8 @@ void ExecuteBloomBlurVPass(const RenderPassContext& ctx,
 
 /**
  * 向 RenderGraph 添加 Post-Process Pass；若已 SetBloomEnabled(true) 则先添加 ExtractBrightness、BloomBlurH、BloomBlurV，再 PostProcess。
- * 声明 FinalColor；Bloom 启用时声明 BloomBright、BloomBlurA、BloomBlurB（半分辨率 RGBA16F）。
+ * 若已 SetFXAAEnabled(true) 则 PostProcess 写入 PostProcessOutput，再添加 FXAA Pass 写入 FinalColor；否则 PostProcess 直接写 FinalColor。
+ * 声明 FinalColor；Bloom 启用时声明 BloomBright、BloomBlurA、BloomBlurB（半分辨率 RGBA16F）；FXAA 启用时声明 PostProcessOutput。
  */
 inline void SetupPostProcessPass(RenderGraph& rg) {
     using namespace kale_device;
@@ -76,6 +94,12 @@ inline void SetupPostProcessPass(RenderGraph& rg) {
 
     RGResourceHandle finalColor = rg.DeclareTexture("FinalColor", finalColorDesc);
     RGResourceHandle lightingResult = rg.GetHandleByName("Lighting");
+
+    const bool useFXAA = IsFXAAEnabled();
+    RGResourceHandle postProcessOutput = kInvalidRGResourceHandle;
+    if (useFXAA) {
+        postProcessOutput = rg.DeclareTexture("PostProcessOutput", finalColorDesc);
+    }
 
     if (IsBloomEnabled() && lightingResult != kInvalidRGResourceHandle) {
         std::uint32_t w = rg.GetResolutionWidth();
@@ -124,10 +148,11 @@ inline void SetupPostProcessPass(RenderGraph& rg) {
                 ExecuteBloomBlurVPass(ctx, cmd, bloomBlurA);
             });
 
+        RGResourceHandle ppWrite = useFXAA ? postProcessOutput : finalColor;
         rg.AddPass(
             "PostProcess",
-            [finalColor, lightingResult, bloomBlurB](RenderPassBuilder& b) {
-                b.WriteColor(0, finalColor);
+            [ppWrite, lightingResult, bloomBlurB](RenderPassBuilder& b) {
+                b.WriteColor(0, ppWrite);
                 b.ReadTexture(lightingResult);
                 b.ReadTexture(bloomBlurB);
             },
@@ -135,15 +160,28 @@ inline void SetupPostProcessPass(RenderGraph& rg) {
                 ExecutePostProcessPass(ctx, cmd, lightingResult, bloomBlurB);
             });
     } else {
+        RGResourceHandle ppWrite = useFXAA ? postProcessOutput : finalColor;
         rg.AddPass(
             "PostProcess",
-            [finalColor, lightingResult](RenderPassBuilder& b) {
-                b.WriteColor(0, finalColor);
+            [ppWrite, lightingResult](RenderPassBuilder& b) {
+                b.WriteColor(0, ppWrite);
                 if (lightingResult != kInvalidRGResourceHandle)
                     b.ReadTexture(lightingResult);
             },
             [lightingResult](const RenderPassContext& ctx, CommandList& cmd) {
                 ExecutePostProcessPass(ctx, cmd, lightingResult, kInvalidRGResourceHandle);
+            });
+    }
+
+    if (useFXAA && postProcessOutput != kInvalidRGResourceHandle) {
+        rg.AddPass(
+            "FXAA",
+            [postProcessOutput, finalColor](RenderPassBuilder& b) {
+                b.ReadTexture(postProcessOutput);
+                b.WriteColor(0, finalColor);
+            },
+            [postProcessOutput](const RenderPassContext& ctx, CommandList& cmd) {
+                ExecuteFXAAPass(ctx, cmd, postProcessOutput);
             });
     }
 }

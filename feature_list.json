@@ -2900,7 +2900,7 @@
         "在 Tone Mapping 之后或与 Tone Mapping 合并应用 FXAA",
         "支持质量预设（低/中/高）或可调参数"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "medium",
       "dependencies": ["phase14-14.1"],
       "test_verification": "FXAA 正确平滑锯齿边缘",

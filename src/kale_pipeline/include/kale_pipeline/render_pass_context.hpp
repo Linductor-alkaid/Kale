@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <kale_pipeline/rg_types.hpp>
 #include <kale_device/render_device.hpp>
 #include <kale_device/rdi_types.hpp>
@@ -76,6 +77,11 @@ public:
     glm::mat4 GetViewMatrix() const;
     /** 返回当前帧投影矩阵；无 graph 时返回单位矩阵。 */
     glm::mat4 GetProjectionMatrix() const;
+
+    /** 返回 RenderGraph 分辨率宽（用于 PostProcess/FXAA 等）；无 graph 时返回 0。 */
+    std::uint32_t GetResolutionWidth() const;
+    /** 返回 RenderGraph 分辨率高；无 graph 时返回 0。 */
+    std::uint32_t GetResolutionHeight() const;
 
 private:
     const std::vector<SubmittedDraw>* draws_ = nullptr;

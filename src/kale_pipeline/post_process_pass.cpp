@@ -48,6 +48,15 @@ kale_device::ShaderHandle g_compositeToneMapVert;
 kale_device::ShaderHandle g_compositeToneMapFrag;
 std::uint64_t g_compositeToneMapDeviceId = 0;
 
+bool g_fxaaEnabled = false;
+int g_fxaaQuality = 1;  // 0=low, 1=medium, 2=high
+
+kale_device::PipelineHandle g_fxaaPipeline;
+kale_device::DescriptorSetHandle g_fxaaDescriptorSet;
+kale_device::ShaderHandle g_fxaaVert;
+kale_device::ShaderHandle g_fxaaFrag;
+std::uint64_t g_fxaaDeviceId = 0;
+
 static std::vector<std::uint8_t> LoadFile(const std::string& path) {
     std::ifstream f(path, std::ios::binary | std::ios::ate);
     if (!f) return {};
@@ -353,6 +362,82 @@ static bool EnsureCompositeToneMapPipeline(kale_device::IRenderDevice* device,
     return true;
 }
 
+struct FXAAPushConstants {
+    float rcpFrameX;
+    float rcpFrameY;
+    int quality;
+};
+
+static bool EnsureFXAAPipeline(kale_device::IRenderDevice* device,
+                               kale_device::TextureHandle inputTexture) {
+    if (!device || !inputTexture.IsValid() || g_toneMappingShaderDir.empty()) return false;
+    const std::uint64_t devId = reinterpret_cast<std::uint64_t>(device);
+    if (g_fxaaPipeline.IsValid() && g_fxaaDeviceId == devId) return true;
+    std::lock_guard<std::mutex> lock(g_toneMappingMutex);
+    if (g_fxaaPipeline.IsValid() && g_fxaaDeviceId != devId) {
+        device->DestroyPipeline(g_fxaaPipeline);
+        device->DestroyDescriptorSet(g_fxaaDescriptorSet);
+        device->DestroyShader(g_fxaaVert);
+        device->DestroyShader(g_fxaaFrag);
+        g_fxaaPipeline = kale_device::PipelineHandle{};
+        g_fxaaDescriptorSet = kale_device::DescriptorSetHandle{};
+        g_fxaaVert = kale_device::ShaderHandle{};
+        g_fxaaFrag = kale_device::ShaderHandle{};
+    }
+    if (g_fxaaPipeline.IsValid()) return true;
+    std::string vp = g_toneMappingShaderDir + "/fxaa.vert.spv";
+    std::string fp = g_toneMappingShaderDir + "/fxaa.frag.spv";
+    auto vc = LoadFile(vp);
+    auto fc = LoadFile(fp);
+    if (vc.empty() || fc.empty()) return false;
+    using namespace kale_device;
+    ShaderDesc vd;
+    vd.stage = ShaderStage::Vertex;
+    vd.code = std::move(vc);
+    ShaderDesc fd;
+    fd.stage = ShaderStage::Fragment;
+    fd.code = std::move(fc);
+    g_fxaaVert = device->CreateShader(vd);
+    g_fxaaFrag = device->CreateShader(fd);
+    if (!g_fxaaVert.IsValid() || !g_fxaaFrag.IsValid()) {
+        if (g_fxaaVert.IsValid()) device->DestroyShader(g_fxaaVert);
+        if (g_fxaaFrag.IsValid()) device->DestroyShader(g_fxaaFrag);
+        return false;
+    }
+    DescriptorSetLayoutDesc setLayout;
+    setLayout.bindings = {{0, DescriptorType::CombinedImageSampler, ShaderStage::Fragment, 1}};
+    PipelineDesc pipeDesc;
+    pipeDesc.shaders = {g_fxaaVert, g_fxaaFrag};
+    pipeDesc.topology = PrimitiveTopology::TriangleList;
+    pipeDesc.rasterization.cullEnable = false;
+    pipeDesc.depthStencil.depthTestEnable = false;
+    pipeDesc.depthStencil.depthWriteEnable = false;
+    pipeDesc.colorAttachmentFormats = {Format::RGBA8_UNORM};
+    pipeDesc.depthAttachmentFormat = Format::Undefined;
+    pipeDesc.descriptorSetLayouts = {setLayout};
+    g_fxaaPipeline = device->CreatePipeline(pipeDesc);
+    if (!g_fxaaPipeline.IsValid()) {
+        device->DestroyShader(g_fxaaVert);
+        device->DestroyShader(g_fxaaFrag);
+        g_fxaaVert = ShaderHandle{};
+        g_fxaaFrag = ShaderHandle{};
+        return false;
+    }
+    g_fxaaDescriptorSet = device->CreateDescriptorSet(setLayout);
+    if (!g_fxaaDescriptorSet.IsValid()) {
+        device->DestroyPipeline(g_fxaaPipeline);
+        device->DestroyShader(g_fxaaVert);
+        device->DestroyShader(g_fxaaFrag);
+        g_fxaaPipeline = PipelineHandle{};
+        g_fxaaVert = ShaderHandle{};
+        g_fxaaFrag = ShaderHandle{};
+        return false;
+    }
+    device->WriteDescriptorSetTexture(g_fxaaDescriptorSet, 0, inputTexture);
+    g_fxaaDeviceId = devId;
+    return true;
+}
+
 }  // namespace
 
 void SetBloomEnabled(bool enable) { g_bloomEnabled = enable; }
@@ -361,6 +446,35 @@ void SetBloomThreshold(float threshold) { g_bloomThreshold = threshold; }
 void SetBloomStrength(float strength) { g_bloomStrength = strength; }
 float GetBloomThreshold() { return g_bloomThreshold; }
 float GetBloomStrength() { return g_bloomStrength; }
+
+void SetFXAAEnabled(bool enable) { g_fxaaEnabled = enable; }
+bool IsFXAAEnabled() { return g_fxaaEnabled; }
+void SetFXAAQuality(int quality) { g_fxaaQuality = (quality >= 0 && quality <= 2) ? quality : 1; }
+int GetFXAAQuality() { return g_fxaaQuality; }
+
+void ExecuteFXAAPass(const RenderPassContext& ctx,
+                     kale_device::CommandList& cmd,
+                     RGResourceHandle postProcessTextureHandle) {
+    kale_device::IRenderDevice* device = ctx.GetDevice();
+    if (!device) return;
+    kale_device::TextureHandle inputTex = ctx.GetCompiledTexture(postProcessTextureHandle);
+    if (!inputTex.IsValid()) return;
+    if (!EnsureFXAAPipeline(device, inputTex)) return;
+
+    std::uint32_t w = ctx.GetResolutionWidth();
+    std::uint32_t h = ctx.GetResolutionHeight();
+    if (w == 0) w = 1;
+    if (h == 0) h = 1;
+    FXAAPushConstants pc;
+    pc.rcpFrameX = 1.0f / static_cast<float>(w);
+    pc.rcpFrameY = 1.0f / static_cast<float>(h);
+    pc.quality = g_fxaaQuality;
+
+    cmd.SetPushConstants(&pc, sizeof(pc), 0);
+    cmd.BindPipeline(g_fxaaPipeline);
+    cmd.BindDescriptorSet(0, g_fxaaDescriptorSet);
+    cmd.Draw(3);
+}
 
 void SetToneMappingShaderDirectory(const std::string& directory) {
     std::lock_guard<std::mutex> lock(g_toneMappingMutex);
@@ -385,6 +499,11 @@ void SetToneMappingShaderDirectory(const std::string& directory) {
     g_compositeToneMapVert = kale_device::ShaderHandle{};
     g_compositeToneMapFrag = kale_device::ShaderHandle{};
     g_compositeToneMapDeviceId = 0;
+    g_fxaaPipeline = kale_device::PipelineHandle{};
+    g_fxaaDescriptorSet = kale_device::DescriptorSetHandle{};
+    g_fxaaVert = kale_device::ShaderHandle{};
+    g_fxaaFrag = kale_device::ShaderHandle{};
+    g_fxaaDeviceId = 0;
 }
 
 void ExecutePostProcessPass(const RenderPassContext& ctx,

@@ -1,4 +1,10 @@
 === 2026-02-15 (session) agent_1771129221_52308 ===
+功能：phase14-14.3 FXAA 实现
+状态：已完成
+- 实现：FXAA 可选（SetFXAAEnabled/IsFXAAEnabled），SetFXAAQuality/GetFXAAQuality（0=低/1=中/2=高）；SetupPostProcessPass 启用时声明 PostProcessOutput、PostProcess 写 PostProcessOutput、AddPass("FXAA") 读 PostProcessOutput 写 FinalColor；fxaa.vert/frag 全屏三角形 + 边缘检测与混合；ExecuteFXAAPass(ctx, cmd, postProcessTextureHandle) 懒加载 FXAA Pipeline、PushConstants(rcpFrame, quality)、Draw(3)；RenderPassContext 增加 GetResolutionWidth/GetResolutionHeight。
+- 验证：编译通过，ctest 98/98 通过。新增 test_fxaa：FXAA API、SetupPostProcessPass 启用时声明 PostProcessOutput 与 FXAA Pass、ExecuteFXAAPass 空/无效句柄不崩溃、禁用时单 Pass 且无 PostProcessOutput。rendering_pipeline_layer_todolist 3.4 FXAA 完整实现已勾选。
+
+=== 2026-02-15 (session) agent_1771129221_52308 ===
 功能：phase14-14.2 Bloom 实现
 状态：已完成
 - 实现：Bloom 可选（SetBloomEnabled/IsBloomEnabled），SetBloomThreshold/GetBloomThreshold、SetBloomStrength/GetBloomStrength；SetupPostProcessPass 启用时声明 BloomBright/BloomBlurA/BloomBlurB（半分辨率 RGBA16F），AddPass ExtractBrightness、BloomBlurH、BloomBlurV、PostProcess（Composite+ToneMap）；着色器 extract_brightness.vert/frag、blur.vert/frag、composite_tone_map.vert/frag；ExecuteExtractBrightnessPass、ExecuteBloomBlurHPass、ExecuteBloomBlurVPass、ExecutePostProcessPass(ctx, cmd, lighting, bloom) 分支 composite 或仅 Tone Mapping。

@@ -724,6 +724,14 @@ inline glm::mat4 RenderPassContext::GetProjectionMatrix() const {
     return graph_ ? graph_->GetProjectionMatrix() : glm::mat4(1.f);
 }
 
+inline std::uint32_t RenderPassContext::GetResolutionWidth() const {
+    return graph_ ? graph_->GetResolutionWidth() : 0u;
+}
+
+inline std::uint32_t RenderPassContext::GetResolutionHeight() const {
+    return graph_ ? graph_->GetResolutionHeight() : 0u;
+}
+
 inline void RenderGraph::Execute(kale_device::IRenderDevice* device, kale_device::TextureHandle outputTarget) {
     kale_device::TextureHandle prev = outputTarget_;
     if (outputTarget.IsValid()) outputTarget_ = outputTarget;

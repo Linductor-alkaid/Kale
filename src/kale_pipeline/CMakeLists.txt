@@ -14,6 +14,8 @@ set(BLOOM_SHADER_OUTPUTS
     ${TONE_MAPPING_SPV_DIR}/blur.frag.spv
     ${TONE_MAPPING_SPV_DIR}/composite_tone_map.vert.spv
     ${TONE_MAPPING_SPV_DIR}/composite_tone_map.frag.spv
+    ${TONE_MAPPING_SPV_DIR}/fxaa.vert.spv
+    ${TONE_MAPPING_SPV_DIR}/fxaa.frag.spv
 )
 if(GLSLC)
     add_custom_command(OUTPUT ${TONE_MAPPING_SPV_DIR}/tone_mapping.vert.spv ${TONE_MAPPING_SPV_DIR}/tone_mapping.frag.spv
@@ -28,10 +30,13 @@ if(GLSLC)
         COMMAND ${GLSLC} -o ${TONE_MAPPING_SPV_DIR}/blur.frag.spv ${TONE_MAPPING_SHADER_DIR}/blur.frag
         COMMAND ${GLSLC} -o ${TONE_MAPPING_SPV_DIR}/composite_tone_map.vert.spv ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.vert
         COMMAND ${GLSLC} -o ${TONE_MAPPING_SPV_DIR}/composite_tone_map.frag.spv ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.frag
+        COMMAND ${GLSLC} -o ${TONE_MAPPING_SPV_DIR}/fxaa.vert.spv ${TONE_MAPPING_SHADER_DIR}/fxaa.vert
+        COMMAND ${GLSLC} -o ${TONE_MAPPING_SPV_DIR}/fxaa.frag.spv ${TONE_MAPPING_SHADER_DIR}/fxaa.frag
         DEPENDS ${TONE_MAPPING_SHADER_DIR}/extract_brightness.vert ${TONE_MAPPING_SHADER_DIR}/extract_brightness.frag
             ${TONE_MAPPING_SHADER_DIR}/blur.vert ${TONE_MAPPING_SHADER_DIR}/blur.frag
             ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.vert ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.frag
-        COMMENT "Compiling Bloom shaders to SPIR-V")
+            ${TONE_MAPPING_SHADER_DIR}/fxaa.vert ${TONE_MAPPING_SHADER_DIR}/fxaa.frag
+        COMMENT "Compiling Bloom/FXAA shaders to SPIR-V")
     add_custom_target(kale_pipeline_tone_mapping_shaders ALL
         DEPENDS ${TONE_MAPPING_SPV_DIR}/tone_mapping.vert.spv ${TONE_MAPPING_SPV_DIR}/tone_mapping.frag.spv
             ${BLOOM_SHADER_OUTPUTS})
@@ -48,10 +53,13 @@ elseif(GLSLANG_VALIDATOR)
         COMMAND ${GLSLANG_VALIDATOR} -V -o ${TONE_MAPPING_SPV_DIR}/blur.frag.spv ${TONE_MAPPING_SHADER_DIR}/blur.frag
         COMMAND ${GLSLANG_VALIDATOR} -V -o ${TONE_MAPPING_SPV_DIR}/composite_tone_map.vert.spv ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.vert
         COMMAND ${GLSLANG_VALIDATOR} -V -o ${TONE_MAPPING_SPV_DIR}/composite_tone_map.frag.spv ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.frag
+        COMMAND ${GLSLANG_VALIDATOR} -V -o ${TONE_MAPPING_SPV_DIR}/fxaa.vert.spv ${TONE_MAPPING_SHADER_DIR}/fxaa.vert
+        COMMAND ${GLSLANG_VALIDATOR} -V -o ${TONE_MAPPING_SPV_DIR}/fxaa.frag.spv ${TONE_MAPPING_SHADER_DIR}/fxaa.frag
         DEPENDS ${TONE_MAPPING_SHADER_DIR}/extract_brightness.vert ${TONE_MAPPING_SHADER_DIR}/extract_brightness.frag
             ${TONE_MAPPING_SHADER_DIR}/blur.vert ${TONE_MAPPING_SHADER_DIR}/blur.frag
             ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.vert ${TONE_MAPPING_SHADER_DIR}/composite_tone_map.frag
-        COMMENT "Compiling Bloom shaders to SPIR-V (glslangValidator)")
+            ${TONE_MAPPING_SHADER_DIR}/fxaa.vert ${TONE_MAPPING_SHADER_DIR}/fxaa.frag
+        COMMENT "Compiling Bloom/FXAA shaders to SPIR-V (glslangValidator)")
     add_custom_target(kale_pipeline_tone_mapping_shaders ALL
         DEPENDS ${TONE_MAPPING_SPV_DIR}/tone_mapping.vert.spv ${TONE_MAPPING_SPV_DIR}/tone_mapping.frag.spv
             ${BLOOM_SHADER_OUTPUTS})
