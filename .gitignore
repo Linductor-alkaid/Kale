@@ -77,3 +77,4 @@ CMakeLists_test.txt
 Testing/
 
 mcp-image-recognition/
+.cursor/     
