@@ -30,6 +30,7 @@ option(KALE_ENABLE_TSAN "启用 ThreadSanitizer 检测数据竞争" OFF)
 # 执行器层可选扩展（设计文档：EXECUTOR_ENABLE_CHANNELS / EXECUTOR_ENABLE_TASK_GRAPH）
 option(KALE_EXECUTOR_ENABLE_CHANNELS "编译 TaskChannel 通道扩展" ON)
 option(KALE_EXECUTOR_ENABLE_TASK_GRAPH "编译 TaskGraph 任务图扩展" ON)
+option(KALE_ENABLE_SCENE_WRITE_VALIDATION "开发期场景写回冲突检测（phase13-13.22）" ON)
 
 # 依赖路径（可通过 -D 传入）
 set(KALE_EXECUTOR_PATH "" CACHE PATH "executor 库路径（add_subdirectory 用）")

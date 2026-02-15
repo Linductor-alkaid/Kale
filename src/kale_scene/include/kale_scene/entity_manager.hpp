@@ -11,6 +11,7 @@
 
 #include <kale_scene/entity.hpp>
 #include <kale_scene/component_storage.hpp>
+#include <kale_scene/scene_types.hpp>
 
 #include <kale_executor/render_task_scheduler.hpp>
 
@@ -119,6 +120,12 @@ public:
 
     void RegisterSystem(std::unique_ptr<System> system);
 
+    /**
+     * 登记本帧内某 System 对某场景节点的写回（开发期冲突检测用）。
+     * 仅在 ENABLE_SCENE_WRITE_VALIDATION 下生效；帧末 CheckSceneWriteConflicts 会检查同一节点被多个无依赖关系的 System 写入。
+     */
+    void NotifySceneNodeWritten(SceneNodeHandle handle, std::type_index systemTypeId);
+
 private:
     template <typename T>
     ComponentStorage<T>* GetOrCreateStorage();
@@ -129,6 +136,9 @@ private:
 
     /// 构建系统拓扑序（Kahn）；返回 system 下标序列
     std::vector<size_t> BuildSystemOrder() const;
+
+    void CheckSceneWriteConflicts() const;
+    std::vector<std::pair<SceneNodeHandle, std::type_index>> frameSceneWrites_;
 
     kale::executor::RenderTaskScheduler* scheduler_ = nullptr;
     SceneManager* sceneMgr_ = nullptr;

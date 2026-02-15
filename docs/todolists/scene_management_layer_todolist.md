@@ -148,9 +148,9 @@
 
 ### 3.7 写回冲突检测（可选）
 
-- [ ] `#ifdef ENABLE_SCENE_WRITE_VALIDATION` 时启用
-- [ ] 实现 `NotifySceneNodeWritten(handle, systemTypeId)` 登记
-- [ ] 帧末检查：同一节点被多个无依赖关系的 System 写入时断言或日志
+- [x] `#ifdef ENABLE_SCENE_WRITE_VALIDATION` 时启用
+- [x] 实现 `NotifySceneNodeWritten(handle, systemTypeId)` 登记
+- [x] 帧末检查：同一节点被多个无依赖关系的 System 写入时断言或日志
 
 ---
 
@@ -269,7 +269,7 @@
 
 - [x] 同一 SceneNode 同一帧内仅应有一个 System 作为「主写者」
 - [x] 多 System 写同一节点时，必须通过 GetDependencies 建立 DAG 保证先后顺序
-- [ ] 开发期可选冲突检测（ENABLE_SCENE_WRITE_VALIDATION）
+- [x] 开发期可选冲突检测（ENABLE_SCENE_WRITE_VALIDATION）
 
 ---
 

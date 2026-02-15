@@ -341,6 +341,14 @@ target_link_libraries(test_scene_layer_error_lifecycle
 )
 add_test(NAME test_scene_layer_error_lifecycle COMMAND test_scene_layer_error_lifecycle)
 
+add_executable(test_scene_write_validation test_scene_write_validation.cpp)
+target_compile_definitions(test_scene_write_validation PRIVATE ENABLE_SCENE_WRITE_VALIDATION)
+target_link_libraries(test_scene_write_validation
+    PRIVATE
+        kale_scene
+)
+add_test(NAME test_scene_write_validation COMMAND test_scene_write_validation)
+
 add_executable(test_material_base test_material_base.cpp)
 target_link_libraries(test_material_base
     PRIVATE

@@ -1,3 +1,9 @@
+=== 2026-02-15 12:56:30 ===
+功能：phase13-13.22 写回冲突检测（可选）
+状态：已完成
+- 实现：EntityManager 增加 NotifySceneNodeWritten(handle, systemTypeId)、frameSceneWrites_ 与 CheckSceneWriteConflicts()；#ifdef ENABLE_SCENE_WRITE_VALIDATION 时登记写回、帧末按 DAG 检查同一节点多写者无依赖则 assert；PhysicsSystem/AnimationSystem 写回后调用 NotifySceneNodeWritten；根 CMake 增加 KALE_ENABLE_SCENE_WRITE_VALIDATION 选项（默认 ON），kale_scene 在该选项下编译宏生效。
+- 验证：编译通过，ctest 101/101 通过。新增 test_scene_write_validation（ENABLE_SCENE_WRITE_VALIDATION 下 Physics+Animation 同节点写回不触发冲突、多帧 Update 不崩溃）。scene_management_layer_todolist 3.7 三项与开发期可选冲突检测已勾选。
+
 === 2026-02-15 (session) agent_1771129221_52308 ===
 功能：phase13-13.23 UpdateBounds（可选）
 状态：已完成

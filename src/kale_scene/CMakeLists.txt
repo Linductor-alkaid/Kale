@@ -25,3 +25,7 @@ target_link_libraries(kale_scene
         kale_executor
         kale_resource
 )
+
+if(KALE_ENABLE_SCENE_WRITE_VALIDATION)
+    target_compile_definitions(kale_scene PRIVATE ENABLE_SCENE_WRITE_VALIDATION)
+endif()

@@ -44,6 +44,9 @@ public:
             SceneNode* node = ref->GetNode(sm);
             if (!node) continue;
             node->SetLocalTransform(phys->localTransform);
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+            em.NotifySceneNodeWritten(node->GetHandle(), std::type_index(typeid(PhysicsSystem)));
+#endif
         }
     }
 };
@@ -64,6 +67,9 @@ public:
             SceneNode* node = ref->GetNode(sm);
             if (!node) continue;
             node->SetLocalTransform(node->GetLocalTransform() * anim->localOffset);
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+            em.NotifySceneNodeWritten(node->GetHandle(), std::type_index(typeid(AnimationSystem)));
+#endif
         }
     }
 

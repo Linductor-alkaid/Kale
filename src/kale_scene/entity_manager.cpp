@@ -8,9 +8,12 @@
 #include <kale_scene/scene_node_ref.hpp>
 
 #include <algorithm>
+#include <cassert>
+#include <functional>
 #include <queue>
 #include <typeindex>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace kale::scene {
 
@@ -139,7 +142,76 @@ std::vector<size_t> EntityManager::BuildSystemOrder() const {
     return order;
 }
 
+void EntityManager::NotifySceneNodeWritten(SceneNodeHandle handle, std::type_index systemTypeId) {
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+    if (handle == kInvalidSceneNodeHandle) return;
+    frameSceneWrites_.emplace_back(handle, systemTypeId);
+#endif
+}
+
+void EntityManager::CheckSceneWriteConflicts() const {
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+    if (frameSceneWrites_.empty()) return;
+    std::unordered_map<SceneNodeHandle, std::vector<std::type_index>> writersByNode;
+    for (const auto& p : frameSceneWrites_)
+        writersByNode[p.first].push_back(p.second);
+
+    const size_t n = systems_.size();
+    std::unordered_map<std::type_index, size_t> typeToIndex;
+    for (size_t i = 0; i < n; ++i)
+        typeToIndex[std::type_index(typeid(*systems_[i].get()))] = i;
+
+    std::vector<std::vector<size_t>> deps(n);
+    for (size_t i = 0; i < n; ++i) {
+        for (const auto& depType : systems_[i]->GetDependencies()) {
+            auto it = typeToIndex.find(depType);
+            if (it != typeToIndex.end())
+                deps[i].push_back(it->second);
+        }
+    }
+    std::function<bool(size_t, size_t)> hasPath;
+    std::unordered_set<size_t> visited;
+    hasPath = [&](size_t from, size_t to) {
+        if (from == to) return true;
+        if (visited.count(from)) return false;
+        visited.insert(from);
+        for (size_t d : deps[from]) {
+            if (hasPath(d, to)) { visited.erase(from); return true; }
+        }
+        visited.erase(from);
+        return false;
+    };
+
+    for (const auto& kv : writersByNode) {
+        const std::vector<std::type_index>& writers = kv.second;
+        if (writers.size() <= 1) continue;
+        std::unordered_set<std::type_index> uniqueWriters(writers.begin(), writers.end());
+        if (uniqueWriters.size() <= 1) continue;
+        std::vector<size_t> indices;
+        for (const auto& t : uniqueWriters) {
+            auto it = typeToIndex.find(t);
+            if (it != typeToIndex.end())
+                indices.push_back(it->second);
+        }
+        for (size_t i = 0; i < indices.size(); ++i) {
+            for (size_t j = i + 1; j < indices.size(); ++j) {
+                visited.clear();
+                bool iBeforeJ = hasPath(indices[j], indices[i]);
+                visited.clear();
+                bool jBeforeI = hasPath(indices[i], indices[j]);
+                if (!iBeforeJ && !jBeforeI) {
+                    assert(!"scene write conflict: same node written by multiple systems with no dependency");
+                }
+            }
+        }
+    }
+#endif
+}
+
 void EntityManager::Update(float deltaTime) {
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+    frameSceneWrites_.clear();
+#endif
     std::vector<size_t> order = BuildSystemOrder();  // DAG 拓扑序
     if (order.empty()) return;
 
@@ -149,8 +221,12 @@ void EntityManager::Update(float deltaTime) {
             if (s)
                 s->Update(deltaTime, *this);
         }
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+        CheckSceneWriteConflicts();
+#endif
         return;
     }
+
 
     const size_t n = systems_.size();
     std::unordered_map<std::type_index, size_t> typeToIndex;
@@ -179,6 +255,10 @@ void EntityManager::Update(float deltaTime) {
     }
 
     scheduler_->WaitAll();
+#ifdef ENABLE_SCENE_WRITE_VALIDATION
+    CheckSceneWriteConflicts();
+#endif
 }
+
 
 }  // namespace kale::scene

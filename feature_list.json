@@ -2789,7 +2789,7 @@
         "实现 NotifySceneNodeWritten(handle, systemTypeId) 登记",
         "帧末检查：同一节点被多个无依赖关系的 System 写入时断言或日志"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase7-7.6"],
       "hold": null
