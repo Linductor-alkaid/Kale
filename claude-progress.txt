@@ -1,3 +1,9 @@
+=== 2026-02-15 12:46:23 (session) agent_1771129221_52308 ===
+功能：phase13-13.13 TextureLoader DDS 支持
+状态：已完成
+- 实现：TextureLoader Supports 增加 .dds；Load 按扩展名分发到 LoadDDS；LoadDDS 解析 DDS magic/124 字节头、DXT1/DXT5 FourCC 与 DX10 dxgiFormat 映射为 BC1/BC3/BC5/BC7；逐 mip CompressedMipSize 读取并经 Staging 上传；无 Staging 时压缩格式返回空并 SetLastError。
+- 验证：编译通过，ctest 99/99 通过。新增 test_compressed_texture_dds：Supports .dds、无效路径/错误 magic 返回空、无 Staging 时 GetLastError 非空、最小合法 4x4 DXT1 经 Staging 加载后 handle 有效且 width/height/format/BC1 正确。resource_management_layer_todolist 4.4 DDS 两项已勾选。
+
 === 2026-02-15 (session) agent_1771129221_52308 ===
 功能：phase14-14.3 FXAA 实现
 状态：已完成

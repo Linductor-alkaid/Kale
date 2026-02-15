@@ -191,9 +191,9 @@
 ### 4.4 压缩纹理支持
 
 - [x] TextureLoader 支持 .ktx（KTX1 内联解析，glInternalFormat→RDI Format）
-- [ ] TextureLoader 支持 .dds（BC、ASTC、ETC2 等）
+- [x] TextureLoader 支持 .dds（BC、ASTC、ETC2 等）
 - [x] 实现 `LoadKTX(path)` 加载 KTX 格式
-- [ ] 实现 `LoadDDS(path)` 加载 DDS 格式（可选）
+- [x] 实现 `LoadDDS(path)` 加载 DDS 格式（可选）
 - [x] 根据格式选择 RDI CreateTexture 的 Format
 
 ### 4.5 资源依赖解析

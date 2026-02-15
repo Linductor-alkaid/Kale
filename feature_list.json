@@ -2624,7 +2624,7 @@
         "TextureLoader 支持 .dds（BC、ASTC、ETC2 等）",
         "实现 LoadDDS(path) 加载 DDS 格式（可选）"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase12-12.5"],
       "hold": null

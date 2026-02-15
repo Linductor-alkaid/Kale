@@ -40,9 +40,13 @@ bool SupportsKTX(const std::string& path) {
     return HasExtension(path, ".ktx");
 }
 
+bool SupportsDDS(const std::string& path) {
+    return HasExtension(path, ".dds");
+}
+
 bool SupportsExtension(const std::string& path) {
     return HasExtension(path, ".png") || HasExtension(path, ".jpg") || HasExtension(path, ".jpeg")
-           || SupportsKTX(path);
+           || SupportsKTX(path) || SupportsDDS(path);
 }
 
 /** 按 Format 返回每像素字节数（仅支持 R8/RG8/RGBA8） */
@@ -129,6 +133,8 @@ std::any TextureLoader::Load(const std::string& path, ResourceLoadContext& ctx) 
     std::unique_ptr<Texture> tex;
     if (SupportsKTX(path))
         tex = LoadKTX(path, ctx);
+    else if (SupportsDDS(path))
+        tex = LoadDDS(path, ctx);
     else
         tex = LoadSTB(path, ctx);
     if (!tex) return {};
@@ -442,6 +448,165 @@ std::unique_ptr<Texture> TextureLoader::LoadKTX(const std::string& path, Resourc
     tex->height = pixelHeight;
     tex->format = format;
     tex->mipLevels = desc.mipLevels;
+    return tex;
+}
+
+// DDS 格式常量（phase13-13.13）
+namespace {
+    constexpr std::uint32_t DDS_MAGIC = 0x20534444u;  /* "DDS " */
+    constexpr std::uint32_t DDS_FOURCC_DXT1 = 0x31545844u;  /* 'DXT1' */
+    constexpr std::uint32_t DDS_FOURCC_DXT5 = 0x35545844u;  /* 'DXT5' */
+    constexpr std::uint32_t DDS_FOURCC_DX10 = 0x30315844u;  /* 'DX10' */
+    constexpr std::uint32_t DDPF_FOURCC = 0x4u;
+    /* DXGI_FORMAT */
+    constexpr std::uint32_t DXGI_BC1_UNORM = 71u;
+    constexpr std::uint32_t DXGI_BC2_UNORM = 74u;
+    constexpr std::uint32_t DXGI_BC3_UNORM = 77u;
+    constexpr std::uint32_t DXGI_BC5_UNORM = 79u;
+    constexpr std::uint32_t DXGI_BC7_UNORM = 98u;
+
+    kale_device::Format DdsFourCCToRdi(std::uint32_t fourCC) {
+        switch (fourCC) {
+            case DDS_FOURCC_DXT1: return kale_device::Format::BC1;
+            case DDS_FOURCC_DXT5: return kale_device::Format::BC3;
+            default: return kale_device::Format::Undefined;
+        }
+    }
+
+    kale_device::Format DdsDxgiFormatToRdi(std::uint32_t dxgiFormat) {
+        switch (dxgiFormat) {
+            case DXGI_BC1_UNORM: return kale_device::Format::BC1;
+            case DXGI_BC2_UNORM: /* 无 BC2 时跳过或当 BC3 用；rdi 仅有 BC1/BC3/BC5/BC7 */
+                return kale_device::Format::Undefined;
+            case DXGI_BC3_UNORM: return kale_device::Format::BC3;
+            case DXGI_BC5_UNORM: return kale_device::Format::BC5;
+            case DXGI_BC7_UNORM: return kale_device::Format::BC7;
+            default: return kale_device::Format::Undefined;
+        }
+    }
+}  // namespace
+
+std::unique_ptr<Texture> TextureLoader::LoadDDS(const std::string& path, ResourceLoadContext& ctx) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f.is_open()) {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS open failed: " + path);
+        return nullptr;
+    }
+    std::uint32_t magic = 0;
+    if (!f.read(reinterpret_cast<char*>(&magic), 4) || magic != DDS_MAGIC) {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS invalid magic: " + path);
+        return nullptr;
+    }
+    /* DDS_HEADER 124 字节：dwSize(4), dwFlags(4), dwHeight(4), dwWidth(4), dwPitchOrLinearSize(4), dwDepth(4), dwMipMapCount(4), reserved1[11](44), ddspf(32), dwCaps(4), ... */
+    std::uint8_t header[124];
+    if (!f.read(reinterpret_cast<char*>(header), 124)) {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS read header failed: " + path);
+        return nullptr;
+    }
+    std::uint32_t dwHeight = *reinterpret_cast<std::uint32_t*>(header + 8);
+    std::uint32_t dwWidth = *reinterpret_cast<std::uint32_t*>(header + 12);
+    std::uint32_t dwMipMapCount = *reinterpret_cast<std::uint32_t*>(header + 24);
+    std::uint32_t dwFourCC = *reinterpret_cast<std::uint32_t*>(header + 80);
+    std::uint32_t dwFlagsPF = *reinterpret_cast<std::uint32_t*>(header + 76);
+
+    if (dwWidth == 0 || dwHeight == 0) {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS zero size: " + path);
+        return nullptr;
+    }
+    kale_device::Format format = kale_device::Format::Undefined;
+    std::streamoff payloadOffset = 124;
+    if ((dwFlagsPF & DDPF_FOURCC) && dwFourCC == DDS_FOURCC_DX10) {
+        std::uint8_t dx10[20];
+        if (!f.read(reinterpret_cast<char*>(dx10), 20)) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS DX10 header read failed: " + path);
+            return nullptr;
+        }
+        payloadOffset += 20;
+        std::uint32_t dxgiFormat = *reinterpret_cast<std::uint32_t*>(dx10);
+        format = DdsDxgiFormatToRdi(dxgiFormat);
+    } else {
+        format = DdsFourCCToRdi(dwFourCC);
+    }
+    if (format == kale_device::Format::Undefined) {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS unsupported format: " + path);
+        return nullptr;
+    }
+
+    const std::uint32_t numMips = (dwMipMapCount > 0) ? dwMipMapCount : 1;
+    std::vector<std::vector<std::uint8_t>> mipLevelData(numMips);
+    std::vector<std::uint32_t> mipWidths(numMips);
+    std::vector<std::uint32_t> mipHeights(numMips);
+    std::uint32_t w = dwWidth, h = dwHeight;
+    for (std::uint32_t mip = 0; mip < numMips; ++mip) {
+        std::size_t sz = CompressedMipSize(format, w, h);
+        if (sz == 0) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS mip size 0: " + path);
+            return nullptr;
+        }
+        mipLevelData[mip].resize(sz);
+        if (!f.read(reinterpret_cast<char*>(mipLevelData[mip].data()), static_cast<std::streamsize>(sz))) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS mip read failed: " + path);
+            return nullptr;
+        }
+        mipWidths[mip] = w;
+        mipHeights[mip] = h;
+        if (w > 1 || h > 1) {
+            w = std::max(1u, w / 2);
+            h = std::max(1u, h / 2);
+        }
+    }
+
+    kale_device::TextureDesc desc;
+    desc.width = dwWidth;
+    desc.height = dwHeight;
+    desc.depth = 1;
+    desc.mipLevels = numMips;
+    desc.arrayLayers = 1;
+    desc.format = format;
+    desc.usage = kale_device::TextureUsage::Sampled | kale_device::TextureUsage::Transfer;
+    desc.isCube = false;
+
+    kale_device::TextureHandle handle;
+    if (ctx.stagingMgr && ctx.device) {
+        handle = ctx.device->CreateTexture(desc, nullptr);
+        if (!handle.IsValid()) {
+            if (ctx.resourceManager) ctx.resourceManager->SetLastError("CreateTexture failed for DDS: " + path);
+            return nullptr;
+        }
+        std::vector<StagingAllocation> stagings;
+        stagings.reserve(numMips);
+        bool failed = false;
+        for (std::uint32_t mip = 0; mip < numMips; ++mip) {
+            std::size_t sz = mipLevelData[mip].size();
+            StagingAllocation staging = ctx.stagingMgr->Allocate(sz);
+            if (!staging.IsValid()) {
+                if (ctx.resourceManager) ctx.resourceManager->SetLastError("Staging Allocate failed for DDS mip " + std::to_string(mip) + ": " + path);
+                failed = true;
+                break;
+            }
+            std::memcpy(staging.mappedPtr, mipLevelData[mip].data(), sz);
+            ctx.stagingMgr->SubmitUpload(nullptr, staging, handle, mip, mipWidths[mip], mipHeights[mip], 1);
+            stagings.push_back(staging);
+        }
+        if (failed) {
+            for (const auto& s : stagings) ctx.stagingMgr->Free(s);
+            ctx.device->DestroyTexture(handle);
+            return nullptr;
+        }
+        kale_device::FenceHandle fence = ctx.stagingMgr->FlushUploads(ctx.device);
+        if (fence.IsValid()) ctx.device->WaitForFence(fence);
+        for (const auto& s : stagings) ctx.stagingMgr->Free(s);
+    } else {
+        if (ctx.resourceManager) ctx.resourceManager->SetLastError("DDS compressed format requires Staging: " + path);
+        return nullptr;
+    }
+
+    auto tex = std::make_unique<Texture>();
+    tex->handle = handle;
+    tex->width = dwWidth;
+    tex->height = dwHeight;
+    tex->format = format;
+    tex->mipLevels = numMips;
     return tex;
 }
 
