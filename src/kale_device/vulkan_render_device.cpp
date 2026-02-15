@@ -1073,6 +1073,7 @@ PipelineHandle VulkanRenderDevice::CreatePipeline(const PipelineDesc& desc) {
     raster.rasterizerDiscardEnable = VK_FALSE;
     raster.polygonMode = VK_POLYGON_MODE_FILL;
     raster.cullMode = ToVkCullMode(desc.rasterization.cullEnable, desc.rasterization.frontFaceCCW);
+    // 与上层一致：CCW=正面。不因 viewport Y 翻转而取反，因 GLM/右手系下几何“正面”在 Y 翻转后仍由顶点顺序决定，Vulkan 在翻转后的 framebuffer 空间里 CCW 与上层语义一致。
     raster.frontFace = desc.rasterization.frontFaceCCW ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
     raster.lineWidth = desc.rasterization.lineWidth;
 
@@ -2385,8 +2386,9 @@ void VulkanCommandList::ClearDepth(TextureHandle texture, float depth, std::uint
 void VulkanCommandList::SetViewport(float x, float y, float width, float height,
                                     float minDepth, float maxDepth) {
     if (!commandBuffer_) return;
-    // Vulkan NDC 为 Y 向下，上层统一使用 Y-up（GLM/OpenGL 习惯）。在设备层做适配：
-    // viewport 使用 y + height、height 取负，使 NDC y=+1 映射到 framebuffer 顶部。
+    // Vulkan 与 GLM/OpenGL 在设备层的适配：
+    // 1) Y 轴：Vulkan NDC Y 向下，上层 Y-up。用 y + height、height 取负，使 NDC y=+1 映射到 framebuffer 顶部。
+    // 2) 深度：上层 glm::perspective 产出 NDC z∈[-1,1]，Vulkan viewport 公式 z_fb=0.5*z_ndc*(max-min)+0.5*(max+min)，(0,1) 即把 [-1,1] 映射到 [0,1]，无需改 minDepth/maxDepth。
     VkViewport vp = {};
     vp.x = x;
     vp.y = y + height;
