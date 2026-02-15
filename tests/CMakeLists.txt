@@ -234,6 +234,12 @@ target_link_libraries(test_cull_scene_single_camera
 )
 add_test(NAME test_cull_scene_single_camera COMMAND test_cull_scene_single_camera)
 
+add_executable(test_update_bounds test_update_bounds.cpp)
+target_link_libraries(test_update_bounds
+  kale_scene kale_resource kale_device glm::glm
+)
+add_test(NAME test_update_bounds COMMAND test_update_bounds)
+
 add_executable(test_lod_manager test_lod_manager.cpp)
 target_link_libraries(test_lod_manager
     PRIVATE

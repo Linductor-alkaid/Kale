@@ -12,7 +12,9 @@
 #include <kale_device/render_device.hpp>
 #include <kale_device/rdi_types.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 
@@ -93,6 +95,18 @@ int main() {
 
     // ReleaseFrameResources() 默认空实现不崩溃
     r.ReleaseFrameResources();
+
+    // UpdateBounds / GetWorldBounds（phase13-13.23）
+    r.UpdateBounds(glm::mat4(1.f));
+    BoundingBox worldIdentity = r.GetWorldBounds();
+    TEST_CHECK(worldIdentity.min.x == got.min.x && worldIdentity.max.x == got.max.x);
+
+    glm::mat4 translate = glm::translate(glm::mat4(1.f), glm::vec3(10.f, 0.f, 0.f));
+    r.UpdateBounds(translate);
+    BoundingBox worldTranslated = r.GetWorldBounds();
+    BoundingBox expected = TransformBounds(box, translate);
+    TEST_CHECK(std::abs(worldTranslated.min.x - expected.min.x) < 1e-5f);
+    TEST_CHECK(std::abs(worldTranslated.max.x - expected.max.x) < 1e-5f);
 
     return 0;
 }

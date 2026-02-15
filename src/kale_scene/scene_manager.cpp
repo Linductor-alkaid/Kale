@@ -33,8 +33,7 @@ std::vector<SceneNode*> SceneManager::CullScene(CameraNode* camera) {
             return;
         }
 
-        kale::resource::BoundingBox worldBounds =
-            kale::resource::TransformBounds(node->GetRenderable()->GetBounds(), node->GetWorldMatrix());
+        kale::resource::BoundingBox worldBounds = node->GetRenderable()->GetWorldBounds();
         if (!IsBoundsInFrustum(worldBounds, frustum)) return;
 
         if (lodManager_) lodManager_->SelectLOD(node, camera);
@@ -69,6 +68,8 @@ void SceneManager::Update(float deltaTime) {
 void SceneManager::UpdateRecursive(SceneNode* node, const glm::mat4& parentWorld) {
     glm::mat4 world = parentWorld * node->GetLocalTransform();
     node->SetWorldMatrix(world);
+    if (Renderable* r = node->GetRenderable())
+        r->UpdateBounds(world);
     for (const auto& child : node->GetChildren())
         UpdateRecursive(child.get(), world);
 }
@@ -152,8 +153,7 @@ namespace {
 
 /** 计算节点世界 AABB 在视空间中的深度范围 [minZ, maxZ]（用于遮挡剔除排序与比较） */
 void getViewDepthRange(SceneNode* node, const glm::mat4& viewMatrix, float& outMinZ, float& outMaxZ) {
-    kale::resource::BoundingBox worldBounds =
-        kale::resource::TransformBounds(node->GetRenderable()->GetBounds(), node->GetWorldMatrix());
+    kale::resource::BoundingBox worldBounds = node->GetRenderable()->GetWorldBounds();
     const glm::vec3 corners[8] = {
         { worldBounds.min.x, worldBounds.min.y, worldBounds.min.z },
         { worldBounds.max.x, worldBounds.min.y, worldBounds.min.z },

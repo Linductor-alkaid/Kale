@@ -2805,7 +2805,7 @@
         "世界矩阵计算后可调用 UpdateBounds 更新 Renderable 的世界包围体缓存",
         "UpdateBounds 由 SceneManager::Update 内部完成"
       ],
-      "status": "pending",
+      "status": "completed",
       "priority": "low",
       "dependencies": ["phase7-7.4"],
       "hold": null

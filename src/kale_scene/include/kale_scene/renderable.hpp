@@ -41,7 +41,7 @@ public:
     /** 由 LODManager::SelectLOD 调用，设置当前使用的 LOD 索引（0-based）。默认空实现。 */
     virtual void SetCurrentLOD(uint32_t lod) { (void)lod; }
 
-    /**
+/**
      * 向命令列表录制绘制命令，worldTransform 为节点世界矩阵。
      * @param device 可选；非空时用于绑定实例级 DescriptorSet（如 Material::AcquireInstanceDescriptorSet），由 RenderPassContext::GetDevice() 传入。
      */
@@ -51,9 +51,23 @@ public:
     /** 帧末由 RenderGraph::ReleaseFrameResources 调用，用于回收实例级 DescriptorSet 等；默认空实现。 */
     virtual void ReleaseFrameResources() {}
 
+    /**
+     * 由 SceneManager::Update 在世界矩阵计算后调用，更新世界空间包围体缓存。
+     * 默认实现：worldBoundsCached_ = TransformBounds(GetBounds(), worldMatrix)。
+     * CullScene 与遮挡剔除使用 GetWorldBounds() 可避免每帧重复变换。
+     */
+    virtual void UpdateBounds(const glm::mat4& worldMatrix) {
+        worldBoundsCached_ = kale::resource::TransformBounds(GetBounds(), worldMatrix);
+    }
+
+    /** 返回最近一次 UpdateBounds(worldMatrix) 写入的世界空间包围体；未调用过时返回值未定义。 */
+    const kale::resource::BoundingBox& GetWorldBounds() const { return worldBoundsCached_; }
+
 protected:
     /** 局部空间包围盒，子类可设置后由 GetBounds() 返回，供 CullScene 使用 */
     kale::resource::BoundingBox bounds_{};
+    /** 世界空间包围体缓存，由 UpdateBounds 写入，供 GetWorldBounds() 与 CullScene 使用 */
+    kale::resource::BoundingBox worldBoundsCached_{};
 };
 
 }  // namespace kale::scene

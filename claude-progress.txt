@@ -1,3 +1,9 @@
+=== 2026-02-15 (session) agent_1771129221_52308 ===
+功能：phase13-13.23 UpdateBounds（可选）
+状态：已完成
+- 实现：Renderable 增加 UpdateBounds(worldMatrix)、GetWorldBounds() 与 worldBoundsCached_；默认 UpdateBounds 为 TransformBounds(GetBounds(), worldMatrix)；SceneManager::UpdateRecursive 在世界矩阵计算后对带 Renderable 的节点调用 r->UpdateBounds(world)；CullScene 与 getViewDepthRange 改用 GetWorldBounds() 替代现场 TransformBounds。
+- 验证：编译通过，ctest 100/100 通过。新增 test_update_bounds：Update 后 GetWorldBounds 与 TransformBounds(local, world) 一致、多场景下缓存正确；test_renderable 增加 UpdateBounds/GetWorldBounds 用例。scene_management_layer_todolist 5.4 UpdateBounds 两项已勾选。
+
 === 2026-02-15 12:46:23 (session) agent_1771129221_52308 ===
 功能：phase13-13.13 TextureLoader DDS 支持
 状态：已完成

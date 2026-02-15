@@ -206,8 +206,8 @@
 
 ### 5.4 UpdateBounds（可选）
 
-- [ ] 世界矩阵计算后可调用 UpdateBounds 更新 Renderable 的世界包围体缓存
-- [ ] 设计文档中 UpdateBounds 由 SceneManager::Update 内部完成
+- [x] 世界矩阵计算后可调用 UpdateBounds 更新 Renderable 的世界包围体缓存
+- [x] 设计文档中 UpdateBounds 由 SceneManager::Update 内部完成
 
 ---
 
